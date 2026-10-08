@@ -59,11 +59,13 @@ export type LinkedRecord = { type: "teacher" | "student" | "guardian"; id: strin
 export type UserContext = {
   profile: Omit<Profile, "user_id">
   school: Pick<School, "id" | "name" | "code" | "logo_url" | "timezone" | "status"> | null
-  settings: Pick<SchoolSettings, "primary_color"> | null
+  settings: Pick<SchoolSettings, "primary_color" | "currency"> | null
   current_academic_year: Pick<AcademicYear, "id" | "name" | "start_date" | "end_date"> | null
   record: LinkedRecord | null
   /** Profile active AND (super admin OR school active). */
   access_active: boolean
   /** Enabled feature keys for the user's school. */
   features: string[]
+  /** Finance area access (admin / staff / view / none), computed by private.finance_level(). */
+  finance_level: "admin" | "staff" | "view" | "none"
 }

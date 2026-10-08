@@ -1586,6 +1586,9 @@ isOneToOne: false
 "has_feature":
 { Args: { "feature": string }; Returns: boolean
                            },
+"hit_rate_limit":
+{ Args: { "p_bucket": string,"p_limit": number,"p_window_seconds": number }; Returns: boolean
+                           },
 "mark_notifications_read":
 { Args: { "p_ids"?: (string)[] }; Returns: number
                            },
@@ -1623,6 +1626,9 @@ isOneToOne: false
 { Args: { "p_discount_id": string,"p_reason": string }; Returns: undefined
                            },
 "run_communication_jobs":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"run_data_retention":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
 "save_attendance":

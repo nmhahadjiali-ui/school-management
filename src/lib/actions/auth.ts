@@ -2,7 +2,9 @@
 
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { createHash } from "node:crypto"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { fail, formToObject, invalid, type ActionResult } from "@/lib/action-result"
 import { safeRedirectPath } from "@/lib/utils"
 import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from "@/lib/validations"
@@ -10,6 +12,30 @@ import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema 
 async function siteOrigin() {
   const h = await headers()
   return process.env.NEXT_PUBLIC_SITE_URL || h.get("origin") || `https://${h.get("host")}`
+}
+
+/**
+ * The visitor's address as reported by the hosting proxy (Vercel sets
+ * x-forwarded-for / x-real-ip). Hashed before it is stored.
+ */
+async function clientKey() {
+  const h = await headers()
+  const ip = h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  return createHash("sha256").update(ip).digest("hex").slice(0, 32)
+}
+
+/** Shared (database) counter: works across every server instance. Fails open if the check itself errors. */
+async function withinLimit(action: string, limit: number, windowSeconds: number) {
+  const { data, error } = await createAdminClient().rpc("hit_rate_limit", {
+    p_bucket: `${action}:${await clientKey()}`,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+  })
+  if (error) {
+    console.error("[rateLimit]", error.code, error.message)
+    return true
+  }
+  return data === true
 }
 
 export async function signIn(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -34,8 +60,12 @@ export async function register(_prev: ActionResult | null, formData: FormData): 
   if (!parsed.success) return invalid(parsed.error)
   const { email, password, first_name, last_name, school_code, requested_role } = parsed.data
 
-  const supabase = await createClient()
-  const { data: codeOk, error: codeError } = await supabase.rpc("school_code_is_valid", { school_code })
+  // School codes are not public: limit guesses per visitor (10 per 15 minutes).
+  if (!(await withinLimit("register", 10, 900))) {
+    return { ok: false, error: "Too many attempts. Please wait a few minutes and try again." }
+  }
+  // Server-only check (the public API no longer answers it).
+  const { data: codeOk, error: codeError } = await createAdminClient().rpc("school_code_is_valid", { school_code })
   if (codeError) return fail(codeError, "register.code")
   if (!codeOk) {
     return {
@@ -47,6 +77,7 @@ export async function register(_prev: ActionResult | null, formData: FormData): 
 
   // Metadata is user-controlled: the database trigger only accepts a valid
   // school code and non-admin roles, and always starts the account as pending.
+  const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     email,
     password,

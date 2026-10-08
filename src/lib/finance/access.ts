@@ -16,12 +16,8 @@ import type { UserContext } from "@/types/domain"
 export type FinanceLevel = "admin" | "staff" | "view" | "none"
 const RANK: Record<FinanceLevel, number> = { none: 0, view: 1, staff: 2, admin: 3 }
 
-export const myFinanceLevel = cache(async (): Promise<FinanceLevel> => {
-  const supabase = await createClient()
-  const { data, error } = await supabase.rpc("my_finance_level")
-  if (error) console.error("[myFinanceLevel]", error.code, error.message)
-  return (data as FinanceLevel | null) ?? "none"
-})
+/** From get_my_context() (already loaded for the page), so it costs no extra query. */
+export const myFinanceLevel = cache(async (): Promise<FinanceLevel> => (await getUserContext())?.finance_level ?? "none")
 
 export const atLeast = (level: FinanceLevel, min: Exclude<FinanceLevel, "none">) => RANK[level] >= RANK[min]
 
@@ -64,6 +60,8 @@ export async function familyActor() {
 }
 
 export const schoolCurrency = cache(async (schoolId: string): Promise<string> => {
+  const ctx = await getUserContext()
+  if (ctx?.profile.school_id === schoolId && ctx.settings?.currency) return ctx.settings.currency.trim()
   const supabase = await createClient()
   const { data } = await supabase.from("school_settings").select("currency").eq("school_id", schoolId).maybeSingle()
   return data?.currency?.trim() || "PHP"
