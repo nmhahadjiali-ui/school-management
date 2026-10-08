@@ -83,6 +83,19 @@ Demo accounts (`--demo`, password `Demo-pass-123`): `admin@north.example`,
 (and the same for `@south.example`). School codes: `NORTH`, `SOUTH`.
 The super admin uses `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
 
+## Using the hosted Supabase project
+
+The hosted project (`school-management-DB`) is linked (`npx supabase link`). Its settings live in
+`.env.hosted` (git-ignored, same variables as `.env.local`).
+
+```bash
+npm run dev:hosted              # the app on http://localhost:3001 using the hosted database
+npm run seed:hosted -- --demo   # super admin (+ demo data); safe to re-run
+npx supabase db push --linked   # apply new migrations to the hosted database
+```
+
+`npm run dev` / `npm test` keep using the local Docker database; tests refuse to run against a remote URL.
+
 ## Environment variables
 
 | Variable | Where | Purpose |
