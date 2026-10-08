@@ -25,7 +25,6 @@ export function SettingsForm({ school, settings }: { school: School; settings: S
       <Card>
         <CardHeader title="Branding" />
         <CardBody className="grid gap-4 md:grid-cols-2">
-          <Field name="logo_url" label="Logo URL" type="url" placeholder="https://" defaultValue={school.logo_url ?? ""} />
           <Field name="primary_color" label="Primary color" type="color" defaultValue={settings.primary_color} />
         </CardBody>
       </Card>

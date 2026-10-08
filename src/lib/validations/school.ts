@@ -11,7 +11,6 @@ const date = z.iso.date("Enter a valid date")
 const id = z.uuid("Choose an option")
 const email = z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address"))
 const phone = optional(z.string().trim().max(40, "Phone is too long"))
-const url = optional(z.url({ protocol: /^https?$/, message: "Enter a full URL starting with https://" }))
 const person = {
   first_name: text("First name", 100),
   middle_name: optional(z.string().trim().max(100)),
@@ -57,7 +56,6 @@ export const studentSchema = z.object({
   email: optional(email),
   phone,
   address: optional(z.string().trim().max(500)),
-  photo_url: url,
   status: z.enum(["active", "inactive", "graduated", "transferred", "withdrawn"]),
 })
 

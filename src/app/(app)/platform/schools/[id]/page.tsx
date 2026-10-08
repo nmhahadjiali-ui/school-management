@@ -4,6 +4,8 @@ import { Alert } from "@/components/ui/alert"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { PageHeader, StatusBadge } from "@/components/ui/misc"
 import { SchoolForm } from "@/components/schools/school-form"
+import { ImageUpload } from "@/components/ui/image-upload"
+import { setSchoolLogo } from "@/lib/actions/images"
 import { FeatureToggles, SchoolStatusControl } from "@/components/schools/school-admin-controls"
 import { ProvisionUserForm } from "@/components/users/provision-user-form"
 import { UsersTable } from "@/components/users/users-table"
@@ -43,6 +45,12 @@ export default async function SchoolDetailPage({ params, searchParams }: PagePro
       )}
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
+          <Card>
+            <CardHeader title="Logo" />
+            <CardBody>
+              <ImageUpload bucket="school-logos" folder={s.id} currentSrc={s.logo_url} onSave={setSchoolLogo.bind(null, s.id)} label="logo" />
+            </CardBody>
+          </Card>
           <Card>
             <CardHeader title="Details" />
             <CardBody>

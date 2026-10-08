@@ -260,7 +260,6 @@ export function StudentForm({ action, student, cancelHref }: { action: FormActio
         <>
           <Field name="email" label="Email" type="email" defaultValue={student?.email ?? ""} hint="Needed to invite the student to the app." />
           <Field name="phone" label="Phone" type="tel" defaultValue={student?.phone ?? ""} />
-          <Field name="photo_url" label="Photo URL" type="url" placeholder="https://" defaultValue={student?.photo_url ?? ""} />
           <Field name="address" label="Address" as="textarea" defaultValue={student?.address ?? ""} className="md:col-span-3" />
         </>
       )}

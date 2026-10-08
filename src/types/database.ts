@@ -927,14 +927,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"email": string,"first_name": string,"id": string,"last_name": string,"phone": string | null,"role": Database["public"]['Enums']["app_role"],"school_id": string | null,"status": Database["public"]['Enums']["profile_status"],"updated_at": string,"user_id": string
+                    "avatar_path": string | null,"avatar_url": string | null,"created_at": string,"email": string,"first_name": string,"id": string,"last_name": string,"phone": string | null,"role": Database["public"]['Enums']["app_role"],"school_id": string | null,"status": Database["public"]['Enums']["profile_status"],"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"email": string,"first_name"?: string,"id"?: string,"last_name"?: string,"phone"?: string | null,"role": Database["public"]['Enums']["app_role"],"school_id"?: string | null,"status"?: Database["public"]['Enums']["profile_status"],"updated_at"?: string,"user_id": string
+                    "avatar_path"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"email": string,"first_name"?: string,"id"?: string,"last_name"?: string,"phone"?: string | null,"role": Database["public"]['Enums']["app_role"],"school_id"?: string | null,"status"?: Database["public"]['Enums']["profile_status"],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"email"?: string,"first_name"?: string,"id"?: string,"last_name"?: string,"phone"?: string | null,"role"?: Database["public"]['Enums']["app_role"],"school_id"?: string | null,"status"?: Database["public"]['Enums']["profile_status"],"updated_at"?: string,"user_id"?: string
+                    "avatar_path"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"email"?: string,"first_name"?: string,"id"?: string,"last_name"?: string,"phone"?: string | null,"role"?: Database["public"]['Enums']["app_role"],"school_id"?: string | null,"status"?: Database["public"]['Enums']["profile_status"],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1313,14 +1313,14 @@ isOneToOne: false
                   ]
                 },"students": {
                   Row: {
-                    "address": string | null,"created_at": string,"date_of_birth": string | null,"email": string | null,"first_name": string,"gender": Database["public"]['Enums']["gender"] | null,"id": string,"last_name": string,"middle_name": string | null,"phone": string | null,"photo_url": string | null,"school_id": string,"search_text": string | null,"status": Database["public"]['Enums']["student_status"],"student_number": string,"suffix": string | null,"updated_at": string,"user_id": string | null
+                    "address": string | null,"created_at": string,"date_of_birth": string | null,"email": string | null,"first_name": string,"gender": Database["public"]['Enums']["gender"] | null,"id": string,"last_name": string,"middle_name": string | null,"phone": string | null,"photo_path": string | null,"photo_url": string | null,"school_id": string,"search_text": string | null,"status": Database["public"]['Enums']["student_status"],"student_number": string,"suffix": string | null,"updated_at": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"first_name": string,"gender"?: Database["public"]['Enums']["gender"] | null,"id"?: string,"last_name": string,"middle_name"?: string | null,"phone"?: string | null,"photo_url"?: string | null,"school_id": string,"search_text"?: never,"status"?: Database["public"]['Enums']["student_status"],"student_number": string,"suffix"?: string | null,"updated_at"?: string,"user_id"?: string | null
+                    "address"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"first_name": string,"gender"?: Database["public"]['Enums']["gender"] | null,"id"?: string,"last_name": string,"middle_name"?: string | null,"phone"?: string | null,"photo_path"?: string | null,"photo_url"?: string | null,"school_id": string,"search_text"?: never,"status"?: Database["public"]['Enums']["student_status"],"student_number": string,"suffix"?: string | null,"updated_at"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "address"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"first_name"?: string,"gender"?: Database["public"]['Enums']["gender"] | null,"id"?: string,"last_name"?: string,"middle_name"?: string | null,"phone"?: string | null,"photo_url"?: string | null,"school_id"?: string,"search_text"?: never,"status"?: Database["public"]['Enums']["student_status"],"student_number"?: string,"suffix"?: string | null,"updated_at"?: string,"user_id"?: string | null
+                    "address"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"first_name"?: string,"gender"?: Database["public"]['Enums']["gender"] | null,"id"?: string,"last_name"?: string,"middle_name"?: string | null,"phone"?: string | null,"photo_path"?: string | null,"photo_url"?: string | null,"school_id"?: string,"search_text"?: never,"status"?: Database["public"]['Enums']["student_status"],"student_number"?: string,"suffix"?: string | null,"updated_at"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {

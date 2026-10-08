@@ -10,6 +10,8 @@ import { requirePermission } from "@/lib/auth/session"
 import { listSchoolFeatures } from "@/services/features"
 import { getSchool } from "@/services/schools"
 import { getSchoolSettings } from "@/services/settings"
+import { ImageUpload } from "@/components/ui/image-upload"
+import { setSchoolLogo } from "@/lib/actions/images"
 
 export const metadata: Metadata = { title: "Settings" }
 
@@ -32,6 +34,12 @@ export default async function SchoolSettingsPage() {
       <PageHeader title="Settings" description="Configure your school." />
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
+          <Card>
+            <CardHeader title="School logo" description="Shown in the menu and on the dashboard." />
+            <CardBody>
+              <ImageUpload bucket="school-logos" folder={schoolId} currentSrc={school.data.logo_url} onSave={setSchoolLogo.bind(null, schoolId)} label="logo" />
+            </CardBody>
+          </Card>
           <SettingsForm school={school.data} settings={settings.data} />
           <AcademicPolicyForm settings={settings.data} />
           <CommunicationSettingsForm settings={settings.data} available={{ email: has("email_notifications"), sms: has("sms"), push: has("push_notifications") }} />

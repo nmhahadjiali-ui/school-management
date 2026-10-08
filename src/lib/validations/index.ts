@@ -13,7 +13,6 @@ const password = z
   .max(72, "Use at most 72 characters")
   .regex(/[A-Za-z]/, "Include at least one letter")
   .regex(/[0-9]/, "Include at least one number")
-const httpUrl = z.url({ protocol: /^https?$/, message: "Enter a full URL starting with https://" })
 const timezone = z
   .string()
   .trim()
@@ -62,7 +61,6 @@ const schoolDetails = {
   address: optional(z.string().max(500)),
   contact_email: optional(email),
   contact_phone: optional(z.string().max(40)),
-  logo_url: optional(httpUrl),
   timezone,
 }
 
@@ -97,14 +95,12 @@ export const updateProfileSchema = z.object({
   first_name: name("First name"),
   last_name: name("Last name"),
   phone: optional(z.string().max(40)),
-  avatar_url: optional(httpUrl),
 })
 
 // --- Settings --------------------------------------------------------------
 // Academic years are managed in academic_years (Phase 2), not in settings.
 export const schoolSettingsSchema = z.object({
   timezone,
-  logo_url: optional(httpUrl),
   primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color such as #1d4ed8"),
 })
 

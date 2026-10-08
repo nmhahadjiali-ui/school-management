@@ -206,6 +206,17 @@ Full rationale in [PHASE5-FINANCE.md](PHASE5-FINANCE.md#how-financial-rls-works)
 * CSV exports run with the user's session (RLS) and neutralise spreadsheet formulas.
 * Finance users can read students, enrollments and sections (names, numbers, placement) but not grades, attendance or guardian contacts; staff names on financial records come from `finance_actor_names()` (names only).
 
+## Picture uploads (migration `20261013000001`)
+
+* Limits enforced by the buckets themselves (and checked in the browser first): **1.5 MB**, JPG/PNG/WebP only (no SVG).
+* `school-logos` (public): `<school_id>/<uuid>.<ext>`; written only by the super admin or that school's admin.
+* `photos` (private): `<school_id>/students/<student_id>/…` — readable by whoever can read the student record (RLS on
+  `students`), written by the school's admin; `<school_id|platform>/users/<user_id>/…` — written only by the user,
+  readable by the user, their school's admins and super admins. Served through `/api/photos` (10-minute signed URLs,
+  signed with the caller's session so Storage RLS decides).
+* `students.photo_path` / `profiles.avatar_path` have check constraints tying the path to the row, so a record cannot
+  point at another record's picture. Replaced pictures are deleted.
+
 ## RLS performance rules (for every new policy)
 
 A load test (50 simultaneous users) showed policies were the bottleneck. Migrations
@@ -239,8 +250,6 @@ A load test (50 simultaneous users) showed policies were the bottleneck. Migrati
 * Auth rate limits and email confirmation are configured in Supabase
   (`supabase/config.toml` locally; dashboard in production). Enable email
   confirmations in production.
-* Logos are URLs in Phase 1. When uploads are added, use a Storage bucket with
-  RLS policies keyed on `school_id` in the object path.
 * Full-form actions have replace semantics: an optional field omitted from a
   submission is stored as empty. Future API clients should send every field.
 * "Link existing account" lists up to 500 unlinked accounts per role; switch it

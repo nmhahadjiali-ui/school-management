@@ -5,6 +5,7 @@ import { navForRole } from "@/lib/navigation"
 import { fullName } from "@/lib/utils"
 import { bellSummary } from "@/services/communication"
 import { myFinanceLevel } from "@/lib/finance/access"
+import { photoSrc } from "@/lib/images"
 
 /** Every page in this group requires an active user (redirects otherwise). */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         orgLogoUrl={isPlatform ? null : (school?.logo_url ?? null)}
         userName={fullName(profile)}
         roleLabel={ROLE_LABELS[profile.role]}
+        avatarSrc={photoSrc(profile.avatar_path, profile.avatar_url)}
       >
         {children}
       </AppShell>

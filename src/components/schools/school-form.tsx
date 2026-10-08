@@ -24,7 +24,6 @@ export function SchoolForm({ action, school, mode }: Props) {
         <Field name="contact_email" label="Contact email" type="email" defaultValue={school?.contact_email ?? ""} />
         <Field name="contact_phone" label="Contact phone" type="tel" defaultValue={school?.contact_phone ?? ""} />
         <Field name="address" label="Address" as="textarea" defaultValue={school?.address ?? ""} className="md:col-span-2" />
-        <Field name="logo_url" label="Logo URL" type="url" placeholder="https://" defaultValue={school?.logo_url ?? ""} />
         <Field name="timezone" label="Time zone" defaultValue={school?.timezone ?? "UTC"} hint="IANA name, e.g. Asia/Manila" required />
         {mode === "create" && (
           <Field

@@ -34,7 +34,7 @@ export async function updateMember(id: string, input: { role?: AppRole; status: 
 
 export async function updateOwnProfile(
   userId: string,
-  input: Pick<Profile, "first_name" | "last_name" | "phone" | "avatar_url">
+  input: Pick<Profile, "first_name" | "last_name" | "phone">
 ) {
   const supabase = await createClient()
   return supabase.from("profiles").update(input).eq("user_id", userId).select("id").single()

@@ -82,6 +82,8 @@ export type ShellProps = {
   orgLogoUrl: string | null
   userName: string
   roleLabel: string
+  /** The user's profile photo, if any. */
+  avatarSrc?: string | null
   /** Unread in-app notifications (badge on the Notifications link). */
   unread?: number
   /** Bell data; null when notifications are off for this user/school. */
@@ -89,7 +91,7 @@ export type ShellProps = {
   children: React.ReactNode
 }
 
-export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread = 0, bell = null, children }: ShellProps) {
+export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, avatarSrc = null, unread = 0, bell = null, children }: ShellProps) {
   const pathname = usePathname()
   // The drawer remembers the path it was opened on, so navigating closes it.
   const [openOn, setOpenOn] = useState<string | null>(null)
@@ -146,10 +148,20 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
         })}
       </nav>
       <div className="border-t border-border p-3">
-        <div className="px-3 pb-2">
-          <p className="truncate text-sm font-medium">{userName}</p>
-          <p className="text-xs text-muted">{roleLabel}</p>
-        </div>
+        <Link href="/profile" className="flex items-center gap-3 rounded-md px-3 pb-2 pt-1 hover:bg-slate-50">
+          {avatarSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element -- signed URL via /api/photos
+            <img src={avatarSrc} alt="" className="size-8 shrink-0 rounded-full border border-border object-cover" />
+          ) : (
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600" aria-hidden>
+              {userName.split(" ").map((w) => w.charAt(0)).slice(0, 2).join("").toUpperCase()}
+            </span>
+          )}
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-medium">{userName}</span>
+            <span className="block text-xs text-muted">{roleLabel}</span>
+          </span>
+        </Link>
         <form action={signOut}>
           <button
             type="submit"

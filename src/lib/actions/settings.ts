@@ -17,10 +17,11 @@ export async function updateSchoolSettings(_prev: ActionResult | null, formData:
 
   const parsed = schoolSettingsSchema.safeParse(formToObject(formData))
   if (!parsed.success) return invalid(parsed.error)
-  const { timezone, logo_url, ...settings } = parsed.data
+  // The logo is uploaded separately (lib/actions/images.ts).
+  const { timezone, ...settings } = parsed.data
 
   const [school, saved] = await Promise.all([
-    updateSchool(schoolId, { timezone, logo_url }),
+    updateSchool(schoolId, { timezone }),
     saveSettings(schoolId, settings),
   ])
   const error = school.error ?? saved.error
