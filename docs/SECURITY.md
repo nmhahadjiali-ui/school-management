@@ -206,11 +206,36 @@ Full rationale in [PHASE5-FINANCE.md](PHASE5-FINANCE.md#how-financial-rls-works)
 * CSV exports run with the user's session (RLS) and neutralise spreadsheet formulas.
 * Finance users can read students, enrollments and sections (names, numbers, placement) but not grades, attendance or guardian contacts; staff names on financial records come from `finance_actor_names()` (names only).
 
+## RLS performance rules (for every new policy)
+
+A load test (50 simultaneous users) showed policies were the bottleneck. Migrations
+`20261012000004` and `…05` fixed it; new policies must follow the same rules:
+
+* Never pass a column to a helper inside a policy (`private.can_manage_school(school_id)`):
+  it runs once per row. Compare the column with a value computed once instead:
+  `(select private.is_super_admin()) or coalesce(school_id = (select private.admin_school_id()), false)`.
+  Finance: `finance_view_school_id()` / `finance_manage_school_id()`. Announcements:
+  `id in (select private.my_visible_announcement_ids())`.
+* Inside helper functions, wrap identity lookups as `(select private.my_teacher_id())`.
+* Identity (`my_role`, `my_school_id`, `my_teacher_id`, `my_student_id`, `my_guardian_id`,
+  `my_feature`) is resolved once per request by `private.my_ident()` and cached in the
+  transaction-local setting `app.ident`; writes to profiles, schools, people records or
+  school features clear it.
+* Measure with `node --env-file=.env.hosted scripts/load-test.mjs <url> 50 90` (read-only).
+
+## Data retention and rate limits
+
+* `private.purge_expired_data()` runs daily (pg_cron, 03:15 Manila): notifications read/dismissed/expired
+  after 180 days (any after 365), sent/failed deliveries after 90 days, rejected/ignored webhook events
+  after 90 days. Financial and academic records are never purged.
+* Registration is limited to 10 attempts per visitor per 15 minutes (`hit_rate_limit`, shared by all app
+  servers; the visitor IP is stored only as a hash). `school_code_is_valid` is server-only.
+
 ## Known limitations / follow-ups
 
-* `school_code_is_valid` is callable anonymously and reveals whether an active
-  school uses a code. Codes are meant to be shared with families, but add rate
-  limiting (or CAPTCHA on sign-up) before public launch.
+* Sign-up through the Supabase Auth API directly (bypassing the app) still reveals an
+  invalid code via an error; Supabase Auth's own per-IP rate limits apply there.
+  Consider a CAPTCHA on sign-up (Supabase Auth → Attack Protection) at public launch.
 * Auth rate limits and email confirmation are configured in Supabase
   (`supabase/config.toml` locally; dashboard in production). Enable email
   confirmations in production.
