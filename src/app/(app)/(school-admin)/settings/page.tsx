@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { Badge, PageHeader } from "@/components/ui/misc"
 import { SettingsForm } from "@/components/settings/settings-form"
+import { AcademicPolicyForm } from "@/components/settings/academic-policy-form"
 import { requirePermission } from "@/lib/auth/session"
 import { listSchoolFeatures } from "@/services/features"
 import { getSchool } from "@/services/schools"
@@ -23,7 +24,10 @@ export default async function SchoolSettingsPage() {
     <>
       <PageHeader title="Settings" description="Configure your school." />
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <SettingsForm school={school.data} settings={settings.data} />
+        <div className="space-y-6">
+          <SettingsForm school={school.data} settings={settings.data} />
+          <AcademicPolicyForm settings={settings.data} />
+        </div>
         <div className="space-y-6">
           <Card>
             <CardHeader title="Modules" description="Enabled by the platform administrator." />
@@ -37,9 +41,10 @@ export default async function SchoolSettingsPage() {
             </ul>
           </Card>
           <Card>
-            <CardHeader title="Grading & attendance" />
+            <CardHeader title="Grading" />
             <CardBody className="text-sm text-muted">
-              Grading scales and attendance rules will be configured here when those modules are released.
+              Configure <a href="/grading-periods" className="font-medium text-brand hover:underline">grading periods</a> and your{" "}
+              <a href="/grading-scales" className="font-medium text-brand hover:underline">grading scale</a>.
             </CardBody>
           </Card>
         </div>

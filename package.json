@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "db:start": "supabase start -x edge-runtime,logflare,vector,imgproxy,supavisor,realtime,storage-api,postgres-meta",
+    "db:start": "supabase start -x edge-runtime,logflare,vector,imgproxy,supavisor,realtime,postgres-meta",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",

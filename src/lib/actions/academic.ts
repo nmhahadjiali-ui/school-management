@@ -219,7 +219,7 @@ export async function createAssignment(_p: ActionResult | null, fd: FormData) {
   return manage(fd, assignmentSchema, (d, ctx) => academic.createAssignment({ ...d, school_id: ctx.schoolId }), {
     context: "createAssignment",
     success: "Teacher assigned.",
-    revalidate: ["/assignments", "/teachers", "/sections"],
+    revalidate: ["/teaching-loads", "/teachers", "/sections"],
   })
 }
 
@@ -228,6 +228,6 @@ export async function deleteAssignment(id: string) {
   return manage(null, none, () => academic.deleteAssignment(id), {
     context: "deleteAssignment",
     success: "Assignment removed.",
-    revalidate: ["/assignments", "/teachers", "/sections"],
+    revalidate: ["/teaching-loads", "/teachers", "/sections"],
   })
 }

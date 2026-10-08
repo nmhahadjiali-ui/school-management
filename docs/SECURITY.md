@@ -154,6 +154,18 @@ arguments, including bound ids. Every action re-authorizes, validates with zod,
 takes `school_id` from the session, and relies on RLS for row access.
 `tests/actions.test.mjs` calls them directly with forged arguments.
 
+## Phase 3 tables
+
+See the RLS matrix and rationale in [PHASE3-ACADEMIC-OPERATIONS.md](PHASE3-ACADEMIC-OPERATIONS.md#how-rls-protects-every-academic-table). Summary:
+
+* RLS on `grading_periods`, `grading_scales`, `class_schedules`, `attendance_sessions`, `attendance_records`, `grade_records`, `grade_change_logs`, `assignments`, `assignment_submissions`, `notifications`, `audit_logs`; no `anon` grants.
+* Every non-manager policy also requires the module's feature flag for the caller's school (`private.my_feature()`).
+* Teacher writes are bound to their own teacher record and, structurally, to their teaching load (composite FKs). Student writes are bound to their own student record; parents never write.
+* Students and parents only see **published** grades (approved/locked).
+* `grade_change_logs` and `audit_logs` are append-only for every role, including the service key. Notifications and audit rows are created only by `SECURITY DEFINER` triggers; users can only set `notifications.read_at`.
+* Storage bucket `academic-files` is private. Paths are `<school_id>/assignments/<assignment_id>/…` and `<school_id>/submissions/<assignment_id>/<student_id>/…`; read/write policies call `SECURITY INVOKER` helpers that look the assignment up **under the caller's RLS**, so access mirrors the records. Downloads go through `/api/files`, which issues 60-second signed URLs only when the caller may read the object. Uploads go directly from the browser (or Flutter) to Storage with the user's own session.
+* `visible_teacher_names()` is the only way students/parents see teacher data: names of their own (children's) teachers, nothing else.
+
 ## Known limitations / follow-ups
 
 * `school_code_is_valid` is callable anonymously and reveals whether an active
@@ -168,6 +180,8 @@ takes `school_id` from the session, and relies on RLS for row access.
   submission is stored as empty. Future API clients should send every field.
 * "Link existing account" lists up to 500 unlinked accounts per role; switch it
   to the search picker if a school exceeds that.
+* Storage objects are not deleted when an attachment is replaced or a submission is resubmitted (the database keeps only the latest path). Add a cleanup job before storage costs matter.
+* Notifications are created per event (e.g. one per published grade). If volume grows, add digesting in the delivery phase.
 * Consider a custom access-token hook to put `role`/`school_id` into the JWT
   once query volume grows; today they are looked up per statement via an
   indexed primary-key lookup.

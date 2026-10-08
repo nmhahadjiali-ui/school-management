@@ -32,7 +32,10 @@ export type Permission =
   | "school.records.manage"
   | "member.dashboard"
   | "teacher.classes"
+  | "teacher.academics"
+  | "student.academics"
   | "parent.children"
+  | "notifications.view"
   | "profile.self"
 
 const ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
@@ -51,11 +54,12 @@ const ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "school.users.manage",
     "school.settings.manage",
     "school.records.manage",
+    "notifications.view",
     "profile.self",
   ],
-  teacher: ["member.dashboard", "teacher.classes", "profile.self"],
-  student: ["member.dashboard", "profile.self"],
-  parent: ["member.dashboard", "parent.children", "profile.self"],
+  teacher: ["member.dashboard", "teacher.classes", "teacher.academics", "notifications.view", "profile.self"],
+  student: ["member.dashboard", "student.academics", "notifications.view", "profile.self"],
+  parent: ["member.dashboard", "parent.children", "notifications.view", "profile.self"],
 }
 
 export function can(role: AppRole | null | undefined, permission: Permission): boolean {

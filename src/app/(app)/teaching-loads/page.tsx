@@ -17,9 +17,9 @@ import { sectionOptions, subjectOptions, teacherOptions, yearOptions } from "@/l
 import { ASSIGNMENT_SORTS, listAcademicYears, listActiveSubjects, listAssignments, listSectionOptions, pickYear } from "@/services/academic"
 import { listActiveTeachers } from "@/services/people"
 
-export const metadata: Metadata = { title: "Teacher assignments" }
+export const metadata: Metadata = { title: "Teaching loads" }
 
-export default async function AssignmentsPage({ searchParams }: PageProps<"/assignments">) {
+export default async function AssignmentsPage({ searchParams }: PageProps<"/teaching-loads">) {
   const ctx = await requireSchoolAdmin()
   const sp = await searchParams
   const [years, teachers, subjects] = await Promise.all([
@@ -35,7 +35,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps<"/assi
   return (
     <>
       <PageHeader
-        title="Teacher assignments"
+        title="Teaching loads"
         description="Who teaches which subject in which section, per academic year."
         actions={
           open ? (
@@ -72,7 +72,7 @@ async function AssignmentsTable({ schoolId, yearId, editable, sp }: { schoolId: 
   const page = await listAssignments(schoolId, p)
   if (page.error) return <Alert tone="error" className="m-4">Assignments could not be loaded. Please refresh the page.</Alert>
   if (page.total === 0) return <EmptyState title="No assignments found" description="Assign teachers to subjects and sections for this year." />
-  const sort = { pathname: "/assignments", searchParams: sp, current: p }
+  const sort = { pathname: "/teaching-loads", searchParams: sp, current: p }
   return (
     <>
       <Table label="Teacher assignments">
@@ -99,7 +99,7 @@ async function AssignmentsTable({ schoolId, yearId, editable, sp }: { schoolId: 
           ))}
         </tbody>
       </Table>
-      <Pagination pathname="/assignments" searchParams={sp} page={page.page} pageSize={page.pageSize} total={page.total} />
+      <Pagination pathname="/teaching-loads" searchParams={sp} page={page.page} pageSize={page.pageSize} total={page.total} />
     </>
   )
 }

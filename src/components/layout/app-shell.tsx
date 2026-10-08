@@ -4,7 +4,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import {
+  Award,
   Backpack,
+  Bell,
+  CheckSquare,
+  Clock,
+  NotebookPen,
+  Scale,
   BookOpen,
   Building2,
   CalendarDays,
@@ -46,6 +52,12 @@ const ICONS: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
   enroll: ClipboardList,
   assign: ClipboardCheck,
   classes: LayoutGrid,
+  clock: Clock,
+  check: CheckSquare,
+  award: Award,
+  scale: Scale,
+  homework: NotebookPen,
+  bell: Bell,
 }
 
 export type ShellProps = {
@@ -55,10 +67,12 @@ export type ShellProps = {
   orgLogoUrl: string | null
   userName: string
   roleLabel: string
+  /** Unread in-app notifications (badge on the Notifications link). */
+  unread?: number
   children: React.ReactNode
 }
 
-export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, children }: ShellProps) {
+export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread = 0, children }: ShellProps) {
   const pathname = usePathname()
   // The drawer remembers the path it was opened on, so navigating closes it.
   const [openOn, setOpenOn] = useState<string | null>(null)
@@ -98,6 +112,11 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, childr
             >
               <Icon className="size-4" aria-hidden />
               {item.label}
+              {item.icon === "bell" && unread > 0 && (
+                <span className="ml-auto rounded-full bg-brand px-1.5 text-xs font-semibold text-white" aria-label={`${unread} unread`}>
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
             </Link>
             </div>
           )

@@ -288,7 +288,7 @@ export type YearOption = Pick<AcademicYear, "id" | "name" | "status" | "is_curre
 export type GradeOption = Pick<GradeLevel, "id" | "name">
 
 /** Resolve a year filter: explicit uuid, else the current year, else the newest. */
-export function pickYear(years: YearOption[], requested?: string) {
+export function pickYear<T extends YearOption>(years: T[], requested?: string): T | null {
   return years.find((y) => y.id === requested) ?? years.find((y) => y.is_current) ?? years[0] ?? null
 }
 

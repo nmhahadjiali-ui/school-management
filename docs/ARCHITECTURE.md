@@ -2,7 +2,9 @@
 
 > Phase 2 (academic years, grade levels, sections, subjects, students,
 > teachers, guardians, enrollments, assignments, invitations) is documented in
-> [PHASE2-SCHOOL-STRUCTURE.md](PHASE2-SCHOOL-STRUCTURE.md). The academic-year
+> [PHASE2-SCHOOL-STRUCTURE.md](PHASE2-SCHOOL-STRUCTURE.md); Phase 3 (attendance, grades,
+> schedules, coursework, notifications, audit) in
+> [PHASE3-ACADEMIC-OPERATIONS.md](PHASE3-ACADEMIC-OPERATIONS.md). The academic-year
 > fields once on `school_settings` moved to `academic_years`.
 
 ```

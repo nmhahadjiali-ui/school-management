@@ -11,6 +11,7 @@ import { FormDialog } from "@/components/ui/form-dialog"
 import { Badge, EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { DescriptionList, TableSkeleton } from "@/components/data/list"
 import { AccountPanel } from "@/components/school/account-panel"
+import { StudentAcademics } from "@/components/academics/student-academics"
 import { AssignSectionFields, CloseEnrollmentFields, EnrollmentFields, GuardianLinkFields, TransferFields } from "@/components/school/fields"
 import { assignEnrollmentSection, closeEnrollment, enrollStudent, transferStudent } from "@/lib/actions/academic"
 import { unlinkGuardian, updateGuardianLink, linkGuardian } from "@/lib/actions/people"
@@ -62,14 +63,9 @@ export default async function StudentPage({ params, searchParams }: PageProps<"/
               <Guardians student={student} isAdmin={isAdmin} />
             </Suspense>
           )}
-          <div className="grid gap-6 md:grid-cols-2">
-            {["Grades", "Attendance"].map((m) => (
-              <Card key={m}>
-                <CardHeader title={m} />
-                <CardBody className="text-sm text-muted">{m} will appear here when the {m.toLowerCase()} module is released.</CardBody>
-              </Card>
-            ))}
-          </div>
+          <Suspense fallback={<Card><TableSkeleton rows={4} /></Card>}>
+            <StudentAcademics student={student} ctx={ctx} />
+          </Suspense>
         </div>
         <div className="space-y-6">
           <Card>

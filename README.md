@@ -9,6 +9,7 @@ A Flutter app will use the same Supabase backend later.
 
 * Architecture, database, roles, feature flags, Flutter: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 * Phase 2 school structure (relationships, history, assignments, invitations): [docs/PHASE2-SCHOOL-STRUCTURE.md](docs/PHASE2-SCHOOL-STRUCTURE.md)
+* Phase 3 academic operations (attendance, grades, schedules, coursework, notifications, audit): [docs/PHASE3-ACADEMIC-OPERATIONS.md](docs/PHASE3-ACADEMIC-OPERATIONS.md)
 * RLS policy matrix and security notes: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## What's in Phase 1
@@ -29,6 +30,15 @@ A Flutter app will use the same Supabase backend later.
 * Teacher subject assignments per section and year
 * Invitations (email, one-time 24 h link) and linking self-registered accounts to records
 * Searchable, filterable, sortable, server-paginated management screens; teacher "My Classes" and parent "My Children"
+
+## What's in Phase 3
+
+* Configurable grading periods (quarters, semesters, terms) and grading scales per school
+* Weekly schedules with database-enforced teacher/section conflict detection (room conflicts optional)
+* Daily attendance (fast "mark all present" sheet), configurable edit window, admin lock/unlock, reports by section and by date
+* Grade entry per class and period, draft → submitted → approved → locked workflow, bulk review, append-only grade history
+* Coursework ("Assignments") with file attachments and student submissions (Supabase Storage, tenant-safe)
+* Teacher, student, parent and school-admin academic dashboards; in-app notifications; audit log
 
 ## Setup (local)
 
@@ -111,6 +121,8 @@ TEST_APP_URL=http://localhost:3000 npm test   # in another
 | `tests/school-structure.test.mjs` | Phase 2 isolation for all 11 tables, composite-FK cross-school references, uniqueness rules, one current year, enrollment history/transfer/archive/capacity, parent and teacher visibility, all five roles |
 | `tests/invitations.test.mjs` | invite, email (Mailpit), single-use token, password, accepted; cross-school and double-link prevention |
 | `tests/http-school-structure.test.mjs` | management pages per role, 404 for other schools' profiles, teacher/parent/student views, lookups API |
+| `tests/academic.test.mjs` | Phase 3 isolation for all 11 tables, attendance (assigned sections, locks, edit window, enrollment-on-date), grades (assignment-bound, workflow, reasons, history immutability, published-only visibility), schedule conflicts, coursework, Storage files, notifications |
+| `tests/http-academic.test.mjs` | Phase 3 pages per role, other teachers'/schools' sheets 404, file download route, academic Server Actions with forged input |
 | `tests/actions.test.mjs` | Server Actions over HTTP with forged arguments (other school's ids, injected `school_id`), enrollment workflow, invitations, account linking |
 
 Other checks: `npm run typecheck`, `npm run lint`, `npm run build`.
@@ -125,3 +137,6 @@ Other checks: `npm run typecheck`, `npm run lint`, `npm run build`.
 6. As `admin@north.example`: Academic Years → create 2027-2028, activate, set current; Sections → add a section; Students → Juan Cruz → see the 2025-2026 (completed) and 2026-2027 history; Transfer him to section B → both placements remain.
 7. Teachers → Jose Reyes → add an email → Send invitation → open the email in Mailpit (http://127.0.0.1:54424) → set a password → "My Classes" shows his sections.
 8. As `parent@north.example`: My Children shows only Juan and Lia.
+9. As `teacher@north.example`: Attendance → pick a section → mark one student absent → Save (the parent gets a notification). Grades → 1st Quarter → Enter grades → Save draft → Submit.
+10. As `admin@north.example`: Grades → approve the submitted grades (students and parents see them), change one with a reason, open its History. Schedules → pick a section → try to schedule a clash (refused with the clashing class named).
+11. Compare Grading Periods for `admin@north.example` (quarters) and `admin@south.example` (semesters): same code, different configuration.

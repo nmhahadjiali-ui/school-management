@@ -171,3 +171,62 @@ export async function latestEmail(address) {
   }
   throw new Error(`No email for ${address}`)
 }
+
+/** Today's date (UTC is fine: fixture schools use the default UTC time zone). */
+export const today = () => new Date().toISOString().slice(0, 10)
+export const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10)
+
+/**
+ * Phase 3 fixtures on top of buildStructure: per school, grading periods for
+ * 2026-2027 (P1 open, P2 upcoming), a MATH schedule for the teacher in G6-A,
+ * and a published MATH assignment in G6-A.
+ */
+export async function buildAcademic(S) {
+  for (const s of [S.A, S.B]) {
+    const id = s.school.id
+    s.p1 = await insert("grading_periods", { school_id: id, academic_year_id: s.y2026.id, name: "Term 1", code: "T1", sequence: 1, start_date: "2026-06-01", end_date: "2026-10-31", status: "open" })
+    s.p2 = await insert("grading_periods", { school_id: id, academic_year_id: s.y2026.id, name: "Term 2", code: "T2", sequence: 2, start_date: "2026-11-01", end_date: "2027-03-31", status: "upcoming" })
+    s.mathSchedule = await insert("class_schedules", { school_id: id, academic_year_id: s.y2026.id, section_id: s.g6a.id, subject_id: s.math.id, teacher_id: s.teacher.id, day_of_week: 1, start_time: "08:00", end_time: "09:00", room: "101" })
+    s.homework = await insert("assignments", { school_id: id, academic_year_id: s.y2026.id, section_id: s.g6a.id, subject_id: s.math.id, teacher_id: s.teacher.id, title: "Fractions worksheet", due_at: new Date(Date.now() + 7 * 864e5).toISOString() })
+  }
+  return S
+}
+
+/**
+ * Invoke a Server Action over HTTP exactly as the browser does (React's
+ * encodeReply + Next-Action header). `args` = bound args then call args;
+ * plain objects marked with `asForm` become FormData, others are sent as-is.
+ * Requires TEST_APP_URL and a production build (.next).
+ */
+export const asForm = (obj) => ({ __form: obj })
+let _actionClient
+export async function callAction(name, args, cookie, path = "/dashboard") {
+  if (!_actionClient) {
+    const { createRequire } = await import("node:module")
+    const require = createRequire(import.meta.url)
+    const manifestPath = new URL("../.next/server/server-reference-manifest.json", import.meta.url)
+    _actionClient = {
+      encodeReply: require("next/dist/compiled/react-server-dom-webpack/client.node").encodeReply,
+      manifest: require(manifestPath.pathname.replace(/^\/([A-Za-z]:)/, "$1")),
+    }
+  }
+  const id = Object.entries(_actionClient.manifest.node).find(([, v]) => v.exportedName === name)?.[0]
+  if (!id) throw new Error(`action ${name} not found in the build`)
+  const encoded = args.map((a) => {
+    if (a && typeof a === "object" && "__form" in a) {
+      const fd = new FormData()
+      for (const [k, v] of Object.entries(a.__form)) fd.set(k, String(v))
+      return fd
+    }
+    return a
+  })
+  const res = await fetch(`${APP_URL}${path}`, {
+    method: "POST",
+    redirect: "manual",
+    headers: { cookie, "Next-Action": id, Origin: APP_URL, Accept: "text/x-component" },
+    body: await _actionClient.encodeReply(encoded),
+  })
+  const body = await res.text()
+  const line = body.split("\n").find((l) => l.startsWith("1:"))
+  return { status: res.status, redirect: res.headers.get("x-action-redirect"), result: line ? JSON.parse(line.slice(2)) : null }
+}

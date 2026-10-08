@@ -9,6 +9,21 @@ type DbError = { code?: string; message?: string } | null | undefined
 
 /** Friendly messages for constraint violations raised by Phase 2 tables. */
 const CONSTRAINT_MESSAGES: [RegExp, string, string?][] = [
+  // Phase 3 (checked first: deletes of referenced teaching loads mention the child FK)
+  [/delete on table "teacher_subject_assignments"/, "This teaching load already has schedules, attendance, grades or assignments, so it is kept for the record and cannot be removed."],
+  [/class_schedules_teacher_conflict/, "Schedule conflict: the teacher already has a class at that time."],
+  [/class_schedules_section_conflict/, "Schedule conflict: the section already has a class at that time."],
+  [/class_schedules_assignment_fkey/, "That teacher is not assigned to this subject and section. Add a teaching load first."],
+  [/grade_records_assignment_fkey/, "You are not assigned to teach this subject in this section."],
+  [/assignments_teaching_fkey/, "You are not assigned to teach this subject in this section."],
+  [/grading_periods_no_overlap/, "Grading periods of the same year cannot overlap.", "start_date"],
+  [/grading_periods_year_sequence_key/, "Another grading period of this year already uses that order number.", "sequence"],
+  [/grading_periods_year_code_key/, "Another grading period of this year uses that code.", "code"],
+  [/grading_periods_year_name_key/, "Another grading period of this year uses that name.", "name"],
+  [/grading_scales_no_overlap/, "This score range overlaps another band.", "minimum_score"],
+  [/grading_scales_school_name_key/, "A band with this name already exists.", "name"],
+  [/attendance_records_enrollment_fkey/, "One of the students is not enrolled in this section."],
+  [/submissions_one_per_student/, "You have already submitted this assignment."],
   [/students_school_number_key/, "This student number is already used in your school.", "student_number"],
   [/teachers_school_employee_number_key/, "This employee number is already used in your school.", "employee_number"],
   [/academic_years_school_name_key/, "An academic year with this name already exists.", "name"],

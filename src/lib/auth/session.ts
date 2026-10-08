@@ -62,3 +62,23 @@ export async function requireSchoolAdmin(): Promise<UserContext & { schoolId: st
   if (!ctx.profile.school_id) redirect("/dashboard?denied=1")
   return { ...ctx, schoolId: ctx.profile.school_id }
 }
+
+/**
+ * Page guard for academic work: a school admin, or a teacher linked to a
+ * teacher record. Returns the teacher id from the session (never from input).
+ */
+export async function requireAcademicActor(feature?: string) {
+  const ctx = await requireActiveUser()
+  const teacherId = ctx.record?.type === "teacher" ? ctx.record.id : null
+  const isAdmin = ctx.profile.role === "school_admin"
+  if (!ctx.profile.school_id || (!isAdmin && !(ctx.profile.role === "teacher" && teacherId))) redirect("/dashboard?denied=1")
+  if (feature && !ctx.features.includes(feature)) redirect("/dashboard?denied=1")
+  return { ...ctx, schoolId: ctx.profile.school_id, teacherId, isAdmin }
+}
+
+/** Page guard that also requires a school feature to be enabled. */
+export async function requireFeatureFor(permission: Permission, feature: string) {
+  const ctx = await requirePermission(permission)
+  if (!ctx.features.includes(feature)) redirect("/dashboard?denied=1")
+  return ctx
+}

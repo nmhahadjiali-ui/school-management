@@ -25,19 +25,279 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"features": {
+                },"assignment_submissions": {
                   Row: {
-                    "created_at": string,"description": string | null,"id": string,"key": string,"name": string,"updated_at": string
+                    "academic_year_id": string,"assignment_id": string,"content": string | null,"created_at": string,"enrollment_id": string,"file_name": string | null,"file_path": string | null,"id": string,"reviewed_at": string | null,"reviewed_by": string | null,"school_id": string,"section_id": string,"status": Database["public"]['Enums']["submission_status"],"student_id": string,"submitted_at": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"description"?: string | null,"id"?: string,"key": string,"name": string,"updated_at"?: string
+                    "academic_year_id": string,"assignment_id": string,"content"?: string | null,"created_at"?: string,"enrollment_id": string,"file_name"?: string | null,"file_path"?: string | null,"id"?: string,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"school_id": string,"section_id": string,"status"?: Database["public"]['Enums']["submission_status"],"student_id": string,"submitted_at"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"description"?: string | null,"id"?: string,"key"?: string,"name"?: string,"updated_at"?: string
+                    "academic_year_id"?: string,"assignment_id"?: string,"content"?: string | null,"created_at"?: string,"enrollment_id"?: string,"file_name"?: string | null,"file_path"?: string | null,"id"?: string,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"school_id"?: string,"section_id"?: string,"status"?: Database["public"]['Enums']["submission_status"],"student_id"?: string,"submitted_at"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "assignment_submissions_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "submissions_assignment_fkey"
+      columns: ["school_id","academic_year_id","section_id","assignment_id"]
+isOneToOne: false
+      referencedRelation: "assignments"
+      referencedColumns: ["school_id","academic_year_id","section_id","id"]
+    },{
+      foreignKeyName: "submissions_enrollment_fkey"
+      columns: ["school_id","academic_year_id","section_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","academic_year_id","section_id","id"]
+    },{
+      foreignKeyName: "submissions_student_fkey"
+      columns: ["school_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "submissions_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"assignments": {
+                  Row: {
+                    "academic_year_id": string,"attachment_name": string | null,"attachment_path": string | null,"created_at": string,"created_by": string | null,"description": string | null,"due_at": string | null,"id": string,"school_id": string,"section_id": string,"status": Database["public"]['Enums']["coursework_status"],"subject_id": string,"teacher_id": string,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"attachment_name"?: string | null,"attachment_path"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"due_at"?: string | null,"id"?: string,"school_id": string,"section_id": string,"status"?: Database["public"]['Enums']["coursework_status"],"subject_id": string,"teacher_id": string,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"attachment_name"?: string | null,"attachment_path"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"due_at"?: string | null,"id"?: string,"school_id"?: string,"section_id"?: string,"status"?: Database["public"]['Enums']["coursework_status"],"subject_id"?: string,"teacher_id"?: string,"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "assignments_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "assignments_section_ref"
+      columns: ["school_id","academic_year_id","section_id"]
+isOneToOne: false
+      referencedRelation: "sections"
+      referencedColumns: ["school_id","academic_year_id","id"]
+    },{
+      foreignKeyName: "assignments_subject_ref"
+      columns: ["school_id","subject_id"]
+isOneToOne: false
+      referencedRelation: "subjects"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "assignments_teacher_ref"
+      columns: ["school_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teachers"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "assignments_teaching_fkey"
+      columns: ["school_id","academic_year_id","section_id","subject_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teacher_subject_assignments"
+      referencedColumns: ["school_id","academic_year_id","section_id","subject_id","teacher_id"]
+    }
+                  ]
+                },"attendance_records": {
+                  Row: {
+                    "academic_year_id": string,"attendance_session_id": string,"created_at": string,"enrollment_id": string,"id": string,"recorded_at": string,"recorded_by": string | null,"remarks": string | null,"school_id": string,"section_id": string,"status": Database["public"]['Enums']["attendance_status"],"student_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"attendance_session_id": string,"created_at"?: string,"enrollment_id": string,"id"?: string,"recorded_at"?: string,"recorded_by"?: string | null,"remarks"?: string | null,"school_id": string,"section_id": string,"status": Database["public"]['Enums']["attendance_status"],"student_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"attendance_session_id"?: string,"created_at"?: string,"enrollment_id"?: string,"id"?: string,"recorded_at"?: string,"recorded_by"?: string | null,"remarks"?: string | null,"school_id"?: string,"section_id"?: string,"status"?: Database["public"]['Enums']["attendance_status"],"student_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "attendance_records_enrollment_fkey"
+      columns: ["school_id","academic_year_id","section_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","academic_year_id","section_id","id"]
+    },{
+      foreignKeyName: "attendance_records_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "attendance_records_session_fkey"
+      columns: ["school_id","academic_year_id","section_id","attendance_session_id"]
+isOneToOne: false
+      referencedRelation: "attendance_sessions"
+      referencedColumns: ["school_id","academic_year_id","section_id","id"]
+    },{
+      foreignKeyName: "attendance_records_student_fkey"
+      columns: ["school_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "attendance_records_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"attendance_sessions": {
+                  Row: {
+                    "academic_year_id": string,"attendance_date": string,"created_at": string,"created_by": string | null,"id": string,"locked_at": string | null,"locked_by": string | null,"school_id": string,"section_id": string,"session_type": Database["public"]['Enums']["attendance_session_type"],"status": Database["public"]['Enums']["attendance_session_status"],"subject_id": string | null,"teacher_id": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"attendance_date": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"locked_at"?: string | null,"locked_by"?: string | null,"school_id": string,"section_id": string,"session_type"?: Database["public"]['Enums']["attendance_session_type"],"status"?: Database["public"]['Enums']["attendance_session_status"],"subject_id"?: string | null,"teacher_id"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"attendance_date"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"locked_at"?: string | null,"locked_by"?: string | null,"school_id"?: string,"section_id"?: string,"session_type"?: Database["public"]['Enums']["attendance_session_type"],"status"?: Database["public"]['Enums']["attendance_session_status"],"subject_id"?: string | null,"teacher_id"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "attendance_sessions_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "attendance_sessions_section_fkey"
+      columns: ["school_id","academic_year_id","section_id"]
+isOneToOne: false
+      referencedRelation: "sections"
+      referencedColumns: ["school_id","academic_year_id","id"]
+    },{
+      foreignKeyName: "attendance_sessions_subject_fkey"
+      columns: ["school_id","subject_id"]
+isOneToOne: false
+      referencedRelation: "subjects"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "attendance_sessions_teacher_fkey"
+      columns: ["school_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teachers"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"audit_logs": {
+                  Row: {
+                    "action": string,"actor_user_id": string | null,"created_at": string,"entity": string,"entity_id": string | null,"id": string,"metadata": NonNullable<Json>,"school_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"actor_user_id"?: string | null,"created_at"?: string,"entity": string,"entity_id"?: string | null,"id"?: string,"metadata"?: NonNullable<Json>,"school_id": string
+                  }
+                  Update: {
+                    "action"?: string,"actor_user_id"?: string | null,"created_at"?: string,"entity"?: string,"entity_id"?: string | null,"id"?: string,"metadata"?: NonNullable<Json>,"school_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "audit_logs_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"class_schedules": {
+                  Row: {
+                    "academic_year_id": string,"created_at": string,"day_of_week": number,"end_time": string,"id": string,"minutes": unknown,"room": string | null,"school_id": string,"section_id": string,"start_time": string,"status": Database["public"]['Enums']["schedule_status"],"subject_id": string,"teacher_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"created_at"?: string,"day_of_week": number,"end_time": string,"id"?: string,"minutes"?: never,"room"?: string | null,"school_id": string,"section_id": string,"start_time": string,"status"?: Database["public"]['Enums']["schedule_status"],"subject_id": string,"teacher_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"created_at"?: string,"day_of_week"?: number,"end_time"?: string,"id"?: string,"minutes"?: never,"room"?: string | null,"school_id"?: string,"section_id"?: string,"start_time"?: string,"status"?: Database["public"]['Enums']["schedule_status"],"subject_id"?: string,"teacher_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "class_schedules_assignment_fkey"
+      columns: ["school_id","academic_year_id","section_id","subject_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teacher_subject_assignments"
+      referencedColumns: ["school_id","academic_year_id","section_id","subject_id","teacher_id"]
+    },{
+      foreignKeyName: "class_schedules_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_schedules_section_ref"
+      columns: ["school_id","academic_year_id","section_id"]
+isOneToOne: false
+      referencedRelation: "sections"
+      referencedColumns: ["school_id","academic_year_id","id"]
+    },{
+      foreignKeyName: "class_schedules_subject_ref"
+      columns: ["school_id","subject_id"]
+isOneToOne: false
+      referencedRelation: "subjects"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "class_schedules_teacher_ref"
+      columns: ["school_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teachers"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"features": {
+                  Row: {
+                    "created_at": string,"default_enabled": boolean,"description": string | null,"id": string,"key": string,"name": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"default_enabled"?: boolean,"description"?: string | null,"id"?: string,"key": string,"name": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"default_enabled"?: boolean,"description"?: string | null,"id"?: string,"key"?: string,"name"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
+                  ]
+                },"grade_change_logs": {
+                  Row: {
+                    "changed_at": string,"changed_by": string | null,"grade_record_id": string,"id": string,"new_score": number | null,"new_status": Database["public"]['Enums']["grade_status"] | null,"old_score": number | null,"old_status": Database["public"]['Enums']["grade_status"] | null,"reason": string | null,"school_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "changed_at"?: string,"changed_by"?: string | null,"grade_record_id": string,"id"?: string,"new_score"?: number | null,"new_status"?: Database["public"]['Enums']["grade_status"] | null,"old_score"?: number | null,"old_status"?: Database["public"]['Enums']["grade_status"] | null,"reason"?: string | null,"school_id": string
+                  }
+                  Update: {
+                    "changed_at"?: string,"changed_by"?: string | null,"grade_record_id"?: string,"id"?: string,"new_score"?: number | null,"new_status"?: Database["public"]['Enums']["grade_status"] | null,"old_score"?: number | null,"old_status"?: Database["public"]['Enums']["grade_status"] | null,"reason"?: string | null,"school_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "grade_change_logs_grade_record_id_fkey"
+      columns: ["grade_record_id"]
+isOneToOne: false
+      referencedRelation: "grade_records"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "grade_change_logs_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"grade_levels": {
                   Row: {
@@ -53,6 +313,120 @@ isOneToOne: false
                   Relationships: [
                     {
       foreignKeyName: "grade_levels_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"grade_records": {
+                  Row: {
+                    "academic_year_id": string,"approved_at": string | null,"approved_by": string | null,"change_reason": string | null,"created_at": string,"created_by": string | null,"enrollment_id": string,"grading_period_id": string,"id": string,"locked_at": string | null,"remarks": string | null,"school_id": string,"score": number,"section_id": string,"status": Database["public"]['Enums']["grade_status"],"student_id": string,"subject_id": string,"submitted_at": string | null,"teacher_id": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"approved_at"?: string | null,"approved_by"?: string | null,"change_reason"?: string | null,"created_at"?: string,"created_by"?: string | null,"enrollment_id": string,"grading_period_id": string,"id"?: string,"locked_at"?: string | null,"remarks"?: string | null,"school_id": string,"score": number,"section_id": string,"status"?: Database["public"]['Enums']["grade_status"],"student_id": string,"subject_id": string,"submitted_at"?: string | null,"teacher_id": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"approved_at"?: string | null,"approved_by"?: string | null,"change_reason"?: string | null,"created_at"?: string,"created_by"?: string | null,"enrollment_id"?: string,"grading_period_id"?: string,"id"?: string,"locked_at"?: string | null,"remarks"?: string | null,"school_id"?: string,"score"?: number,"section_id"?: string,"status"?: Database["public"]['Enums']["grade_status"],"student_id"?: string,"subject_id"?: string,"submitted_at"?: string | null,"teacher_id"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "grade_records_assignment_fkey"
+      columns: ["school_id","academic_year_id","section_id","subject_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teacher_subject_assignments"
+      referencedColumns: ["school_id","academic_year_id","section_id","subject_id","teacher_id"]
+    },{
+      foreignKeyName: "grade_records_enrollment_fkey"
+      columns: ["school_id","academic_year_id","section_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","academic_year_id","section_id","id"]
+    },{
+      foreignKeyName: "grade_records_period_fkey"
+      columns: ["school_id","academic_year_id","grading_period_id"]
+isOneToOne: false
+      referencedRelation: "grading_periods"
+      referencedColumns: ["school_id","academic_year_id","id"]
+    },{
+      foreignKeyName: "grade_records_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "grade_records_section_ref"
+      columns: ["school_id","academic_year_id","section_id"]
+isOneToOne: false
+      referencedRelation: "sections"
+      referencedColumns: ["school_id","academic_year_id","id"]
+    },{
+      foreignKeyName: "grade_records_student_fkey"
+      columns: ["school_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "grade_records_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "grade_records_subject_ref"
+      columns: ["school_id","subject_id"]
+isOneToOne: false
+      referencedRelation: "subjects"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "grade_records_teacher_ref"
+      columns: ["school_id","teacher_id"]
+isOneToOne: false
+      referencedRelation: "teachers"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"grading_periods": {
+                  Row: {
+                    "academic_year_id": string,"code": string,"created_at": string,"end_date": string,"id": string,"name": string,"school_id": string,"sequence": number,"start_date": string,"status": Database["public"]['Enums']["grading_period_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"code": string,"created_at"?: string,"end_date": string,"id"?: string,"name": string,"school_id": string,"sequence": number,"start_date": string,"status"?: Database["public"]['Enums']["grading_period_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"code"?: string,"created_at"?: string,"end_date"?: string,"id"?: string,"name"?: string,"school_id"?: string,"sequence"?: number,"start_date"?: string,"status"?: Database["public"]['Enums']["grading_period_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "grading_periods_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "grading_periods_year_fkey"
+      columns: ["school_id","academic_year_id"]
+isOneToOne: false
+      referencedRelation: "academic_years"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"grading_scales": {
+                  Row: {
+                    "created_at": string,"description": string | null,"equivalent": string | null,"id": string,"is_passing": boolean,"maximum_score": number,"minimum_score": number,"name": string,"school_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"description"?: string | null,"equivalent"?: string | null,"id"?: string,"is_passing"?: boolean,"maximum_score": number,"minimum_score": number,"name": string,"school_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"description"?: string | null,"equivalent"?: string | null,"id"?: string,"is_passing"?: boolean,"maximum_score"?: number,"minimum_score"?: number,"name"?: string,"school_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "grading_scales_school_id_fkey"
       columns: ["school_id"]
 isOneToOne: false
       referencedRelation: "schools"
@@ -117,6 +491,26 @@ isOneToOne: false
       referencedColumns: ["school_id","id"]
     }
                   ]
+                },"notifications": {
+                  Row: {
+                    "created_at": string,"data": NonNullable<Json>,"id": string,"message": string,"read_at": string | null,"recipient_user_id": string,"school_id": string,"title": string,"type": Database["public"]['Enums']["notification_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"data"?: NonNullable<Json>,"id"?: string,"message": string,"read_at"?: string | null,"recipient_user_id": string,"school_id": string,"title": string,"type": Database["public"]['Enums']["notification_type"]
+                  }
+                  Update: {
+                    "created_at"?: string,"data"?: NonNullable<Json>,"id"?: string,"message"?: string,"read_at"?: string | null,"recipient_user_id"?: string,"school_id"?: string,"title"?: string,"type"?: Database["public"]['Enums']["notification_type"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"created_at": string,"email": string,"first_name": string,"id": string,"last_name": string,"phone": string | null,"role": Database["public"]['Enums']["app_role"],"school_id": string | null,"status": Database["public"]['Enums']["profile_status"],"updated_at": string,"user_id": string
@@ -165,14 +559,14 @@ isOneToOne: false
                   ]
                 },"school_settings": {
                   Row: {
-                    "attendance_config": NonNullable<Json>,"branding": NonNullable<Json>,"created_at": string,"grading_config": NonNullable<Json>,"id": string,"primary_color": string,"school_id": string,"updated_at": string
+                    "attendance_edit_days": number | null,"branding": NonNullable<Json>,"created_at": string,"enforce_room_conflicts": boolean,"grade_max_score": number,"grade_passing_score": number,"id": string,"primary_color": string,"school_id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attendance_config"?: NonNullable<Json>,"branding"?: NonNullable<Json>,"created_at"?: string,"grading_config"?: NonNullable<Json>,"id"?: string,"primary_color"?: string,"school_id": string,"updated_at"?: string
+                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"primary_color"?: string,"school_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "attendance_config"?: NonNullable<Json>,"branding"?: NonNullable<Json>,"created_at"?: string,"grading_config"?: NonNullable<Json>,"id"?: string,"primary_color"?: string,"school_id"?: string,"updated_at"?: string
+                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"primary_color"?: string,"school_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -427,11 +821,38 @@ isOneToOne: false
 "archive_academic_year":
 { Args: { "p_year_id": string }; Returns: undefined
                            },
+"attendance_day_totals":
+{ Args: { "p_date": string,"p_school_id": string }; Returns: {
+              "absent": number,"excused": number,"late": number,"present": number,"sessions": number
+            }[]
+                           },
+"attendance_section_summary":
+{ Args: { "p_from": string,"p_section_id": string,"p_to": string }; Returns: {
+              "absent": number,"excused": number,"first_name": string,"last_name": string,"late": number,"present": number,"student_id": string,"student_number": string,"total": number
+            }[]
+                           },
+"attendance_student_summary":
+{ Args: { "p_academic_year_id": string,"p_student_id": string }; Returns: {
+              "absent": number,"excused": number,"late": number,"present": number,"total": number
+            }[]
+                           },
 "get_my_context":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
 "has_feature":
 { Args: { "feature": string }; Returns: boolean
+                           },
+"mark_notifications_read":
+{ Args: { "p_ids"?: (string)[] }; Returns: number
+                           },
+"review_grades":
+{ Args: { "p_action": string,"p_ids": (string)[],"p_reason"?: string }; Returns: number
+                           },
+"save_attendance":
+{ Args: { "p_date": string,"p_records": Json,"p_section_id": string,"p_subject_id"?: string }; Returns: string
+                           },
+"save_grades":
+{ Args: { "p_entries": Json,"p_period_id": string,"p_section_id": string,"p_subject_id": string,"p_submit"?: boolean }; Returns: Json
                            },
 "school_code_is_valid":
 { Args: { "school_code": string }; Returns: boolean
@@ -441,10 +862,15 @@ isOneToOne: false
                            },
 "transfer_enrollment":
 { Args: { "p_effective_date"?: string,"p_enrollment_id": string,"p_grade_level_id": string,"p_section_id": string }; Returns: string
+                           },
+"visible_teacher_names":
+{ Args: { "p_ids": (string)[] }; Returns: {
+              "first_name": string,"id": string,"last_name": string
+            }[]
                            }
           }
           Enums: {
-            "academic_year_status": "planned"|"active"|"archived","app_role": "super_admin"|"school_admin"|"teacher"|"student"|"parent","enrollment_status": "enrolled"|"completed"|"transferred"|"withdrawn","gender": "male"|"female"|"other"|"unspecified","guardian_relationship": "mother"|"father"|"guardian"|"grandparent"|"sibling"|"other","profile_status": "pending"|"active"|"inactive","record_status": "active"|"inactive","school_status": "active"|"inactive","student_status": "active"|"inactive"|"graduated"|"transferred"|"withdrawn","teacher_status": "active"|"inactive"|"resigned"|"retired"
+            "academic_year_status": "planned"|"active"|"archived","app_role": "super_admin"|"school_admin"|"teacher"|"student"|"parent","attendance_session_status": "open"|"locked","attendance_session_type": "daily"|"subject"|"event"|"custom","attendance_status": "present"|"absent"|"late"|"excused","coursework_status": "draft"|"published"|"archived","enrollment_status": "enrolled"|"completed"|"transferred"|"withdrawn","gender": "male"|"female"|"other"|"unspecified","grade_status": "draft"|"submitted"|"approved"|"locked","grading_period_status": "upcoming"|"open"|"closed","guardian_relationship": "mother"|"father"|"guardian"|"grandparent"|"sibling"|"other","notification_type": "assignment_created"|"assignment_due"|"attendance_recorded"|"grade_published"|"announcement"|"system","profile_status": "pending"|"active"|"inactive","record_status": "active"|"inactive","schedule_status": "active"|"inactive","school_status": "active"|"inactive","student_status": "active"|"inactive"|"graduated"|"transferred"|"withdrawn","submission_status": "submitted"|"late"|"reviewed","teacher_status": "active"|"inactive"|"resigned"|"retired"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -560,7 +986,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "academic_year_status": ["planned", "active", "archived"],"app_role": ["super_admin", "school_admin", "teacher", "student", "parent"],"enrollment_status": ["enrolled", "completed", "transferred", "withdrawn"],"gender": ["male", "female", "other", "unspecified"],"guardian_relationship": ["mother", "father", "guardian", "grandparent", "sibling", "other"],"profile_status": ["pending", "active", "inactive"],"record_status": ["active", "inactive"],"school_status": ["active", "inactive"],"student_status": ["active", "inactive", "graduated", "transferred", "withdrawn"],"teacher_status": ["active", "inactive", "resigned", "retired"]
+            "academic_year_status": ["planned", "active", "archived"],"app_role": ["super_admin", "school_admin", "teacher", "student", "parent"],"attendance_session_status": ["open", "locked"],"attendance_session_type": ["daily", "subject", "event", "custom"],"attendance_status": ["present", "absent", "late", "excused"],"coursework_status": ["draft", "published", "archived"],"enrollment_status": ["enrolled", "completed", "transferred", "withdrawn"],"gender": ["male", "female", "other", "unspecified"],"grade_status": ["draft", "submitted", "approved", "locked"],"grading_period_status": ["upcoming", "open", "closed"],"guardian_relationship": ["mother", "father", "guardian", "grandparent", "sibling", "other"],"notification_type": ["assignment_created", "assignment_due", "attendance_recorded", "grade_published", "announcement", "system"],"profile_status": ["pending", "active", "inactive"],"record_status": ["active", "inactive"],"schedule_status": ["active", "inactive"],"school_status": ["active", "inactive"],"student_status": ["active", "inactive", "graduated", "transferred", "withdrawn"],"submission_status": ["submitted", "late", "reviewed"],"teacher_status": ["active", "inactive", "resigned", "retired"]
           }
         }
 } as const

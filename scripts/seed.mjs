@@ -78,6 +78,7 @@ if (demo) {
       })
     }
     await seedStructure(school, s, slug)
+    await seedAcademics(school, s.code)
   }
   console.log(`\nDemo users use the password ${DEMO_PASSWORD}`)
 }
@@ -140,4 +141,81 @@ async function seedStructure(school, s, slug) {
   const { error } = await db.rpc("archive_academic_year", { p_year_id: past.id })
   if (error) throw error
   console.log(`  + ${s.code} structure: ${s.grades.length} grade levels, 2 years, 3 sections, ${names.length} students`)
+}
+
+/** Phase 3 demo data: grading periods & scale (different per school), schedules, attendance, grades, coursework. */
+async function seedAcademics(school, code) {
+  const { count } = await db.from("grading_periods").select("id", { count: "exact", head: true }).eq("school_id", school.id)
+  if (count) {
+    console.log(`  = ${code} academics already exist`)
+    return
+  }
+  const one = async (table, row) => {
+    const { data, error } = await db.from(table).insert(row).select().single()
+    if (error) throw new Error(`${table}: ${error.message}`)
+    return data
+  }
+  const id = school.id
+  const { data: year } = await db.from("academic_years").select("*").eq("school_id", id).eq("is_current", true).single()
+
+  // Configurable per school: quarters vs semesters, descriptor vs letter scale.
+  const periods = code === "NORTH"
+    ? [["1st Quarter", "Q1", "2026-06-01", "2026-08-15"], ["2nd Quarter", "Q2", "2026-08-16", "2026-10-31"], ["3rd Quarter", "Q3", "2026-11-01", "2027-01-15"], ["4th Quarter", "Q4", "2027-01-16", "2027-03-31"]]
+    : [["Semester 1", "S1", "2026-06-01", "2026-10-31"], ["Semester 2", "S2", "2026-11-01", "2027-03-31"]]
+  const today = new Date().toISOString().slice(0, 10)
+  const periodRows = []
+  for (const [i, [name, pcode, start, end]] of periods.entries()) {
+    const status = end < today ? "closed" : start <= today ? "open" : "upcoming"
+    periodRows.push(await one("grading_periods", { school_id: id, academic_year_id: year.id, name, code: pcode, sequence: i + 1, start_date: start, end_date: end, status }))
+  }
+  const scale = code === "NORTH"
+    ? [["Outstanding", 90, 100, "O", true], ["Very Satisfactory", 85, 89.99, "VS", true], ["Satisfactory", 80, 84.99, "S", true], ["Fairly Satisfactory", 75, 79.99, "FS", true], ["Did Not Meet Expectations", 0, 74.99, "DNME", false]]
+    : [["Excellent", 93, 100, "A", true], ["Very Good", 85, 92.99, "B", true], ["Good", 77, 84.99, "C", true], ["Passing", 70, 76.99, "D", true], ["Failing", 0, 69.99, "F", false]]
+  for (const [name, min, max, eq, passing] of scale) {
+    await one("grading_scales", { school_id: id, name, minimum_score: min, maximum_score: max, equivalent: eq, is_passing: passing })
+  }
+
+  const { data: loads } = await db.from("teacher_subject_assignments").select("*").eq("school_id", id).eq("academic_year_id", year.id)
+  // Each class gets its own weekday at 08:00 and another at 10:00, so no teacher or section is double-booked.
+  for (const [i, l] of loads.entries()) {
+    for (const [day, start, end] of [[(i % 5) + 1, "08:00", "09:00"], [((i + 2) % 5) + 1, "10:00", "11:00"]]) {
+      await one("class_schedules", { school_id: id, academic_year_id: year.id, section_id: l.section_id, subject_id: l.subject_id, teacher_id: l.teacher_id, day_of_week: day, start_time: start, end_time: end })
+    }
+  }
+
+  // Attendance for the last 5 weekdays, every section of the year.
+  const { data: sections } = await db.from("sections").select("id").eq("school_id", id).eq("academic_year_id", year.id)
+  const days = []
+  for (let d = 1; days.length < 5; d++) {
+    const date = new Date(Date.now() - d * 864e5)
+    if (date.getUTCDay() % 6 !== 0) days.push(date.toISOString().slice(0, 10))
+  }
+  const statuses = ["present", "present", "present", "present", "present", "present", "late", "absent"]
+  for (const sec of sections) {
+    const { data: enr } = await db.from("student_enrollments").select("id, student_id").eq("section_id", sec.id).eq("enrollment_status", "enrolled")
+    for (const [di, date] of days.entries()) {
+      const session = await one("attendance_sessions", { school_id: id, academic_year_id: year.id, section_id: sec.id, attendance_date: date })
+      const rows = enr.map((e, ei) => ({ school_id: id, academic_year_id: year.id, section_id: sec.id, attendance_session_id: session.id, student_id: e.student_id, enrollment_id: e.id, status: statuses[(ei + di) % statuses.length] }))
+      if (rows.length) {
+        const { error } = await db.from("attendance_records").insert(rows)
+        if (error) throw error
+      }
+    }
+  }
+
+  // Grades for the first period: approved (published) for one class, submitted for the rest.
+  const first = periodRows[0]
+  for (const [li, l] of loads.entries()) {
+    const { data: enr } = await db.from("student_enrollments").select("id, student_id").eq("section_id", l.section_id).eq("enrollment_status", "enrolled")
+    for (const [ei, e] of enr.entries()) {
+      await one("grade_records", { school_id: id, academic_year_id: year.id, grading_period_id: first.id, section_id: l.section_id, enrollment_id: e.id, student_id: e.student_id, subject_id: l.subject_id, teacher_id: l.teacher_id, score: 72 + ((ei * 7 + li * 5) % 27), status: li === 0 ? "approved" : "submitted" })
+    }
+  }
+
+  // Coursework: one published assignment per teaching load, due next week.
+  for (const l of loads) {
+    const { data: subject } = await db.from("subjects").select("name").eq("id", l.subject_id).single()
+    await one("assignments", { school_id: id, academic_year_id: year.id, section_id: l.section_id, subject_id: l.subject_id, teacher_id: l.teacher_id, title: `${subject.name} practice set`, description: "Answer all items and show your solutions.", due_at: new Date(Date.now() + 6 * 864e5).toISOString() })
+  }
+  console.log(`  + ${code} academics: ${periodRows.length} grading periods, ${scale.length}-band scale, schedules, ${days.length} days of attendance, grades, coursework`)
 }

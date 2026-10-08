@@ -58,6 +58,19 @@ const STATUS_TONES: Record<string, keyof typeof badgeTones> = {
   expired: "gray",
   revoked: "gray",
   accepted: "green",
+  open: "green",
+  upcoming: "amber",
+  closed: "gray",
+  locked: "gray",
+  draft: "amber",
+  submitted: "blue",
+  approved: "green",
+  published: "green",
+  present: "green",
+  absent: "red",
+  late: "amber",
+  excused: "blue",
+  reviewed: "green",
 }
 
 /** Badge for any status enum value (schools, profiles, records, enrollments, invitations). */

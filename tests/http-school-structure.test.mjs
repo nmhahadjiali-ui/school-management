@@ -17,7 +17,7 @@ before(async () => {
   cookie = Object.fromEntries(entries)
 })
 
-const ADMIN_PAGES = ["/academic-years", "/grade-levels", "/sections", "/subjects", "/students", "/students/new", "/teachers", "/teachers/new", "/guardians", "/guardians/new", "/enrollments", "/assignments"]
+const ADMIN_PAGES = ["/academic-years", "/grade-levels", "/sections", "/subjects", "/students", "/students/new", "/teachers", "/teachers/new", "/guardians", "/guardians/new", "/enrollments", "/teaching-loads"]
 const status = async (path, who) => (await http(path, cookie[who])).status
 const text = async (path, who) => (await http(path, cookie[who])).text()
 

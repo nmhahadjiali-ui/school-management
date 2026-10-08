@@ -23,13 +23,16 @@ describe("super admin", () => {
     assert.equal(users.length, 8)
   })
 
-  test("can create a school (settings and disabled flags are created with it)", async () => {
+  test("can create a school (settings and default feature flags are created with it)", async () => {
     const { data, error } = await as.super.from("schools").insert({ name: `New ${RUN}`, code: `N-${RUN}` }).select().single()
     assert.equal(error, null)
     const { data: settings } = await as.super.from("school_settings").select("id").eq("school_id", data.id)
     assert.equal(settings.length, 1)
-    const { data: flags } = await as.super.from("school_features").select("enabled").eq("school_id", data.id)
-    assert.ok(flags.length >= 8 && flags.every((f) => f.enabled === false))
+    const { data: flags } = await as.super.from("school_features").select("feature_key, enabled").eq("school_id", data.id)
+    const core = ["schedules", "attendance", "grades", "coursework", "notifications"]
+    assert.ok(flags.length >= 12)
+    // Core academic modules start enabled; optional modules (SMS, payments, ...) start disabled.
+    for (const f of flags) assert.equal(f.enabled, core.includes(f.feature_key), f.feature_key)
   })
 
   test("can disable and re-enable a school; its users lose and regain access", async () => {
