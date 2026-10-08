@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:hosted": "node scripts/with-env.mjs .env.hosted next dev -p 3001",
+    "build:hosted": "node scripts/with-env.mjs .env.hosted next build",
+    "start:hosted": "node scripts/with-env.mjs .env.hosted next start -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
