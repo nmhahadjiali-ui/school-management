@@ -122,9 +122,9 @@ npx supabase db push --linked   # apply new migrations to the hosted database
    `https://<domain>/auth/confirm` to redirect URLs, enable email confirmations,
    and configure SMTP. Under Email Templates → Invite user, paste
    `supabase/templates/invite.html` (it routes the link through `/auth/confirm`).
-3. In Vercel: import the repo and set the environment variables above
+3. In Vercel: import the repo (`vercel.json` pins the Next.js framework and the Singapore region `sin1`, next to the database) and set the environment variables above
    (`SUPABASE_SERVICE_ROLE_KEY` for Production only, not exposed to the client).
-4. Schedule the delivery worker: call `POST https://<domain>/api/jobs/communication` with `Authorization: Bearer <CRON_SECRET>` every minute (Vercel Cron, or pg_cron + pg_net — see docs/PHASE4-COMMUNICATION.md). Scheduled announcements are already published by pg_cron inside the database.
+4. Delivery worker: the database calls `POST https://<domain>/api/jobs/communication` every minute itself (pg_cron + pg_net, migration `20261012000003`). Store the address and secret once in Supabase Vault (SQL editor): `select vault.create_secret('https://<domain>', 'app_url'); select vault.create_secret('<CRON_SECRET>', 'cron_secret');`. Scheduled announcements and the daily data-retention purge also run inside the database.
 5. Online payments: configure a real gateway (see docs/PHASE5-FINANCE.md), set its webhook URL to `https://<domain>/api/payments/webhooks/<provider>`, and leave `simulator` out of `PAYMENT_PROVIDERS`.
 6. Create the first super admin from a trusted machine:
    `NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… SEED_SUPER_ADMIN_EMAIL=… SEED_SUPER_ADMIN_PASSWORD=… node scripts/seed.mjs`
