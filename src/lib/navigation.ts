@@ -7,7 +7,7 @@ import type { AppRole } from "@/types/domain"
 export type NavIcon =
   | "dashboard" | "schools" | "school" | "users" | "settings" | "profile"
   | "calendar" | "layers" | "grid" | "book" | "student" | "teacher" | "family" | "enroll" | "assign" | "classes"
-  | "clock" | "check" | "award" | "scale" | "homework" | "bell"
+  | "clock" | "check" | "award" | "scale" | "homework" | "bell" | "megaphone"
 
 export type NavItem = {
   href: string
@@ -31,6 +31,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/coursework", label: "Assignments", icon: "homework", permission: "school.records.manage", group: "Academics", feature: "coursework" },
   { href: "/schedules", label: "Schedules", icon: "clock", permission: "school.records.manage", group: "Academics", feature: "schedules" },
   { href: "/enrollments", label: "Enrollments", icon: "enroll", permission: "school.records.manage", group: "Academics" },
+  // School administration: communication
+  { href: "/announcements", label: "Announcements", icon: "megaphone", permission: "school.records.manage", group: "Communication", feature: "announcements" },
   // School administration: setup
   { href: "/academic-years", label: "Academic Years", icon: "calendar", permission: "school.records.manage", group: "Setup" },
   { href: "/grading-periods", label: "Grading Periods", icon: "calendar", permission: "school.records.manage", group: "Setup", feature: "grades" },
@@ -57,7 +59,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/coursework", label: "Assignments", icon: "homework", permission: "student.academics", feature: "coursework" },
   // Parent
   { href: "/my-children", label: "My Children", icon: "family", permission: "parent.children" },
-  // Everyone in a school
+  // Everyone in a school (admins have it in their Communication group)
+  { href: "/announcements", label: "Announcements", icon: "megaphone", permission: "member.dashboard", feature: "announcements" },
   { href: "/notifications", label: "Notifications", icon: "bell", permission: "notifications.view", feature: "notifications" },
   { href: "/profile", label: "Profile", icon: "profile", permission: "profile.self" },
 ]

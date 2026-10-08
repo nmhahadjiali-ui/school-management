@@ -3,20 +3,21 @@ import { requireActiveUser } from "@/lib/auth/session"
 import { ROLE_LABELS } from "@/lib/auth/permissions"
 import { navForRole } from "@/lib/navigation"
 import { fullName } from "@/lib/utils"
-import { unreadCount } from "@/services/operations"
+import { bellSummary } from "@/services/communication"
 
 /** Every page in this group requires an active user (redirects otherwise). */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireActiveUser()
   const { profile, school, settings } = ctx
   const isPlatform = profile.role === "super_admin"
-  const unread = !isPlatform && ctx.features.includes("notifications") ? await unreadCount() : 0
+  const bell = !isPlatform && ctx.features.includes("notifications") ? await bellSummary() : null
 
   return (
     <div style={settings?.primary_color ? ({ "--brand": settings.primary_color } as React.CSSProperties) : undefined}>
       <AppShell
         nav={navForRole(profile.role, ctx.features)}
-        unread={unread}
+        unread={bell?.unread ?? 0}
+        bell={bell}
         orgName={isPlatform ? "Platform Administration" : (school?.name ?? "")}
         orgLogoUrl={isPlatform ? null : (school?.logo_url ?? null)}
         userName={fullName(profile)}

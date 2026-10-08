@@ -10,6 +10,7 @@ A Flutter app will use the same Supabase backend later.
 * Architecture, database, roles, feature flags, Flutter: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 * Phase 2 school structure (relationships, history, assignments, invitations): [docs/PHASE2-SCHOOL-STRUCTURE.md](docs/PHASE2-SCHOOL-STRUCTURE.md)
 * Phase 3 academic operations (attendance, grades, schedules, coursework, notifications, audit): [docs/PHASE3-ACADEMIC-OPERATIONS.md](docs/PHASE3-ACADEMIC-OPERATIONS.md)
+* Phase 4 communication (notification service, announcements, channels, SMS, devices): [docs/PHASE4-COMMUNICATION.md](docs/PHASE4-COMMUNICATION.md)
 * RLS policy matrix and security notes: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## What's in Phase 1
@@ -39,6 +40,14 @@ A Flutter app will use the same Supabase backend later.
 * Grade entry per class and period, draft → submitted → approved → locked workflow, bulk review, append-only grade history
 * Coursework ("Assignments") with file attachments and student submissions (Supabase Storage, tenant-safe)
 * Teacher, student, parent and school-admin academic dashboards; in-app notifications; audit log
+
+## What's in Phase 4
+
+* One notification service for every event; in-app notification center with bell, filters, read/unread/dismiss and deep links
+* Announcements with flexible audiences (school, grade, section, class, person; narrowed by role), scheduling (published by pg_cron) and expiry
+* Per-user notification preferences; per-school channel settings (email, SMS, push) on top of platform feature flags
+* Delivery queue with retries, idempotency, audit, and pluggable email/SMS/push providers (simulator included)
+* SMS usage tracking per school per month; device registration for the future mobile app
 
 ## Setup (local)
 
@@ -72,6 +81,8 @@ The super admin uses `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
 | `SUPABASE_SERVICE_ROLE_KEY` | **server only** | Creates Auth users for admin provisioning. Bypasses RLS — never expose it |
 | `NEXT_PUBLIC_SITE_URL` | server | Base URL used in auth email links |
 | `SEED_SUPER_ADMIN_EMAIL`, `SEED_SUPER_ADMIN_PASSWORD` | seed script | First platform owner account |
+| `CRON_SECRET` | **server only** | Bearer secret for `/api/jobs/communication` (delivery worker) |
+| `EMAIL_PROVIDER`, `SMS_PROVIDER`, `PUSH_PROVIDER` | **server only** | `simulator` or empty; real vendors are added in `src/server/notifications/providers.ts` with their own server-only API keys |
 | `TEST_APP_URL` | tests | Running app URL for HTTP tests (optional) |
 
 ## Deploying
@@ -87,7 +98,8 @@ The super admin uses `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
    `supabase/templates/invite.html` (it routes the link through `/auth/confirm`).
 3. In Vercel: import the repo and set the environment variables above
    (`SUPABASE_SERVICE_ROLE_KEY` for Production only, not exposed to the client).
-4. Create the first super admin from a trusted machine:
+4. Schedule the delivery worker: call `POST https://<domain>/api/jobs/communication` with `Authorization: Bearer <CRON_SECRET>` every minute (Vercel Cron, or pg_cron + pg_net — see docs/PHASE4-COMMUNICATION.md). Scheduled announcements are already published by pg_cron inside the database.
+5. Create the first super admin from a trusted machine:
    `NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… SEED_SUPER_ADMIN_EMAIL=… SEED_SUPER_ADMIN_PASSWORD=… node scripts/seed.mjs`
 
 Schema changes always go through a new file in `supabase/migrations/`
@@ -122,6 +134,8 @@ TEST_APP_URL=http://localhost:3000 npm test   # in another
 | `tests/invitations.test.mjs` | invite, email (Mailpit), single-use token, password, accepted; cross-school and double-link prevention |
 | `tests/http-school-structure.test.mjs` | management pages per role, 404 for other schools' profiles, teacher/parent/student views, lookups API |
 | `tests/academic.test.mjs` | Phase 3 isolation for all 11 tables, attendance (assigned sections, locks, edit window, enrollment-on-date), grades (assignment-bound, workflow, reasons, history immutability, published-only visibility), schedule conflicts, coursework, Storage files, notifications |
+| `tests/communication.test.mjs` | Phase 4: announcement targeting (school/grade/section/class/user, roles), readable ⇔ notified, cross-school targets, teacher moderation, drafts/scheduling/pg_cron/expiry, academic events, notification center security, preferences and urgent override, SMS feature isolation, idempotency, retries, usage, devices, tenant isolation |
+| `tests/http-communication.test.mjs` | Phase 4 pages per role, announcement actions with forged input, deep links re-authorized, worker secret, simulated SMS delivery and failure retry |
 | `tests/http-academic.test.mjs` | Phase 3 pages per role, other teachers'/schools' sheets 404, file download route, academic Server Actions with forged input |
 | `tests/actions.test.mjs` | Server Actions over HTTP with forged arguments (other school's ids, injected `school_id`), enrollment workflow, invitations, account linking |
 
@@ -140,3 +154,5 @@ Other checks: `npm run typecheck`, `npm run lint`, `npm run build`.
 9. As `teacher@north.example`: Attendance → pick a section → mark one student absent → Save (the parent gets a notification). Grades → 1st Quarter → Enter grades → Save draft → Submit.
 10. As `admin@north.example`: Grades → approve the submitted grades (students and parents see them), change one with a reason, open its History. Schedules → pick a section → try to schedule a clash (refused with the clashing class named).
 11. Compare Grading Periods for `admin@north.example` (quarters) and `admin@south.example` (semesters): same code, different configuration.
+12. As `admin@north.example`: Announcements → New → audience "Grade level: Grade 2, Parents" → Schedule 2 minutes ahead → it publishes by itself. Settings → Communication shows SMS (NORTH has the add-on; SOUTH shows "not included").
+13. As `teacher@north.example`: mark a student absent → the parent's bell shows it; run the worker (`curl -X POST -H "Authorization: Bearer local-dev-cron-secret-change-me" http://localhost:3000/api/jobs/communication`) → Settings → Delivery health / SMS usage update.

@@ -3,6 +3,9 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { Badge, PageHeader } from "@/components/ui/misc"
 import { SettingsForm } from "@/components/settings/settings-form"
 import { AcademicPolicyForm } from "@/components/settings/academic-policy-form"
+import { CommunicationSettingsForm } from "@/components/settings/communication-settings"
+import { EmptyState, Table, Td, Th } from "@/components/ui/misc"
+import { deliverySummary, recentFailures, smsUsage } from "@/services/communication"
 import { requirePermission } from "@/lib/auth/session"
 import { listSchoolFeatures } from "@/services/features"
 import { getSchool } from "@/services/schools"
@@ -13,11 +16,15 @@ export const metadata: Metadata = { title: "Settings" }
 export default async function SchoolSettingsPage() {
   const ctx = await requirePermission("school.settings.manage")
   const schoolId = ctx.profile.school_id!
-  const [school, settings, features] = await Promise.all([
+  const [school, settings, features, usage, deliveries, failures] = await Promise.all([
     getSchool(schoolId),
     getSchoolSettings(schoolId),
     listSchoolFeatures(schoolId),
+    smsUsage(schoolId),
+    deliverySummary(schoolId),
+    recentFailures(schoolId),
   ])
+  const has = (key: string) => (features.data ?? []).some((f) => f.key === key && f.enabled)
   if (school.error || settings.error || !school.data || !settings.data) throw new Error("Unable to load settings")
 
   return (
@@ -27,6 +34,65 @@ export default async function SchoolSettingsPage() {
         <div className="space-y-6">
           <SettingsForm school={school.data} settings={settings.data} />
           <AcademicPolicyForm settings={settings.data} />
+          <CommunicationSettingsForm settings={settings.data} available={{ email: has("email_notifications"), sms: has("sms"), push: has("push_notifications") }} />
+          <Card>
+            <CardHeader title="Delivery health (last 30 days)" description="Messages sent through external channels. In-app notifications are not counted here." />
+            {Object.keys(deliveries).length === 0 ? (
+              <EmptyState title="No external deliveries yet" />
+            ) : (
+              <Table label="Deliveries by channel">
+                <thead>
+                  <tr>
+                    <Th>Channel</Th>
+                    {["sent", "pending", "failed", "cancelled"].map((s) => <Th key={s} className="text-right">{s[0].toUpperCase() + s.slice(1)}</Th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(deliveries).map(([channel, counts]) => (
+                    <tr key={channel}>
+                      <Td className="font-medium uppercase">{channel}</Td>
+                      {["sent", "pending", "failed", "cancelled"].map((s) => <Td key={s} className="text-right tabular-nums">{counts[s] ?? 0}</Td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+            {(failures.data ?? []).length > 0 && (
+              <CardBody className="space-y-1 border-t border-border text-sm">
+                <p className="font-medium">Recent failures</p>
+                {(failures.data ?? []).map((f) => (
+                  <p key={f.id} className="text-muted"><span className="uppercase">{f.channel}</span> · {f.error_message} ({f.attempts} attempts)</p>
+                ))}
+              </CardBody>
+            )}
+          </Card>
+          {has("sms") && (
+            <Card>
+              <CardHeader title="SMS usage" description="Counted per month for usage reporting and future billing." />
+              {(usage.data ?? []).length === 0 ? (
+                <EmptyState title="No SMS sent yet" />
+              ) : (
+                <Table label="SMS usage by month">
+                  <thead>
+                    <tr>
+                      <Th>Month</Th>
+                      <Th className="text-right">Sent</Th>
+                      <Th className="text-right">Failed</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(usage.data ?? []).map((u) => (
+                      <tr key={u.id}>
+                        <Td>{new Date(Date.UTC(u.year, u.month - 1, 1)).toLocaleString("en", { month: "long", year: "numeric", timeZone: "UTC" })}</Td>
+                        <Td className="text-right tabular-nums">{u.messages_sent.toLocaleString()}</Td>
+                        <Td className="text-right tabular-nums">{u.messages_failed.toLocaleString()}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card>
+          )}
         </div>
         <div className="space-y-6">
           <Card>

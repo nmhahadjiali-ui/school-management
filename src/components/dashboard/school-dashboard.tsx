@@ -6,6 +6,7 @@ import { getSchoolStats } from "@/services/stats"
 import { formatDateTime, todayIn } from "@/lib/dates"
 import { attendanceDayTotals, pendingGradeCount, schoolActivity, upcomingCount } from "@/services/operations"
 import { EmptyState } from "@/components/ui/misc"
+import { AnnouncementsCard } from "@/components/dashboard/announcements-card"
 import { fullName } from "@/lib/utils"
 import type { UserContext } from "@/types/domain"
 
@@ -79,6 +80,12 @@ export async function SchoolDashboard({ ctx }: { ctx: UserContext }) {
           </Card>
         )}
       </div>
+
+      {on("announcements") && (
+        <div className="mb-8">
+          <AnnouncementsCard schoolId={school!.id} timezone={school?.timezone} />
+        </div>
+      )}
 
       <Card className="mb-8">
         <CardHeader title="Recent academic activity" description="From the audit log" />

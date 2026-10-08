@@ -4,7 +4,8 @@
 > teachers, guardians, enrollments, assignments, invitations) is documented in
 > [PHASE2-SCHOOL-STRUCTURE.md](PHASE2-SCHOOL-STRUCTURE.md); Phase 3 (attendance, grades,
 > schedules, coursework, notifications, audit) in
-> [PHASE3-ACADEMIC-OPERATIONS.md](PHASE3-ACADEMIC-OPERATIONS.md). The academic-year
+> [PHASE3-ACADEMIC-OPERATIONS.md](PHASE3-ACADEMIC-OPERATIONS.md); Phase 4 (notification service,
+> announcements, channels, SMS, devices) in [PHASE4-COMMUNICATION.md](PHASE4-COMMUNICATION.md). The academic-year
 > fields once on `school_settings` moved to `academic_years`.
 
 ```

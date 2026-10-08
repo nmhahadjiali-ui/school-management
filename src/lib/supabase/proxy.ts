@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 /** Routes reachable without a session. Everything else requires sign-in. */
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/auth"]
+// /api/jobs authenticates with a bearer secret (cron), not a session.
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/auth", "/api/jobs"]
 /** Pages a signed-in user has no reason to see. */
 const GUEST_ONLY_PATHS = ["/login", "/register", "/forgot-password"]
 
@@ -49,7 +50,7 @@ export async function updateSession(request: NextRequest) {
     return redirect
   }
 
-  if (!isSignedIn && pathname.startsWith("/api/")) {
+  if (!isSignedIn && pathname.startsWith("/api/") && !matches(pathname, PUBLIC_PATHS)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 

@@ -166,6 +166,25 @@ See the RLS matrix and rationale in [PHASE3-ACADEMIC-OPERATIONS.md](PHASE3-ACADE
 * Storage bucket `academic-files` is private. Paths are `<school_id>/assignments/<assignment_id>/…` and `<school_id>/submissions/<assignment_id>/<student_id>/…`; read/write policies call `SECURITY INVOKER` helpers that look the assignment up **under the caller's RLS**, so access mirrors the records. Downloads go through `/api/files`, which issues 60-second signed URLs only when the caller may read the object. Uploads go directly from the browser (or Flutter) to Storage with the user's own session.
 * `visible_teacher_names()` is the only way students/parents see teacher data: names of their own (children's) teachers, nothing else.
 
+## Phase 4 tables
+
+Full rationale in [PHASE4-COMMUNICATION.md](PHASE4-COMMUNICATION.md#how-tenant-isolation-is-enforced).
+
+| Table | Visible to | Writes |
+| --- | --- | --- |
+| `notifications` | the recipient, within their school | only `read_at`, `dismissed_at` by the recipient; rows created by `notify_event()` only |
+| `notification_types` | any signed-in user (catalog) | migrations only |
+| `notification_preferences` | own rows | own rows (user and school from the session) |
+| `announcements` | school managers; the author; audience members when published and not expired | managers; teachers only if the school allows; inserts are always drafts; publishing via `publish_announcement()` |
+| `announcement_targets` | managers, the author | managers, the author; trigger enforces same-school targets and teacher moderation; frozen after publishing |
+| `notification_deliveries` | school managers (contains destinations) | worker RPCs only (service role) |
+| `sms_usage` | school managers | worker RPC only |
+| `user_devices` | own rows | own rows; `register_device()` always uses the caller |
+
+* `claim_notification_deliveries`, `complete_notification_delivery` and `run_communication_jobs` are executable by the service role only.
+* `/api/jobs/communication` requires `Authorization: Bearer $CRON_SECRET` (constant-time comparison); the proxy lets it through without a session.
+* Provider credentials live only in server environment variables; audit entries record channel/provider/attempts but never destinations, message bodies or secrets.
+
 ## Known limitations / follow-ups
 
 * `school_code_is_valid` is callable anonymously and reveals whether an active
@@ -182,6 +201,8 @@ See the RLS matrix and rationale in [PHASE3-ACADEMIC-OPERATIONS.md](PHASE3-ACADE
   to the search picker if a school exceeds that.
 * Storage objects are not deleted when an attachment is replaced or a submission is resubmitted (the database keeps only the latest path). Add a cleanup job before storage costs matter.
 * Notifications are created per event (e.g. one per published grade). If volume grows, add digesting in the delivery phase.
+* Delivery logs keep full destinations (needed for retries); consider masking/purging after a retention period.
+* `run_communication_jobs` also runs from pg_cron as the database owner; keep its logic idempotent (it is: event keys).
 * Consider a custom access-token hook to put `role`/`school_id` into the JWT
   once query volume grows; today they are looked up per statement via an
   indexed primary-key lookup.

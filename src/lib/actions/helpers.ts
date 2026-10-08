@@ -54,7 +54,10 @@ export function dbFail(error: DbError, context: string): ActionResult {
       return field ? { ok: false, error: "Please correct the highlighted fields.", fieldErrors: { [field]: [message] } } : { ok: false, error: message }
     }
   }
-  const ours = error?.code === "P0001" || ((error?.code === "42501" || error?.code === "23514") && !/row-level security|violates check constraint/.test(msg))
+  const ours =
+    error?.code === "P0001" ||
+    ((error?.code === "42501" || error?.code === "23514" || error?.code === "23503") &&
+      !/row-level security|violates check constraint|violates foreign key constraint|permission denied/.test(msg))
   if (ours && msg) {
     console.error(`[${context}]`, error?.code, msg)
     return { ok: false, error: msg }

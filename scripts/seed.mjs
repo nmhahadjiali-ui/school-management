@@ -79,6 +79,7 @@ if (demo) {
     }
     await seedStructure(school, s, slug)
     await seedAcademics(school, s.code)
+    await seedCommunication(school, s.code, slug)
   }
   console.log(`\nDemo users use the password ${DEMO_PASSWORD}`)
 }
@@ -218,4 +219,45 @@ async function seedAcademics(school, code) {
     await one("assignments", { school_id: id, academic_year_id: year.id, section_id: l.section_id, subject_id: l.subject_id, teacher_id: l.teacher_id, title: `${subject.name} practice set`, description: "Answer all items and show your solutions.", due_at: new Date(Date.now() + 6 * 864e5).toISOString() })
   }
   console.log(`  + ${code} academics: ${periodRows.length} grading periods, ${scale.length}-band scale, schedules, ${days.length} days of attendance, grades, coursework`)
+}
+
+/**
+ * Phase 4 demo: NORTH has the SMS add-on and teacher announcements on;
+ * SOUTH has neither (same code, different configuration). Announcements are
+ * published through the real publish_announcement() path as the school admin.
+ */
+async function seedCommunication(school, code, slug) {
+  const { count } = await db.from("announcements").select("id", { count: "exact", head: true }).eq("school_id", school.id)
+  if (count) {
+    console.log(`  = ${code} communication already exists`)
+    return
+  }
+  const north = code === "NORTH"
+  await db.from("school_settings").update({ sms_notifications_enabled: north, teachers_can_announce: north }).eq("school_id", school.id)
+  await db.from("school_features").update({ enabled: north }).eq("school_id", school.id).eq("feature_key", "sms")
+  await db.from("profiles").update({ phone: north ? "+63 917 555 0101" : "+63 917 555 0202" }).eq("email", `parent@${slug}.example`)
+
+  const { createClient: makeClient } = await import("@supabase/supabase-js")
+  const admin = makeClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+  const { error: loginError } = await admin.auth.signInWithPassword({ email: `admin@${slug}.example`, password: DEMO_PASSWORD })
+  if (loginError) throw loginError
+
+  const { data: grade } = await db.from("sections").select("grade_level_id").eq("school_id", school.id).eq("room", "101").single()
+  const items = [
+    { title: "Welcome to the new school year", content: "Classes start at 7:30 AM. Please check your child's schedule in the app.", targets: [{ target_type: "school", target_id: school.id }] },
+    { title: "Parent-teacher conference", content: "Conferences are on Friday afternoon. Teachers will contact you with a time slot.", priority: "high", targets: [{ target_type: "grade_level", target_id: grade.grade_level_id, roles: ["parent", "teacher"] }] },
+    { title: "Science fair (draft)", content: "Details to follow.", targets: [{ target_type: "school", target_id: school.id }], draft: true },
+  ]
+  for (const item of items) {
+    const { data: a, error } = await admin.from("announcements").insert({ school_id: school.id, title: item.title, content: item.content, priority: item.priority ?? "normal" }).select().single()
+    if (error) throw error
+    const { error: tErr } = await admin.from("announcement_targets").insert(item.targets.map((t) => ({ ...t, school_id: school.id, announcement_id: a.id, roles: t.roles ?? null })))
+    if (tErr) throw tErr
+    if (!item.draft) {
+      const { error: pErr } = await admin.rpc("publish_announcement", { p_id: a.id })
+      if (pErr) throw pErr
+    }
+  }
+  await admin.auth.signOut()
+  console.log(`  + ${code} communication: SMS ${north ? "enabled" : "not included"}, ${items.length} announcements (1 draft)`)
 }

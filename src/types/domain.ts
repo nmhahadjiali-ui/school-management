@@ -15,7 +15,11 @@ export type AttendanceStatus = Enums<"attendance_status">
 export type GradeStatus = Enums<"grade_status">
 export type CourseworkStatus = Enums<"coursework_status">
 export type SubmissionStatus = Enums<"submission_status">
-export type NotificationType = Enums<"notification_type">
+export type NotificationPriority = Enums<"notification_priority">
+export type AnnouncementStatus = Enums<"announcement_status">
+export type AnnouncementTargetType = Enums<"announcement_target_type">
+export type DeliveryChannel = Enums<"delivery_channel">
+export type DeliveryStatus = Enums<"delivery_status">
 
 export type School = Tables<"schools">
 export type Profile = Tables<"profiles">
@@ -42,6 +46,11 @@ export type GradeChangeLog = Tables<"grade_change_logs">
 export type Coursework = Tables<"assignments">
 export type Submission = Tables<"assignment_submissions">
 export type Notification = Tables<"notifications">
+export type NotificationTypeRow = Tables<"notification_types">
+export type NotificationPreference = Tables<"notification_preferences">
+export type Announcement = Tables<"announcements">
+export type AnnouncementTarget = Tables<"announcement_targets">
+export type SmsUsage = Tables<"sms_usage">
 
 /** Which school record (if any) a login account is linked to. */
 export type LinkedRecord = { type: "teacher" | "student" | "guardian"; id: string }

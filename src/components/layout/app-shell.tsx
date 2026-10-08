@@ -7,6 +7,7 @@ import {
   Award,
   Backpack,
   Bell,
+  Megaphone,
   CheckSquare,
   Clock,
   NotebookPen,
@@ -34,6 +35,7 @@ import { signOut } from "@/lib/actions/auth"
 import type { NavIcon, NavItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 import { ToastProvider } from "@/components/ui/toast"
+import { NotificationBell, type BellItem } from "@/components/layout/notification-bell"
 
 const ICONS: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard,
@@ -58,6 +60,7 @@ const ICONS: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
   scale: Scale,
   homework: NotebookPen,
   bell: Bell,
+  megaphone: Megaphone,
 }
 
 export type ShellProps = {
@@ -69,10 +72,12 @@ export type ShellProps = {
   roleLabel: string
   /** Unread in-app notifications (badge on the Notifications link). */
   unread?: number
+  /** Bell data; null when notifications are off for this user/school. */
+  bell?: { unread: number; recent: BellItem[] } | null
   children: React.ReactNode
 }
 
-export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread = 0, children }: ShellProps) {
+export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread = 0, bell = null, children }: ShellProps) {
   const pathname = usePathname()
   // The drawer remembers the path it was opened on, so navigating closes it.
   const [openOn, setOpenOn] = useState<string | null>(null)
@@ -161,7 +166,8 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
         >
           <Menu className="size-5" />
         </button>
-        <p className="truncate text-sm font-semibold">{orgName}</p>
+        <p className="flex-1 truncate text-sm font-semibold">{orgName}</p>
+        {bell && <NotificationBell unread={bell.unread} recent={bell.recent} />}
       </div>
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
@@ -180,7 +186,12 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
         </div>
       )}
 
-      <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      {bell && (
+        <div className="hidden justify-end px-8 pt-4 lg:flex">
+          <NotificationBell unread={bell.unread} recent={bell.recent} />
+        </div>
+      )}
+      <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:pt-2 lg:pb-8">
         {children}
       </main>
     </div>

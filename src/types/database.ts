@@ -25,6 +25,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"announcement_targets": {
+                  Row: {
+                    "announcement_id": string,"created_at": string,"id": string,"roles": (Database["public"]['Enums']["app_role"])[] | null,"school_id": string,"target_id": string,"target_type": Database["public"]['Enums']["announcement_target_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "announcement_id": string,"created_at"?: string,"id"?: string,"roles"?: (Database["public"]['Enums']["app_role"])[] | null,"school_id": string,"target_id": string,"target_type": Database["public"]['Enums']["announcement_target_type"]
+                  }
+                  Update: {
+                    "announcement_id"?: string,"created_at"?: string,"id"?: string,"roles"?: (Database["public"]['Enums']["app_role"])[] | null,"school_id"?: string,"target_id"?: string,"target_type"?: Database["public"]['Enums']["announcement_target_type"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "announcement_targets_announcement_fkey"
+      columns: ["school_id","announcement_id"]
+isOneToOne: false
+      referencedRelation: "announcements"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "announcement_targets_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"announcements": {
+                  Row: {
+                    "archived_at": string | null,"author_user_id": string | null,"content": string,"created_at": string,"expires_at": string | null,"id": string,"priority": Database["public"]['Enums']["notification_priority"],"publish_at": string | null,"published_at": string | null,"school_id": string,"status": Database["public"]['Enums']["announcement_status"],"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archived_at"?: string | null,"author_user_id"?: string | null,"content": string,"created_at"?: string,"expires_at"?: string | null,"id"?: string,"priority"?: Database["public"]['Enums']["notification_priority"],"publish_at"?: string | null,"published_at"?: string | null,"school_id": string,"status"?: Database["public"]['Enums']["announcement_status"],"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "archived_at"?: string | null,"author_user_id"?: string | null,"content"?: string,"created_at"?: string,"expires_at"?: string | null,"id"?: string,"priority"?: Database["public"]['Enums']["notification_priority"],"publish_at"?: string | null,"published_at"?: string | null,"school_id"?: string,"status"?: Database["public"]['Enums']["announcement_status"],"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "announcements_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"assignment_submissions": {
                   Row: {
                     "academic_year_id": string,"assignment_id": string,"content": string | null,"created_at": string,"enrollment_id": string,"file_name": string | null,"file_path": string | null,"id": string,"reviewed_at": string | null,"reviewed_by": string | null,"school_id": string,"section_id": string,"status": Database["public"]['Enums']["submission_status"],"student_id": string,"submitted_at": string,"updated_at": string
@@ -491,16 +537,82 @@ isOneToOne: false
       referencedColumns: ["school_id","id"]
     }
                   ]
-                },"notifications": {
+                },"notification_deliveries": {
                   Row: {
-                    "created_at": string,"data": NonNullable<Json>,"id": string,"message": string,"read_at": string | null,"recipient_user_id": string,"school_id": string,"title": string,"type": Database["public"]['Enums']["notification_type"]
+                    "attempts": number,"channel": Database["public"]['Enums']["delivery_channel"],"created_at": string,"delivered_at": string | null,"destination": string,"error_message": string | null,"failed_at": string | null,"id": string,"last_attempt_at": string | null,"next_attempt_at": string,"notification_id": string,"provider": string | null,"provider_message_id": string | null,"recipient_user_id": string,"school_id": string,"status": Database["public"]['Enums']["delivery_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"data"?: NonNullable<Json>,"id"?: string,"message": string,"read_at"?: string | null,"recipient_user_id": string,"school_id": string,"title": string,"type": Database["public"]['Enums']["notification_type"]
+                    "attempts"?: number,"channel": Database["public"]['Enums']["delivery_channel"],"created_at"?: string,"delivered_at"?: string | null,"destination": string,"error_message"?: string | null,"failed_at"?: string | null,"id"?: string,"last_attempt_at"?: string | null,"next_attempt_at"?: string,"notification_id": string,"provider"?: string | null,"provider_message_id"?: string | null,"recipient_user_id": string,"school_id": string,"status"?: Database["public"]['Enums']["delivery_status"],"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"data"?: NonNullable<Json>,"id"?: string,"message"?: string,"read_at"?: string | null,"recipient_user_id"?: string,"school_id"?: string,"title"?: string,"type"?: Database["public"]['Enums']["notification_type"]
+                    "attempts"?: number,"channel"?: Database["public"]['Enums']["delivery_channel"],"created_at"?: string,"delivered_at"?: string | null,"destination"?: string,"error_message"?: string | null,"failed_at"?: string | null,"id"?: string,"last_attempt_at"?: string | null,"next_attempt_at"?: string,"notification_id"?: string,"provider"?: string | null,"provider_message_id"?: string | null,"recipient_user_id"?: string,"school_id"?: string,"status"?: Database["public"]['Enums']["delivery_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_deliveries_notification_fkey"
+      columns: ["school_id","notification_id"]
+isOneToOne: false
+      referencedRelation: "notifications"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "notification_deliveries_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notification_preferences": {
+                  Row: {
+                    "created_at": string,"email_enabled": boolean,"id": string,"in_app_enabled": boolean,"notification_type": string,"push_enabled": boolean,"school_id": string,"sms_enabled": boolean,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"email_enabled"?: boolean,"id"?: string,"in_app_enabled"?: boolean,"notification_type": string,"push_enabled"?: boolean,"school_id": string,"sms_enabled"?: boolean,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"email_enabled"?: boolean,"id"?: string,"in_app_enabled"?: boolean,"notification_type"?: string,"push_enabled"?: boolean,"school_id"?: string,"sms_enabled"?: boolean,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_preferences_notification_type_fkey"
+      columns: ["notification_type"]
+isOneToOne: false
+      referencedRelation: "notification_types"
+      referencedColumns: ["key"]
+    },{
+      foreignKeyName: "notification_preferences_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notification_types": {
+                  Row: {
+                    "category": string,"created_at": string,"default_email": boolean,"default_in_app": boolean,"default_push": boolean,"default_sms": boolean,"description": string | null,"id": string,"key": string,"mandatory": boolean,"name": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category": string,"created_at"?: string,"default_email"?: boolean,"default_in_app"?: boolean,"default_push"?: boolean,"default_sms"?: boolean,"description"?: string | null,"id"?: string,"key": string,"mandatory"?: boolean,"name": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "category"?: string,"created_at"?: string,"default_email"?: boolean,"default_in_app"?: boolean,"default_push"?: boolean,"default_sms"?: boolean,"description"?: string | null,"id"?: string,"key"?: string,"mandatory"?: boolean,"name"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"notifications": {
+                  Row: {
+                    "actor_user_id": string | null,"created_at": string,"data": NonNullable<Json>,"dismissed_at": string | null,"event_key": string,"expires_at": string | null,"id": string,"message": string,"priority": Database["public"]['Enums']["notification_priority"],"read_at": string | null,"recipient_user_id": string,"school_id": string,"show_in_app": boolean,"title": string,"type": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_user_id"?: string | null,"created_at"?: string,"data"?: NonNullable<Json>,"dismissed_at"?: string | null,"event_key": string,"expires_at"?: string | null,"id"?: string,"message": string,"priority"?: Database["public"]['Enums']["notification_priority"],"read_at"?: string | null,"recipient_user_id": string,"school_id": string,"show_in_app"?: boolean,"title": string,"type": string
+                  }
+                  Update: {
+                    "actor_user_id"?: string | null,"created_at"?: string,"data"?: NonNullable<Json>,"dismissed_at"?: string | null,"event_key"?: string,"expires_at"?: string | null,"id"?: string,"message"?: string,"priority"?: Database["public"]['Enums']["notification_priority"],"read_at"?: string | null,"recipient_user_id"?: string,"school_id"?: string,"show_in_app"?: boolean,"title"?: string,"type"?: string
                   }
                   Relationships: [
                     {
@@ -509,6 +621,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "schools"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_type_fkey"
+      columns: ["type"]
+isOneToOne: false
+      referencedRelation: "notification_types"
+      referencedColumns: ["key"]
     }
                   ]
                 },"profiles": {
@@ -559,14 +677,14 @@ isOneToOne: false
                   ]
                 },"school_settings": {
                   Row: {
-                    "attendance_edit_days": number | null,"branding": NonNullable<Json>,"created_at": string,"enforce_room_conflicts": boolean,"grade_max_score": number,"grade_passing_score": number,"id": string,"primary_color": string,"school_id": string,"updated_at": string
+                    "attendance_edit_days": number | null,"branding": NonNullable<Json>,"created_at": string,"email_notifications_enabled": boolean,"enforce_room_conflicts": boolean,"grade_max_score": number,"grade_passing_score": number,"id": string,"notifications_enabled": boolean,"primary_color": string,"push_notifications_enabled": boolean,"school_id": string,"sms_notifications_enabled": boolean,"teachers_can_announce": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"primary_color"?: string,"school_id": string,"updated_at"?: string
+                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"email_notifications_enabled"?: boolean,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"notifications_enabled"?: boolean,"primary_color"?: string,"push_notifications_enabled"?: boolean,"school_id": string,"sms_notifications_enabled"?: boolean,"teachers_can_announce"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"primary_color"?: string,"school_id"?: string,"updated_at"?: string
+                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"email_notifications_enabled"?: boolean,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"notifications_enabled"?: boolean,"primary_color"?: string,"push_notifications_enabled"?: boolean,"school_id"?: string,"sms_notifications_enabled"?: boolean,"teachers_can_announce"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -627,6 +745,26 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "academic_years"
       referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"sms_usage": {
+                  Row: {
+                    "created_at": string,"id": string,"messages_failed": number,"messages_sent": number,"month": number,"school_id": string,"updated_at": string,"year": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"messages_failed"?: number,"messages_sent"?: number,"month": number,"school_id": string,"updated_at"?: string,"year": number
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"messages_failed"?: number,"messages_sent"?: number,"month"?: number,"school_id"?: string,"updated_at"?: string,"year"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "sms_usage_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
     }
                   ]
                 },"student_enrollments": {
@@ -809,6 +947,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"user_devices": {
+                  Row: {
+                    "app_version": string | null,"created_at": string,"device_type": Database["public"]['Enums']["device_type"],"id": string,"last_seen_at": string,"push_token": string,"school_id": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "app_version"?: string | null,"created_at"?: string,"device_type": Database["public"]['Enums']["device_type"],"id"?: string,"last_seen_at"?: string,"push_token": string,"school_id": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "app_version"?: string | null,"created_at"?: string,"device_type"?: Database["public"]['Enums']["device_type"],"id"?: string,"last_seen_at"?: string,"push_token"?: string,"school_id"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "user_devices_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -817,6 +975,9 @@ isOneToOne: false
           Functions: {
             "accept_invitation":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"announcement_audience_count":
+{ Args: { "p_id": string }; Returns: number
                            },
 "archive_academic_year":
 { Args: { "p_year_id": string }; Returns: undefined
@@ -836,6 +997,14 @@ isOneToOne: false
               "absent": number,"excused": number,"late": number,"present": number,"total": number
             }[]
                            },
+"claim_notification_deliveries":
+{ Args: { "p_limit"?: number }; Returns: {
+              "attempts": number,"channel": Database["public"]['Enums']["delivery_channel"],"data": Json,"destination": string,"id": string,"message": string,"notification_id": string,"priority": Database["public"]['Enums']["notification_priority"],"school_id": string,"title": string
+            }[]
+                           },
+"complete_notification_delivery":
+{ Args: { "p_error"?: string,"p_id": string,"p_provider": string,"p_provider_message_id"?: string,"p_success": boolean }; Returns: Database["public"]['Enums']["delivery_status"]
+                           },
 "get_my_context":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -845,8 +1014,17 @@ isOneToOne: false
 "mark_notifications_read":
 { Args: { "p_ids"?: (string)[] }; Returns: number
                            },
+"publish_announcement":
+{ Args: { "p_id": string }; Returns: string
+                           },
+"register_device":
+{ Args: { "p_app_version"?: string,"p_device_type": Database["public"]['Enums']["device_type"],"p_push_token": string }; Returns: string
+                           },
 "review_grades":
 { Args: { "p_action": string,"p_ids": (string)[],"p_reason"?: string }; Returns: number
+                           },
+"run_communication_jobs":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "save_attendance":
 { Args: { "p_date": string,"p_records": Json,"p_section_id": string,"p_subject_id"?: string }; Returns: string
@@ -870,7 +1048,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "academic_year_status": "planned"|"active"|"archived","app_role": "super_admin"|"school_admin"|"teacher"|"student"|"parent","attendance_session_status": "open"|"locked","attendance_session_type": "daily"|"subject"|"event"|"custom","attendance_status": "present"|"absent"|"late"|"excused","coursework_status": "draft"|"published"|"archived","enrollment_status": "enrolled"|"completed"|"transferred"|"withdrawn","gender": "male"|"female"|"other"|"unspecified","grade_status": "draft"|"submitted"|"approved"|"locked","grading_period_status": "upcoming"|"open"|"closed","guardian_relationship": "mother"|"father"|"guardian"|"grandparent"|"sibling"|"other","notification_type": "assignment_created"|"assignment_due"|"attendance_recorded"|"grade_published"|"announcement"|"system","profile_status": "pending"|"active"|"inactive","record_status": "active"|"inactive","schedule_status": "active"|"inactive","school_status": "active"|"inactive","student_status": "active"|"inactive"|"graduated"|"transferred"|"withdrawn","submission_status": "submitted"|"late"|"reviewed","teacher_status": "active"|"inactive"|"resigned"|"retired"
+            "academic_year_status": "planned"|"active"|"archived","announcement_status": "draft"|"scheduled"|"published"|"archived","announcement_target_type": "school"|"grade_level"|"section"|"class"|"user","app_role": "super_admin"|"school_admin"|"teacher"|"student"|"parent","attendance_session_status": "open"|"locked","attendance_session_type": "daily"|"subject"|"event"|"custom","attendance_status": "present"|"absent"|"late"|"excused","coursework_status": "draft"|"published"|"archived","delivery_channel": "in_app"|"email"|"sms"|"push","delivery_status": "pending"|"processing"|"sent"|"delivered"|"failed"|"cancelled","device_type": "android"|"ios"|"web","enrollment_status": "enrolled"|"completed"|"transferred"|"withdrawn","gender": "male"|"female"|"other"|"unspecified","grade_status": "draft"|"submitted"|"approved"|"locked","grading_period_status": "upcoming"|"open"|"closed","guardian_relationship": "mother"|"father"|"guardian"|"grandparent"|"sibling"|"other","notification_priority": "low"|"normal"|"high"|"urgent","profile_status": "pending"|"active"|"inactive","record_status": "active"|"inactive","schedule_status": "active"|"inactive","school_status": "active"|"inactive","student_status": "active"|"inactive"|"graduated"|"transferred"|"withdrawn","submission_status": "submitted"|"late"|"reviewed","teacher_status": "active"|"inactive"|"resigned"|"retired"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -986,7 +1164,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "academic_year_status": ["planned", "active", "archived"],"app_role": ["super_admin", "school_admin", "teacher", "student", "parent"],"attendance_session_status": ["open", "locked"],"attendance_session_type": ["daily", "subject", "event", "custom"],"attendance_status": ["present", "absent", "late", "excused"],"coursework_status": ["draft", "published", "archived"],"enrollment_status": ["enrolled", "completed", "transferred", "withdrawn"],"gender": ["male", "female", "other", "unspecified"],"grade_status": ["draft", "submitted", "approved", "locked"],"grading_period_status": ["upcoming", "open", "closed"],"guardian_relationship": ["mother", "father", "guardian", "grandparent", "sibling", "other"],"notification_type": ["assignment_created", "assignment_due", "attendance_recorded", "grade_published", "announcement", "system"],"profile_status": ["pending", "active", "inactive"],"record_status": ["active", "inactive"],"schedule_status": ["active", "inactive"],"school_status": ["active", "inactive"],"student_status": ["active", "inactive", "graduated", "transferred", "withdrawn"],"submission_status": ["submitted", "late", "reviewed"],"teacher_status": ["active", "inactive", "resigned", "retired"]
+            "academic_year_status": ["planned", "active", "archived"],"announcement_status": ["draft", "scheduled", "published", "archived"],"announcement_target_type": ["school", "grade_level", "section", "class", "user"],"app_role": ["super_admin", "school_admin", "teacher", "student", "parent"],"attendance_session_status": ["open", "locked"],"attendance_session_type": ["daily", "subject", "event", "custom"],"attendance_status": ["present", "absent", "late", "excused"],"coursework_status": ["draft", "published", "archived"],"delivery_channel": ["in_app", "email", "sms", "push"],"delivery_status": ["pending", "processing", "sent", "delivered", "failed", "cancelled"],"device_type": ["android", "ios", "web"],"enrollment_status": ["enrolled", "completed", "transferred", "withdrawn"],"gender": ["male", "female", "other", "unspecified"],"grade_status": ["draft", "submitted", "approved", "locked"],"grading_period_status": ["upcoming", "open", "closed"],"guardian_relationship": ["mother", "father", "guardian", "grandparent", "sibling", "other"],"notification_priority": ["low", "normal", "high", "urgent"],"profile_status": ["pending", "active", "inactive"],"record_status": ["active", "inactive"],"schedule_status": ["active", "inactive"],"school_status": ["active", "inactive"],"student_status": ["active", "inactive", "graduated", "transferred", "withdrawn"],"submission_status": ["submitted", "late", "reviewed"],"teacher_status": ["active", "inactive", "resigned", "retired"]
           }
         }
 } as const

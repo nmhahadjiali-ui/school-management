@@ -17,12 +17,15 @@ export function RecordPicker({
   entity,
   required,
   initial,
+  onSelect,
 }: {
   name: string
   label: string
-  entity: "students" | "guardians" | "teachers"
+  entity: "students" | "guardians" | "teachers" | "users"
   required?: boolean
   initial?: PickerOption | null
+  /** Optional callback when the selection changes (for non-form use). */
+  onSelect?: (option: PickerOption | null) => void
 }) {
   const error = useFieldError(name)
   const id = useId()
@@ -65,7 +68,7 @@ export function RecordPicker({
             <span className="font-medium">{selected.label}</span>
             {selected.detail && <span className="ml-2 text-muted">{selected.detail}</span>}
           </span>
-          <button type="button" onClick={() => setSelected(null)} aria-label={`Clear ${label}`} className="text-muted hover:text-foreground">
+          <button type="button" onClick={() => { setSelected(null); onSelect?.(null) }} aria-label={`Clear ${label}`} className="text-muted hover:text-foreground">
             <X className="size-4" />
           </button>
         </div>
@@ -98,6 +101,7 @@ export function RecordPicker({
                     onClick={() => {
                       setSelected(o)
                       setOpen(false)
+                      onSelect?.(o)
                     }}
                     className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
                   >

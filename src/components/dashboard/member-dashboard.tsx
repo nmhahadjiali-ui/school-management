@@ -6,6 +6,7 @@ import { TableSkeleton } from "@/components/data/list"
 import { ChildrenList } from "@/components/school/children-list"
 import { StudentAcademics } from "@/components/academics/student-academics"
 import { TeacherDashboard } from "@/components/dashboard/teacher-dashboard"
+import { AnnouncementsCard } from "@/components/dashboard/announcements-card"
 import { FEATURE_LABELS } from "@/lib/features"
 import { formatDateTime } from "@/lib/dates"
 import { fullName } from "@/lib/utils"
@@ -46,6 +47,11 @@ export function MemberDashboard({ ctx }: { ctx: UserContext }) {
           </Card>
         )}
         <div className="grid gap-6 lg:grid-cols-2">
+          {features.includes("announcements") && profile.school_id && (
+            <Suspense fallback={skeleton}>
+              <AnnouncementsCard schoolId={profile.school_id} timezone={school?.timezone} />
+            </Suspense>
+          )}
           {features.includes("notifications") && record?.type !== "teacher" && (
             <Suspense fallback={skeleton}>
               <RecentNotifications timezone={school?.timezone} />

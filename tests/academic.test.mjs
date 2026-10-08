@@ -128,7 +128,7 @@ describe("attendance", () => {
   })
 
   test("absences notify the guardian; changes are audited", async () => {
-    const { data: notes } = await as.parentA.from("notifications").select("type, data").eq("type", "attendance_recorded")
+    const { data: notes } = await as.parentA.from("notifications").select("type, data").eq("type", "attendance_absent")
     assert.ok(notes.some((n) => n.data.student_id === A.student.id))
     const { data: logs } = await as.adminA.from("audit_logs").select("action").in("action", ["attendance.created", "attendance.modified", "attendance.locked"])
     const actions = new Set(logs.map((l) => l.action))
@@ -306,7 +306,7 @@ describe("coursework and files", () => {
 
   test("new coursework notifies the class", async () => {
     const { data } = await as.studentA.from("notifications").select("type, data").eq("type", "assignment_created")
-    assert.ok(data.some((n) => n.data.assignment_id))
+    assert.ok(data.some((n) => n.data.entity_type === "assignment" && n.data.entity_id === A.homework.id))
   })
 
   test("submission workflow: own work only, late detection, review locks it", async () => {

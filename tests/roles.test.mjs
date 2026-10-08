@@ -29,10 +29,11 @@ describe("super admin", () => {
     const { data: settings } = await as.super.from("school_settings").select("id").eq("school_id", data.id)
     assert.equal(settings.length, 1)
     const { data: flags } = await as.super.from("school_features").select("feature_key, enabled").eq("school_id", data.id)
-    const core = ["schedules", "attendance", "grades", "coursework", "notifications"]
-    assert.ok(flags.length >= 12)
-    // Core academic modules start enabled; optional modules (SMS, payments, ...) start disabled.
-    for (const f of flags) assert.equal(f.enabled, core.includes(f.feature_key), f.feature_key)
+    const { data: catalog } = await service.from("features").select("key, default_enabled")
+    assert.equal(flags.length, catalog.length, "one flag per catalog feature")
+    // Each module starts as its catalog default: core modules on, optional ones (SMS, payments, ...) off.
+    for (const f of flags) assert.equal(f.enabled, catalog.find((c) => c.key === f.feature_key).default_enabled, f.feature_key)
+    assert.equal(flags.find((f) => f.feature_key === "sms").enabled, false, "SMS is an add-on")
   })
 
   test("can disable and re-enable a school; its users lose and regain access", async () => {
