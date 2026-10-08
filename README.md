@@ -12,6 +12,7 @@ A Flutter app will use the same Supabase backend later.
 * Phase 3 academic operations (attendance, grades, schedules, coursework, notifications, audit): [docs/PHASE3-ACADEMIC-OPERATIONS.md](docs/PHASE3-ACADEMIC-OPERATIONS.md)
 * Phase 4 communication (notification service, announcements, channels, SMS, devices): [docs/PHASE4-COMMUNICATION.md](docs/PHASE4-COMMUNICATION.md)
 * Phase 5 fees, billing & payments (ledger, allocations, refunds, receipts, online payments, financial RLS): [docs/PHASE5-FINANCE.md](docs/PHASE5-FINANCE.md)
+* Phase 6 Android app (offline-first, same backend; app in `../school-management-mobile`): [docs/PHASE6-MOBILE.md](docs/PHASE6-MOBILE.md)
 * RLS policy matrix and security notes: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## What's in Phase 1
@@ -166,6 +167,7 @@ TEST_APP_URL=http://localhost:3000 npm test   # in another
 | `tests/http-academic.test.mjs` | Phase 3 pages per role, other teachers'/schools' sheets 404, file download route, academic Server Actions with forged input |
 | `tests/finance.test.mjs` | Phase 5: charge generation and idempotency, installments to the cent, discounts/adjustments leave charges unchanged, full/partial/multi payments, overpayment credit, allocation limits and atomicity, double submit, reversal, receipt numbering, refund limits and second approver, ledger = balances, parent/student/teacher access, separation of duties, online transactions (browser cannot complete, idempotent completion, failure/cancel/amount mismatch), webhook duplicates/invalid signatures, isolation of all 14 finance tables |
 | `tests/http-finance.test.mjs` | Phase 5 pages per finance level and role, other schools' records 404, payment entry action (double submit, forged charges, manual "online", sub-cent), receipts access, CSV export access and formula escaping, online payment end-to-end through signed webhooks (unsigned/forged/tampered/stale rejected, replay, amount mismatch) |
+| `tests/mobile-sync.test.mjs` | Phase 6: offline attendance sync (idempotent replays, conflicts, authorization), operation receipts privacy, device registration |
 | `tests/actions.test.mjs` | Server Actions over HTTP with forged arguments (other school's ids, injected `school_id`), enrollment workflow, invitations, account linking |
 
 Other checks: `npm run typecheck`, `npm run lint`, `npm run build`.
