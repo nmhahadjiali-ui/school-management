@@ -8,6 +8,7 @@ export type NavIcon =
   | "dashboard" | "schools" | "school" | "users" | "settings" | "profile"
   | "calendar" | "layers" | "grid" | "book" | "student" | "teacher" | "family" | "enroll" | "assign" | "classes"
   | "clock" | "check" | "award" | "scale" | "homework" | "bell" | "megaphone"
+  | "wallet" | "receipt" | "coins" | "undo" | "tag" | "report"
 
 export type NavItem = {
   href: string
@@ -31,6 +32,13 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/coursework", label: "Assignments", icon: "homework", permission: "school.records.manage", group: "Academics", feature: "coursework" },
   { href: "/schedules", label: "Schedules", icon: "clock", permission: "school.records.manage", group: "Academics", feature: "schedules" },
   { href: "/enrollments", label: "Enrollments", icon: "enroll", permission: "school.records.manage", group: "Academics" },
+  // Finance (finance roles, and school admins unless the school set their access to "none")
+  { href: "/finance", label: "Finance Overview", icon: "wallet", permission: "finance.access", group: "Finance", feature: "billing" },
+  { href: "/finance/payments", label: "Payments", icon: "coins", permission: "finance.access", group: "Finance", feature: "billing" },
+  { href: "/finance/charges", label: "Charges", icon: "receipt", permission: "finance.access", group: "Finance", feature: "billing" },
+  { href: "/finance/refunds", label: "Refunds", icon: "undo", permission: "finance.access", group: "Finance", feature: "refunds" },
+  { href: "/finance/fee-structures", label: "Fee Setup", icon: "tag", permission: "finance.access", group: "Finance", feature: "billing" },
+  { href: "/finance/reports", label: "Reports", icon: "report", permission: "finance.access", group: "Finance", feature: "billing" },
   // School administration: communication
   { href: "/announcements", label: "Announcements", icon: "megaphone", permission: "school.records.manage", group: "Communication", feature: "announcements" },
   // School administration: setup
@@ -59,12 +67,22 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/coursework", label: "Assignments", icon: "homework", permission: "student.academics", feature: "coursework" },
   // Parent
   { href: "/my-children", label: "My Children", icon: "family", permission: "parent.children" },
+  // Student / parent finances
+  { href: "/fees", label: "Fees & Payments", icon: "wallet", permission: "finance.family", feature: "student_finance" },
   // Everyone in a school (admins have it in their Communication group)
   { href: "/announcements", label: "Announcements", icon: "megaphone", permission: "member.dashboard", feature: "announcements" },
   { href: "/notifications", label: "Notifications", icon: "bell", permission: "notifications.view", feature: "notifications" },
   { href: "/profile", label: "Profile", icon: "profile", permission: "profile.self" },
 ]
 
-export function navForRole(role: AppRole, features: string[] = []): NavItem[] {
-  return NAV_ITEMS.filter((item) => can(role, item.permission) && (!item.feature || features.includes(item.feature)))
+/** `financeLevel` (from the database) hides the Finance group from school admins without finance access. */
+export function navForRole(role: AppRole, features: string[] = [], financeLevel = "none"): NavItem[] {
+  return NAV_ITEMS.filter(
+    (item) =>
+      can(role, item.permission) &&
+      (!item.feature || features.includes(item.feature)) &&
+      // "Fees & Payments" is a billing module too.
+      (item.permission !== "finance.family" || features.includes("billing")) &&
+      (item.permission !== "finance.access" || financeLevel !== "none")
+  )
 }

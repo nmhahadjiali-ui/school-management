@@ -39,6 +39,12 @@ const CONSTRAINT_MESSAGES: [RegExp, string, string?][] = [
   [/tsa_unique_assignment/, "This teacher already teaches that subject in that section."],
   [/invitations_one_open_per_record/, "There is already an open invitation for this person."],
   [/academic_years_one_current/, "Another academic year is already current."],
+  // Phase 5
+  [/fee_types_school_code_key/, "A fee type with this code already exists.", "code"],
+  [/discount_types_school_code_key/, "A discount type with this code already exists.", "code"],
+  [/fee_items_installments_match/, "Installments are only possible for monthly, quarterly or semester fees.", "installments"],
+  [/discount_types_percentage/, "A percentage cannot exceed 100.", "value"],
+  [/delete on table "fee_structure_items"/, "This fee item already generated charges, so it is kept for the record."],
   [/academic_years_current_is_active/, "The current academic year must stay active. Make another year current first."],
 ]
 
@@ -56,6 +62,7 @@ export function dbFail(error: DbError, context: string): ActionResult {
   }
   const ours =
     error?.code === "P0001" ||
+    error?.code === "P0002" ||
     ((error?.code === "42501" || error?.code === "23514" || error?.code === "23503") &&
       !/row-level security|violates check constraint|violates foreign key constraint|permission denied/.test(msg))
   if (ours && msg) {

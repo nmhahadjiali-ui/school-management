@@ -108,6 +108,13 @@ See `docs/SECURITY.md` for the full policy matrix. Summary:
   pages (`requirePermission`) and actions (`authorize`).
 * New roles/permissions: add the enum value in a migration, extend the map, and
   extend RLS. Permission names are stable strings Flutter can mirror.
+* Phase 5 added `finance_admin` and `finance_staff`. Finance access is a
+  *level* computed by the database (`private.finance_level()`, exposed to the
+  UI as `my_finance_level()`): it depends on the role **and** on the school's
+  setting for school admins (full / view / none), so the permission map only
+  says "may enter the finance area" (`finance.access`) and pages/actions ask
+  the database for the level (`src/lib/finance/access.ts`). See
+  [PHASE5-FINANCE.md](PHASE5-FINANCE.md).
 
 ## Feature flag strategy
 
@@ -142,6 +149,7 @@ src/
     validations/       zod schemas
     features.ts        requireFeature()
   services/            Data access (Supabase queries), no React
+  server/              server-only integrations: notifications/ (email, SMS, push providers), payments/ (payment providers, webhooks)
   types/               generated database types + domain types
   proxy.ts             session refresh + route protection
 supabase/migrations/   schema, functions/triggers, RLS

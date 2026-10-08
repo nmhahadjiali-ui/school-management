@@ -30,6 +30,12 @@ import {
   UserCircle,
   Users,
   X,
+  Wallet,
+  ReceiptText,
+  Coins,
+  Undo2,
+  Tags,
+  FileBarChart,
 } from "lucide-react"
 import { signOut } from "@/lib/actions/auth"
 import type { NavIcon, NavItem } from "@/lib/navigation"
@@ -61,6 +67,12 @@ const ICONS: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
   homework: NotebookPen,
   bell: Bell,
   megaphone: Megaphone,
+  wallet: Wallet,
+  receipt: ReceiptText,
+  coins: Coins,
+  undo: Undo2,
+  tag: Tags,
+  report: FileBarChart,
 }
 
 export type ShellProps = {
@@ -84,6 +96,12 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
   const open = openOn === pathname
   const setOpen = (value: boolean) => setOpenOn(value ? pathname : null)
 
+  // The most specific matching link is active (/finance vs /finance/payments).
+  const activeHref = nav
+    .map((item) => item.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0]
+
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border px-4 py-4">
@@ -100,7 +118,7 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
       <nav aria-label="Main" className="flex-1 space-y-1 overflow-y-auto p-3">
         {nav.map((item, i) => {
           const Icon = ICONS[item.icon]
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const active = item.href === activeHref
           const heading = item.group && item.group !== nav[i - 1]?.group ? item.group : null
           return (
             <div key={item.href}>
@@ -147,16 +165,16 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
 
   return (
     <ToastProvider>
-    <div className="min-h-dvh lg:pl-64">
+    <div className="min-h-dvh lg:pl-64 print:pl-0">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
 
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-surface lg:block">{sidebar}</aside>
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-surface lg:block print:hidden">{sidebar}</aside>
 
       {/* Mobile top bar + drawer */}
-      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden">
+      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden print:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -187,7 +205,7 @@ export function AppShell({ nav, orgName, orgLogoUrl, userName, roleLabel, unread
       )}
 
       {bell && (
-        <div className="hidden justify-end px-8 pt-4 lg:flex">
+        <div className="hidden justify-end px-8 pt-4 lg:flex print:hidden">
           <NotificationBell unread={bell.unread} recent={bell.recent} />
         </div>
       )}

@@ -230,3 +230,32 @@ export async function callAction(name, args, cookie, path = "/dashboard") {
   const line = body.split("\n").find((l) => l.startsWith("1:"))
   return { status: res.status, redirect: res.headers.get("x-action-redirect"), result: line ? JSON.parse(line.slice(2)) : null }
 }
+
+/**
+ * Phase 5 fixtures: billing enabled for both schools (online payments for A
+ * only), finance users, fee types, a Grade 6 fee structure for 2026-2027, and
+ * discount types. Returns { financeA, staffA, financeB } user records.
+ */
+export async function buildFinance(t, S) {
+  const users = {
+    financeA: await provisionUser("financeA", "finance_admin", t.schoolA.id),
+    staffA: await provisionUser("staffA", "finance_staff", t.schoolA.id),
+    financeB: await provisionUser("financeB", "finance_admin", t.schoolB.id),
+  }
+  for (const [key, school] of [["A", t.schoolA], ["B", t.schoolB]]) {
+    const s = S[key]
+    for (const [feature, on] of [["billing", true], ["online_payments", key === "A"]]) {
+      await service.from("school_features").update({ enabled: on }).eq("school_id", school.id).eq("feature_key", feature)
+    }
+    s.tuitionType = await insert("fee_types", { school_id: school.id, name: "Tuition", code: "TUI", category: "tuition" })
+    s.labType = await insert("fee_types", { school_id: school.id, name: "Laboratory", code: "LAB", category: "laboratory" })
+    s.actType = await insert("fee_types", { school_id: school.id, name: "Activities", code: "ACT", category: "activity" })
+    s.structure = await insert("fee_structures", { school_id: school.id, academic_year_id: s.y2026.id, name: "Grade 6 fees", grade_level_id: s.g6.id })
+    s.tuitionItem = await insert("fee_structure_items", { school_id: school.id, fee_structure_id: s.structure.id, fee_type_id: s.tuitionType.id, name: "Tuition", amount: "30000.00", due_date: "2026-06-15", sequence: 1 })
+    s.labItem = await insert("fee_structure_items", { school_id: school.id, fee_structure_id: s.structure.id, fee_type_id: s.labType.id, name: "Laboratory fee", amount: "1500.00", due_date: "2026-07-01", sequence: 2 })
+    s.actItem = await insert("fee_structure_items", { school_id: school.id, fee_structure_id: s.structure.id, fee_type_id: s.actType.id, name: "Activities", amount: "1000.00", frequency: "monthly", installments: 3, due_date: "2026-07-01", sequence: 3 })
+    s.sibling10 = await insert("discount_types", { school_id: school.id, name: "Sibling discount", code: "SIB", calculation_type: "fixed", value: "1000.00" })
+    s.half = await insert("discount_types", { school_id: school.id, name: "Scholarship 50%", code: "SCH50", calculation_type: "percentage", value: "50" })
+  }
+  return users
+}

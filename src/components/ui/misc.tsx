@@ -11,7 +11,7 @@ export function PageHeader({
 }: {
   title: string
   description?: React.ReactNode
-  eyebrow?: string
+  eyebrow?: React.ReactNode
   actions?: React.ReactNode
 }) {
   return (
@@ -71,11 +71,25 @@ const STATUS_TONES: Record<string, keyof typeof badgeTones> = {
   late: "amber",
   excused: "blue",
   reviewed: "green",
+  // Finance
+  paid: "green",
+  partially_paid: "amber",
+  overdue: "red",
+  cancelled: "gray",
+  reversed: "red",
+  issued: "green",
+  voided: "gray",
+  requested: "amber",
+  rejected: "red",
+  processed: "blue",
+  initiated: "amber",
+  successful: "green",
+  failed: "red",
 }
 
 /** Badge for any status enum value (schools, profiles, records, enrollments, invitations). */
 export function StatusBadge({ status }: { status: SchoolStatus | ProfileStatus | (string & {}) }) {
-  return <Badge tone={STATUS_TONES[status] ?? "gray"}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>
+  return <Badge tone={STATUS_TONES[status] ?? "gray"}>{(status.charAt(0).toUpperCase() + status.slice(1)).replace("_", " ")}</Badge>
 }
 
 export function RoleBadge({ role }: { role: AppRole }) {

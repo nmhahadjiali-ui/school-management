@@ -185,6 +185,27 @@ Full rationale in [PHASE4-COMMUNICATION.md](PHASE4-COMMUNICATION.md#how-tenant-i
 * `/api/jobs/communication` requires `Authorization: Bearer $CRON_SECRET` (constant-time comparison); the proxy lets it through without a session.
 * Provider credentials live only in server environment variables; audit entries record channel/provider/attempts but never destinations, message bodies or secrets.
 
+## Phase 5 tables
+
+Full rationale in [PHASE5-FINANCE.md](PHASE5-FINANCE.md#how-financial-rls-works).
+
+| Table | Visible to | Writes |
+| --- | --- | --- |
+| `fee_types`, `fee_structures`, `fee_structure_items`, `discount_types` | finance view level (`private.finance_can_view`) | finance admin; items deletable only before charges exist |
+| `student_charges`, `student_discounts`, `financial_adjustments`, `payments`, `payment_allocations`, `refunds`, `payment_transactions` | finance view level; the student and verified parents when `student_finance` is on | none — `SECURITY DEFINER` functions only |
+| `receipts` | finance view level; the payment's student / parents | none |
+| `payment_webhook_events`, `financial_audit_logs` | finance admin | none (append-only audit) |
+| `receipt_sequences` | nobody | `next_receipt_number()` only |
+
+* Finance levels: finance admin; finance staff; school admin per `admin_finance_access` (full / view / none — changeable only by the `finance_admin` role or the platform); teachers never. All require the `billing` feature and the caller's own school.
+* Finance roles are provisioned by the platform only (a school admin could otherwise create a finance account, know its password and bypass the access setting).
+* Charges, payments, allocations, receipts, refunds and discounts cannot be deleted (even with the service key); their recorded facts are frozen by `guard_financial_history()`; only forward status transitions are allowed. Adjustments and the audit log are append-only.
+* Amounts, school, enrollment, payment status and receipt numbers are always derived in the database. Money is `numeric(12,2)`.
+* `complete_payment_transaction`, `set_transaction_checkout`, `record_webhook_event` and `finish_webhook_event` are executable by the service role only; the webhook route authenticates providers by HMAC signature over the raw body with a ±5 minute timestamp window; the proxy lets `/api/payments/webhooks` through without a session.
+* Provider secrets live only in server env vars (`PAYMENT_SIMULATOR_SECRET`, future gateway keys). The simulator must not be enabled in production.
+* CSV exports run with the user's session (RLS) and neutralise spreadsheet formulas.
+* Finance users can read students, enrollments and sections (names, numbers, placement) but not grades, attendance or guardian contacts; staff names on financial records come from `finance_actor_names()` (names only).
+
 ## Known limitations / follow-ups
 
 * `school_code_is_valid` is callable anonymously and reveals whether an active
@@ -203,6 +224,8 @@ Full rationale in [PHASE4-COMMUNICATION.md](PHASE4-COMMUNICATION.md#how-tenant-i
 * Notifications are created per event (e.g. one per published grade). If volume grows, add digesting in the delivery phase.
 * Delivery logs keep full destinations (needed for retries); consider masking/purging after a retention period.
 * `run_communication_jobs` also runs from pg_cron as the database owner; keep its logic idempotent (it is: event keys).
+* Receipt numbers are per school per calendar year (school time zone); voided receipts keep their numbers, so gaps are explained by voids.
+* Webhook events are kept indefinitely; add a retention policy once volume grows.
 * Consider a custom access-token hook to put `role`/`school_id` into the JWT
   once query volume grows; today they are looked up per statement via an
   indexed primary-key lookup.

@@ -11,6 +11,7 @@ A Flutter app will use the same Supabase backend later.
 * Phase 2 school structure (relationships, history, assignments, invitations): [docs/PHASE2-SCHOOL-STRUCTURE.md](docs/PHASE2-SCHOOL-STRUCTURE.md)
 * Phase 3 academic operations (attendance, grades, schedules, coursework, notifications, audit): [docs/PHASE3-ACADEMIC-OPERATIONS.md](docs/PHASE3-ACADEMIC-OPERATIONS.md)
 * Phase 4 communication (notification service, announcements, channels, SMS, devices): [docs/PHASE4-COMMUNICATION.md](docs/PHASE4-COMMUNICATION.md)
+* Phase 5 fees, billing & payments (ledger, allocations, refunds, receipts, online payments, financial RLS): [docs/PHASE5-FINANCE.md](docs/PHASE5-FINANCE.md)
 * RLS policy matrix and security notes: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## What's in Phase 1
@@ -49,6 +50,16 @@ A Flutter app will use the same Supabase backend later.
 * Delivery queue with retries, idempotency, audit, and pluggable email/SMS/push providers (simulator included)
 * SMS usage tracking per school per month; device registration for the future mobile app
 
+## What's in Phase 5
+
+* Finance roles (finance admin, finance staff) and configurable school-admin finance access (full / view / none)
+* Fee types, fee structures per year/grade/section with installments; idempotent charge generation with preview; individual charges
+* Discounts (fixed / %) and adjustments recorded separately — the original charge never changes
+* Payments with allocation across charges, partial payments, overpayment credit, credit application, reversals (never deletes)
+* Unique, sequential receipt numbers per school; printable receipts; refunds with approval (second approver) and payout
+* Student ledger and balances computed by the database (numeric), parent/student "Fees & payments", finance dashboard with filters, CSV exports
+* Online payment provider abstraction with signed, idempotent webhooks (test simulator included); append-only financial audit log
+
 ## Setup (local)
 
 Prerequisites: Node 20+, Docker Desktop (for the local Supabase stack).
@@ -83,6 +94,8 @@ The super admin uses `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
 | `SEED_SUPER_ADMIN_EMAIL`, `SEED_SUPER_ADMIN_PASSWORD` | seed script | First platform owner account |
 | `CRON_SECRET` | **server only** | Bearer secret for `/api/jobs/communication` (delivery worker) |
 | `EMAIL_PROVIDER`, `SMS_PROVIDER`, `PUSH_PROVIDER` | **server only** | `simulator` or empty; real vendors are added in `src/server/notifications/providers.ts` with their own server-only API keys |
+| `PAYMENT_PROVIDERS` | **server only** | Enabled online payment providers, e.g. `simulator` (test gateway — never in production). Real gateways: `src/server/payments/providers.ts` |
+| `PAYMENT_SIMULATOR_SECRET` | **server only** | Webhook signing secret for the simulator (32+ random characters) |
 | `TEST_APP_URL` | tests | Running app URL for HTTP tests (optional) |
 
 ## Deploying
@@ -99,7 +112,8 @@ The super admin uses `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
 3. In Vercel: import the repo and set the environment variables above
    (`SUPABASE_SERVICE_ROLE_KEY` for Production only, not exposed to the client).
 4. Schedule the delivery worker: call `POST https://<domain>/api/jobs/communication` with `Authorization: Bearer <CRON_SECRET>` every minute (Vercel Cron, or pg_cron + pg_net — see docs/PHASE4-COMMUNICATION.md). Scheduled announcements are already published by pg_cron inside the database.
-5. Create the first super admin from a trusted machine:
+5. Online payments: configure a real gateway (see docs/PHASE5-FINANCE.md), set its webhook URL to `https://<domain>/api/payments/webhooks/<provider>`, and leave `simulator` out of `PAYMENT_PROVIDERS`.
+6. Create the first super admin from a trusted machine:
    `NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… SEED_SUPER_ADMIN_EMAIL=… SEED_SUPER_ADMIN_PASSWORD=… node scripts/seed.mjs`
 
 Schema changes always go through a new file in `supabase/migrations/`
@@ -137,6 +151,8 @@ TEST_APP_URL=http://localhost:3000 npm test   # in another
 | `tests/communication.test.mjs` | Phase 4: announcement targeting (school/grade/section/class/user, roles), readable ⇔ notified, cross-school targets, teacher moderation, drafts/scheduling/pg_cron/expiry, academic events, notification center security, preferences and urgent override, SMS feature isolation, idempotency, retries, usage, devices, tenant isolation |
 | `tests/http-communication.test.mjs` | Phase 4 pages per role, announcement actions with forged input, deep links re-authorized, worker secret, simulated SMS delivery and failure retry |
 | `tests/http-academic.test.mjs` | Phase 3 pages per role, other teachers'/schools' sheets 404, file download route, academic Server Actions with forged input |
+| `tests/finance.test.mjs` | Phase 5: charge generation and idempotency, installments to the cent, discounts/adjustments leave charges unchanged, full/partial/multi payments, overpayment credit, allocation limits and atomicity, double submit, reversal, receipt numbering, refund limits and second approver, ledger = balances, parent/student/teacher access, separation of duties, online transactions (browser cannot complete, idempotent completion, failure/cancel/amount mismatch), webhook duplicates/invalid signatures, isolation of all 14 finance tables |
+| `tests/http-finance.test.mjs` | Phase 5 pages per finance level and role, other schools' records 404, payment entry action (double submit, forged charges, manual "online", sub-cent), receipts access, CSV export access and formula escaping, online payment end-to-end through signed webhooks (unsigned/forged/tampered/stale rejected, replay, amount mismatch) |
 | `tests/actions.test.mjs` | Server Actions over HTTP with forged arguments (other school's ids, injected `school_id`), enrollment workflow, invitations, account linking |
 
 Other checks: `npm run typecheck`, `npm run lint`, `npm run build`.
@@ -156,3 +172,6 @@ Other checks: `npm run typecheck`, `npm run lint`, `npm run build`.
 11. Compare Grading Periods for `admin@north.example` (quarters) and `admin@south.example` (semesters): same code, different configuration.
 12. As `admin@north.example`: Announcements → New → audience "Grade level: Grade 2, Parents" → Schedule 2 minutes ahead → it publishes by itself. Settings → Communication shows SMS (NORTH has the add-on; SOUTH shows "not included").
 13. As `teacher@north.example`: mark a student absent → the parent's bell shows it; run the worker (`curl -X POST -H "Authorization: Bearer local-dev-cron-secret-change-me" http://localhost:3000/api/jobs/communication`) → Settings → Delivery health / SMS usage update.
+14. As `cashier@north.example`: Record payment → search "Cruz" → Juan → Auto-apply → Review → Confirm → open the receipt and print it. A double click records only one payment.
+15. As `finance@north.example`: Refunds → approve the pending refund (the cashier requested it) → Mark paid out; Charges → open one → Apply discount; Payments → Reverse a payment (its receipt shows VOID); Reports → download CSVs; Audit log shows every step. Settings → set school admins' access to "No access": the Finance menu disappears for `admin@north.example`.
+16. As `parent@north.example`: Fees & payments → Juan → Pay online → test gateway → "Pay (simulate success)" → the payment and receipt appear (recorded by the signed webhook). `admin@south.example` can only view finances.

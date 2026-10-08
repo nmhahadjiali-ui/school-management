@@ -77,9 +77,14 @@ if (demo) {
         schoolId: school.id,
       })
     }
+    // Finance roles are provisioned by the platform (not by school admins).
+    for (const [label, role, first] of [["finance", "finance_admin", "Finance"], ["cashier", "finance_staff", "Cashier"]]) {
+      await ensureUser({ email: `${label}@${slug}.example`, password: DEMO_PASSWORD, firstName: first, lastName: s.code.charAt(0) + s.code.slice(1).toLowerCase(), role, schoolId: school.id })
+    }
     await seedStructure(school, s, slug)
     await seedAcademics(school, s.code)
     await seedCommunication(school, s.code, slug)
+    await seedFinance(school, s.code, slug)
   }
   console.log(`\nDemo users use the password ${DEMO_PASSWORD}`)
 }
@@ -260,4 +265,80 @@ async function seedCommunication(school, code, slug) {
   }
   await admin.auth.signOut()
   console.log(`  + ${code} communication: SMS ${north ? "enabled" : "not included"}, ${items.length} announcements (1 draft)`)
+}
+
+/**
+ * Phase 5 demo finance: fee setup, generated charges, a discount, payments
+ * (full, partial and an overpayment that becomes credit) and a refund request.
+ * Money operations go through the same database functions the app uses,
+ * signed in as the demo finance users.
+ */
+async function seedFinance(school, code, slug) {
+  const { count } = await db.from("fee_types").select("id", { count: "exact", head: true }).eq("school_id", school.id)
+  if (count) {
+    console.log(`  = ${code} finance already exists`)
+    return
+  }
+  const north = code === "NORTH"
+  for (const [feature, on] of [["billing", true], ["student_finance", true], ["refunds", true], ["online_payments", north]]) {
+    await db.from("school_features").update({ enabled: on }).eq("school_id", school.id).eq("feature_key", feature)
+  }
+  const { createClient: makeClient } = await import("@supabase/supabase-js")
+  const signIn = async (email) => {
+    const c = makeClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+    const { error } = await c.auth.signInWithPassword({ email, password: DEMO_PASSWORD })
+    if (error) throw error
+    return c
+  }
+  const must = ({ data, error }, label) => {
+    if (error) throw new Error(`${label}: ${error.message}`)
+    return data
+  }
+  const finance = await signIn(`finance@${slug}.example`)
+  const cashier = await signIn(`cashier@${slug}.example`)
+  // Separation of duties demo: Southridge's school admin can only VIEW finances.
+  must(await finance.from("school_settings").update({ admin_finance_access: north ? "full" : "view", receipt_prefix: north ? "NFA" : "SHS" }).eq("school_id", school.id).select().single(), "settings")
+
+  const one = async (table, row) => must(await finance.from(table).insert({ school_id: school.id, ...row }).select().single(), table)
+  const tuition = await one("fee_types", { name: "Tuition", code: "TUI", category: "tuition" })
+  const reg = await one("fee_types", { name: "Registration", code: "REG", category: "registration" })
+  const misc = await one("fee_types", { name: "Miscellaneous", code: "MISC", category: "miscellaneous" })
+  await one("fee_types", { name: "Laboratory", code: "LAB", category: "laboratory" })
+  const sibling = await one("discount_types", { name: "Sibling discount", code: "SIB", calculation_type: "percentage", value: 10 })
+  await one("discount_types", { name: "Academic scholarship", code: "SCHOLAR", calculation_type: "percentage", value: 50 })
+
+  const { data: year } = await db.from("academic_years").select("id").eq("school_id", school.id).eq("is_current", true).single()
+  const { data: sec } = await db.from("sections").select("grade_level_id").eq("school_id", school.id).eq("room", "101").single()
+  const structure = await one("fee_structures", { academic_year_id: year.id, grade_level_id: sec.grade_level_id, name: `${north ? "Grade 2" : "Grade 1"} fees 2026-2027` })
+  const item = (row) => one("fee_structure_items", { fee_structure_id: structure.id, ...row })
+  const regItem = await item({ fee_type_id: reg.id, name: "Registration fee", amount: 2500, due_date: "2026-06-01", sequence: 1 })
+  const tuiItem = await item({ fee_type_id: tuition.id, name: "Tuition", amount: north ? 36000 : 30000, frequency: "monthly", installments: 10, due_date: "2026-06-15", sequence: 2 })
+  await item({ fee_type_id: misc.id, name: "Miscellaneous fees", amount: 4500, due_date: "2026-07-15", sequence: 3 })
+  const gen = must(await finance.rpc("generate_charges", { p_structure_id: structure.id }), "generate")
+
+  const student = async (no) => (await db.from("students").select("id").eq("school_id", school.id).eq("student_number", no).single()).data.id
+  const charge = async (studentId, itemId, inst = 1) => (await db.from("student_charges").select("id, amount").eq("student_id", studentId).eq("fee_structure_item_id", itemId).eq("installment_no", inst).single()).data
+  const juan = await student("2026-0001")
+  const lia = await student("2026-0002")
+  const paolo = await student("2026-0003")
+
+  // Lia is Juan's sister: sibling discount on her tuition installments.
+  const liaTuition = []
+  for (let k = 1; k <= 10; k++) liaTuition.push((await charge(lia, tuiItem.id, k)).id)
+  must(await finance.rpc("apply_discount", { p_charge_ids: liaTuition, p_discount_type_id: sibling.id, p_reason: "Sibling enrolled (Juan Cruz)" }), "discount")
+
+  const pay = async (studentId, amount, allocations, method = "cash", reference = null, date = "2026-06-10") =>
+    must(await cashier.rpc("record_payment", { p_student_id: studentId, p_amount: amount, p_method: method, p_reference: reference, p_payment_date: date, p_notes: null, p_allocations: allocations, p_idempotency_key: null }), "payment")
+  const jReg = await charge(juan, regItem.id)
+  const jT1 = await charge(juan, tuiItem.id, 1)
+  const jT2 = await charge(juan, tuiItem.id, 2)
+  await pay(juan, Number(jReg.amount) + Number(jT1.amount), [{ charge_id: jReg.id, amount: jReg.amount }, { charge_id: jT1.id, amount: jT1.amount }])
+  await pay(juan, 1500, [{ charge_id: jT2.id, amount: 1500 }], "bank_transfer", "BDO-778812", "2026-07-14")
+  const pReg = await charge(paolo, regItem.id)
+  const over = await pay(paolo, 3000, [{ charge_id: pReg.id, amount: pReg.amount }], "e_wallet", "GCASH-55120", "2026-06-05")
+  must(await cashier.rpc("request_refund", { p_payment_id: over.payment_id, p_amount: 500, p_reason: "Paid 3,000 for the 2,500 registration fee" }), "refund")
+
+  await finance.auth.signOut()
+  await cashier.auth.signOut()
+  console.log(`  + ${code} finance: ${gen.created} charges, 3 payments, 1 refund request${north ? ", online payments on" : ", school admin view-only"}`)
 }

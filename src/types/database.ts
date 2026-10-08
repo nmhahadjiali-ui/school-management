@@ -305,6 +305,26 @@ isOneToOne: false
       referencedColumns: ["school_id","id"]
     }
                   ]
+                },"discount_types": {
+                  Row: {
+                    "calculation_type": Database["public"]['Enums']["discount_calculation"],"code": string,"created_at": string,"description": string | null,"id": string,"name": string,"school_id": string,"status": Database["public"]['Enums']["record_status"],"updated_at": string,"value": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "calculation_type": Database["public"]['Enums']["discount_calculation"],"code": string,"created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"school_id": string,"status"?: Database["public"]['Enums']["record_status"],"updated_at"?: string,"value": number
+                  }
+                  Update: {
+                    "calculation_type"?: Database["public"]['Enums']["discount_calculation"],"code"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"school_id"?: string,"status"?: Database["public"]['Enums']["record_status"],"updated_at"?: string,"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "discount_types_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"features": {
                   Row: {
                     "created_at": string,"default_enabled": boolean,"description": string | null,"id": string,"key": string,"name": string,"updated_at": string
@@ -318,6 +338,148 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"fee_structure_items": {
+                  Row: {
+                    "amount": number,"created_at": string,"due_date": string | null,"fee_structure_id": string,"fee_type_id": string,"frequency": Database["public"]['Enums']["fee_frequency"],"id": string,"installments": number,"name": string,"school_id": string,"sequence": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"created_at"?: string,"due_date"?: string | null,"fee_structure_id": string,"fee_type_id": string,"frequency"?: Database["public"]['Enums']["fee_frequency"],"id"?: string,"installments"?: number,"name": string,"school_id": string,"sequence"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"created_at"?: string,"due_date"?: string | null,"fee_structure_id"?: string,"fee_type_id"?: string,"frequency"?: Database["public"]['Enums']["fee_frequency"],"id"?: string,"installments"?: number,"name"?: string,"school_id"?: string,"sequence"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fee_items_structure_fkey"
+      columns: ["school_id","fee_structure_id"]
+isOneToOne: false
+      referencedRelation: "fee_structures"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "fee_items_type_fkey"
+      columns: ["school_id","fee_type_id"]
+isOneToOne: false
+      referencedRelation: "fee_types"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "fee_structure_items_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"fee_structures": {
+                  Row: {
+                    "academic_year_id": string,"created_at": string,"description": string | null,"grade_level_id": string | null,"id": string,"name": string,"school_id": string,"section_id": string | null,"status": Database["public"]['Enums']["record_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"created_at"?: string,"description"?: string | null,"grade_level_id"?: string | null,"id"?: string,"name": string,"school_id": string,"section_id"?: string | null,"status"?: Database["public"]['Enums']["record_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"created_at"?: string,"description"?: string | null,"grade_level_id"?: string | null,"id"?: string,"name"?: string,"school_id"?: string,"section_id"?: string | null,"status"?: Database["public"]['Enums']["record_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fee_structures_grade_fkey"
+      columns: ["school_id","grade_level_id"]
+isOneToOne: false
+      referencedRelation: "grade_levels"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "fee_structures_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fee_structures_section_fkey"
+      columns: ["school_id","academic_year_id","section_id"]
+isOneToOne: false
+      referencedRelation: "sections"
+      referencedColumns: ["school_id","academic_year_id","id"]
+    },{
+      foreignKeyName: "fee_structures_year_fkey"
+      columns: ["school_id","academic_year_id"]
+isOneToOne: false
+      referencedRelation: "academic_years"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"fee_types": {
+                  Row: {
+                    "category": string,"code": string,"created_at": string,"description": string | null,"id": string,"name": string,"school_id": string,"status": Database["public"]['Enums']["record_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category"?: string,"code": string,"created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"school_id": string,"status"?: Database["public"]['Enums']["record_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "category"?: string,"code"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"school_id"?: string,"status"?: Database["public"]['Enums']["record_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fee_types_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"financial_adjustments": {
+                  Row: {
+                    "adjustment_type": Database["public"]['Enums']["adjustment_type"],"created_at": string,"created_by": string | null,"id": string,"reason": string,"school_id": string,"signed_amount": number,"student_charge_id": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "adjustment_type": Database["public"]['Enums']["adjustment_type"],"created_at"?: string,"created_by"?: string | null,"id"?: string,"reason": string,"school_id": string,"signed_amount": number,"student_charge_id": string,"student_id": string
+                  }
+                  Update: {
+                    "adjustment_type"?: Database["public"]['Enums']["adjustment_type"],"created_at"?: string,"created_by"?: string | null,"id"?: string,"reason"?: string,"school_id"?: string,"signed_amount"?: number,"student_charge_id"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "adjustments_charge_fkey"
+      columns: ["school_id","student_id","student_charge_id"]
+isOneToOne: false
+      referencedRelation: "student_charge_balances"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "adjustments_charge_fkey"
+      columns: ["school_id","student_id","student_charge_id"]
+isOneToOne: false
+      referencedRelation: "student_charges"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "financial_adjustments_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"financial_audit_logs": {
+                  Row: {
+                    "action": string,"actor_user_id": string | null,"created_at": string,"entity": string,"entity_id": string | null,"id": string,"new_values": Json | null,"old_values": Json | null,"reason": string | null,"school_id": string,"student_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"actor_user_id"?: string | null,"created_at"?: string,"entity": string,"entity_id"?: string | null,"id"?: string,"new_values"?: Json | null,"old_values"?: Json | null,"reason"?: string | null,"school_id": string,"student_id"?: string | null
+                  }
+                  Update: {
+                    "action"?: string,"actor_user_id"?: string | null,"created_at"?: string,"entity"?: string,"entity_id"?: string | null,"id"?: string,"new_values"?: Json | null,"old_values"?: Json | null,"reason"?: string | null,"school_id"?: string,"student_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "financial_audit_logs_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"grade_change_logs": {
                   Row: {
@@ -629,6 +791,140 @@ isOneToOne: false
       referencedColumns: ["key"]
     }
                   ]
+                },"payment_allocations": {
+                  Row: {
+                    "amount": number,"created_at": string,"created_by": string | null,"id": string,"payment_id": string,"release_reason": string | null,"released_at": string | null,"released_by": string | null,"school_id": string,"student_charge_id": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"created_at"?: string,"created_by"?: string | null,"id"?: string,"payment_id": string,"release_reason"?: string | null,"released_at"?: string | null,"released_by"?: string | null,"school_id": string,"student_charge_id": string,"student_id": string
+                  }
+                  Update: {
+                    "amount"?: number,"created_at"?: string,"created_by"?: string | null,"id"?: string,"payment_id"?: string,"release_reason"?: string | null,"released_at"?: string | null,"released_by"?: string | null,"school_id"?: string,"student_charge_id"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "allocations_charge_fkey"
+      columns: ["school_id","student_id","student_charge_id"]
+isOneToOne: false
+      referencedRelation: "student_charge_balances"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "allocations_charge_fkey"
+      columns: ["school_id","student_id","student_charge_id"]
+isOneToOne: false
+      referencedRelation: "student_charges"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "allocations_payment_fkey"
+      columns: ["school_id","student_id","payment_id"]
+isOneToOne: false
+      referencedRelation: "payments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "allocations_payment_fkey"
+      columns: ["school_id","student_id","payment_id"]
+isOneToOne: false
+      referencedRelation: "student_payment_credits"
+      referencedColumns: ["school_id","student_id","payment_id"]
+    },{
+      foreignKeyName: "payment_allocations_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"payment_transactions": {
+                  Row: {
+                    "amount": number,"checkout_url": string | null,"created_at": string,"created_by": string | null,"currency": string,"failure_reason": string | null,"id": string,"metadata": NonNullable<Json>,"provider": string,"provider_transaction_id": string | null,"school_id": string,"status": Database["public"]['Enums']["payment_transaction_status"],"student_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"checkout_url"?: string | null,"created_at"?: string,"created_by"?: string | null,"currency": string,"failure_reason"?: string | null,"id"?: string,"metadata"?: NonNullable<Json>,"provider": string,"provider_transaction_id"?: string | null,"school_id": string,"status"?: Database["public"]['Enums']["payment_transaction_status"],"student_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"checkout_url"?: string | null,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"failure_reason"?: string | null,"id"?: string,"metadata"?: NonNullable<Json>,"provider"?: string,"provider_transaction_id"?: string | null,"school_id"?: string,"status"?: Database["public"]['Enums']["payment_transaction_status"],"student_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payment_transactions_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "payment_tx_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                },"payment_webhook_events": {
+                  Row: {
+                    "attempts": number,"error_message": string | null,"event_id": string,"event_type": string | null,"id": string,"payload": NonNullable<Json>,"processed_at": string | null,"provider": string,"received_at": string,"school_id": string | null,"signature_valid": boolean,"status": string,"transaction_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"error_message"?: string | null,"event_id": string,"event_type"?: string | null,"id"?: string,"payload"?: NonNullable<Json>,"processed_at"?: string | null,"provider": string,"received_at"?: string,"school_id"?: string | null,"signature_valid": boolean,"status"?: string,"transaction_id"?: string | null
+                  }
+                  Update: {
+                    "attempts"?: number,"error_message"?: string | null,"event_id"?: string,"event_type"?: string | null,"id"?: string,"payload"?: NonNullable<Json>,"processed_at"?: string | null,"provider"?: string,"received_at"?: string,"school_id"?: string | null,"signature_valid"?: boolean,"status"?: string,"transaction_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payment_webhook_events_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "payment_webhook_events_transaction_id_fkey"
+      columns: ["transaction_id"]
+isOneToOne: false
+      referencedRelation: "payment_transactions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"payments": {
+                  Row: {
+                    "amount": number,"created_at": string,"currency": string,"enrollment_id": string | null,"id": string,"idempotency_key": string | null,"notes": string | null,"payment_date": string,"payment_method": Database["public"]['Enums']["payment_method"],"payment_transaction_id": string | null,"received_by": string | null,"reference_number": string | null,"reversal_reason": string | null,"reversed_at": string | null,"reversed_by": string | null,"school_id": string,"status": Database["public"]['Enums']["payment_status"],"student_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"created_at"?: string,"currency": string,"enrollment_id"?: string | null,"id"?: string,"idempotency_key"?: string | null,"notes"?: string | null,"payment_date"?: string,"payment_method": Database["public"]['Enums']["payment_method"],"payment_transaction_id"?: string | null,"received_by"?: string | null,"reference_number"?: string | null,"reversal_reason"?: string | null,"reversed_at"?: string | null,"reversed_by"?: string | null,"school_id": string,"status"?: Database["public"]['Enums']["payment_status"],"student_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"created_at"?: string,"currency"?: string,"enrollment_id"?: string | null,"id"?: string,"idempotency_key"?: string | null,"notes"?: string | null,"payment_date"?: string,"payment_method"?: Database["public"]['Enums']["payment_method"],"payment_transaction_id"?: string | null,"received_by"?: string | null,"reference_number"?: string | null,"reversal_reason"?: string | null,"reversed_at"?: string | null,"reversed_by"?: string | null,"school_id"?: string,"status"?: Database["public"]['Enums']["payment_status"],"student_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payments_enrollment_fkey"
+      columns: ["school_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "payments_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "payments_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "payments_tx_fkey"
+      columns: ["school_id","payment_transaction_id"]
+isOneToOne: false
+      referencedRelation: "payment_transactions"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"created_at": string,"email": string,"first_name": string,"id": string,"last_name": string,"phone": string | null,"role": Database["public"]['Enums']["app_role"],"school_id": string | null,"status": Database["public"]['Enums']["profile_status"],"updated_at": string,"user_id": string
@@ -643,6 +939,90 @@ isOneToOne: false
                   Relationships: [
                     {
       foreignKeyName: "profiles_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"receipt_sequences": {
+                  Row: {
+                    "last_number": number,"school_id": string,"year": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "last_number"?: number,"school_id": string,"year": number
+                  }
+                  Update: {
+                    "last_number"?: number,"school_id"?: string,"year"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "receipt_sequences_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"receipts": {
+                  Row: {
+                    "created_at": string,"id": string,"issued_at": string,"issued_by": string | null,"payment_id": string,"receipt_number": string,"school_id": string,"status": Database["public"]['Enums']["receipt_status"],"void_reason": string | null,"voided_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"issued_at"?: string,"issued_by"?: string | null,"payment_id": string,"receipt_number": string,"school_id": string,"status"?: Database["public"]['Enums']["receipt_status"],"void_reason"?: string | null,"voided_at"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"issued_at"?: string,"issued_by"?: string | null,"payment_id"?: string,"receipt_number"?: string,"school_id"?: string,"status"?: Database["public"]['Enums']["receipt_status"],"void_reason"?: string | null,"voided_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "receipts_payment_fkey"
+      columns: ["school_id","payment_id"]
+isOneToOne: false
+      referencedRelation: "payments"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "receipts_payment_fkey"
+      columns: ["school_id","payment_id"]
+isOneToOne: false
+      referencedRelation: "student_payment_credits"
+      referencedColumns: ["school_id","payment_id"]
+    },{
+      foreignKeyName: "receipts_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"refunds": {
+                  Row: {
+                    "amount": number,"approved_by": string | null,"created_at": string,"decided_at": string | null,"decision_note": string | null,"id": string,"payment_id": string,"processed_at": string | null,"processed_by": string | null,"reason": string,"refund_method": Database["public"]['Enums']["payment_method"] | null,"refund_reference": string | null,"requested_by": string | null,"school_id": string,"status": Database["public"]['Enums']["refund_status"],"student_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"approved_by"?: string | null,"created_at"?: string,"decided_at"?: string | null,"decision_note"?: string | null,"id"?: string,"payment_id": string,"processed_at"?: string | null,"processed_by"?: string | null,"reason": string,"refund_method"?: Database["public"]['Enums']["payment_method"] | null,"refund_reference"?: string | null,"requested_by"?: string | null,"school_id": string,"status"?: Database["public"]['Enums']["refund_status"],"student_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"approved_by"?: string | null,"created_at"?: string,"decided_at"?: string | null,"decision_note"?: string | null,"id"?: string,"payment_id"?: string,"processed_at"?: string | null,"processed_by"?: string | null,"reason"?: string,"refund_method"?: Database["public"]['Enums']["payment_method"] | null,"refund_reference"?: string | null,"requested_by"?: string | null,"school_id"?: string,"status"?: Database["public"]['Enums']["refund_status"],"student_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "refunds_payment_fkey"
+      columns: ["school_id","student_id","payment_id"]
+isOneToOne: false
+      referencedRelation: "payments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "refunds_payment_fkey"
+      columns: ["school_id","student_id","payment_id"]
+isOneToOne: false
+      referencedRelation: "student_payment_credits"
+      referencedColumns: ["school_id","student_id","payment_id"]
+    },{
+      foreignKeyName: "refunds_school_id_fkey"
       columns: ["school_id"]
 isOneToOne: false
       referencedRelation: "schools"
@@ -677,14 +1057,14 @@ isOneToOne: false
                   ]
                 },"school_settings": {
                   Row: {
-                    "attendance_edit_days": number | null,"branding": NonNullable<Json>,"created_at": string,"email_notifications_enabled": boolean,"enforce_room_conflicts": boolean,"grade_max_score": number,"grade_passing_score": number,"id": string,"notifications_enabled": boolean,"primary_color": string,"push_notifications_enabled": boolean,"school_id": string,"sms_notifications_enabled": boolean,"teachers_can_announce": boolean,"updated_at": string
+                    "admin_finance_access": Database["public"]['Enums']["finance_access"],"attendance_edit_days": number | null,"branding": NonNullable<Json>,"created_at": string,"currency": string,"email_notifications_enabled": boolean,"enforce_room_conflicts": boolean,"grade_max_score": number,"grade_passing_score": number,"id": string,"notifications_enabled": boolean,"primary_color": string,"push_notifications_enabled": boolean,"receipt_prefix": string,"refunds_require_second_approver": boolean,"school_id": string,"sms_notifications_enabled": boolean,"teachers_can_announce": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"email_notifications_enabled"?: boolean,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"notifications_enabled"?: boolean,"primary_color"?: string,"push_notifications_enabled"?: boolean,"school_id": string,"sms_notifications_enabled"?: boolean,"teachers_can_announce"?: boolean,"updated_at"?: string
+                    "admin_finance_access"?: Database["public"]['Enums']["finance_access"],"attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"currency"?: string,"email_notifications_enabled"?: boolean,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"notifications_enabled"?: boolean,"primary_color"?: string,"push_notifications_enabled"?: boolean,"receipt_prefix"?: string,"refunds_require_second_approver"?: boolean,"school_id": string,"sms_notifications_enabled"?: boolean,"teachers_can_announce"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"email_notifications_enabled"?: boolean,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"notifications_enabled"?: boolean,"primary_color"?: string,"push_notifications_enabled"?: boolean,"school_id"?: string,"sms_notifications_enabled"?: boolean,"teachers_can_announce"?: boolean,"updated_at"?: string
+                    "admin_finance_access"?: Database["public"]['Enums']["finance_access"],"attendance_edit_days"?: number | null,"branding"?: NonNullable<Json>,"created_at"?: string,"currency"?: string,"email_notifications_enabled"?: boolean,"enforce_room_conflicts"?: boolean,"grade_max_score"?: number,"grade_passing_score"?: number,"id"?: string,"notifications_enabled"?: boolean,"primary_color"?: string,"push_notifications_enabled"?: boolean,"receipt_prefix"?: string,"refunds_require_second_approver"?: boolean,"school_id"?: string,"sms_notifications_enabled"?: boolean,"teachers_can_announce"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -765,6 +1145,94 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "schools"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"student_charges": {
+                  Row: {
+                    "academic_year_id": string,"amount": number,"cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"created_at": string,"created_by": string | null,"description": string,"due_date": string | null,"enrollment_id": string,"fee_structure_item_id": string | null,"fee_type_id": string,"id": string,"installment_no": number,"school_id": string,"status": Database["public"]['Enums']["charge_status"],"student_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"amount": number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"description": string,"due_date"?: string | null,"enrollment_id": string,"fee_structure_item_id"?: string | null,"fee_type_id": string,"id"?: string,"installment_no"?: number,"school_id": string,"status"?: Database["public"]['Enums']["charge_status"],"student_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"amount"?: number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string,"due_date"?: string | null,"enrollment_id"?: string,"fee_structure_item_id"?: string | null,"fee_type_id"?: string,"id"?: string,"installment_no"?: number,"school_id"?: string,"status"?: Database["public"]['Enums']["charge_status"],"student_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "charges_enrollment_fkey"
+      columns: ["school_id","academic_year_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","academic_year_id","student_id","id"]
+    },{
+      foreignKeyName: "charges_fee_type_fkey"
+      columns: ["school_id","fee_type_id"]
+isOneToOne: false
+      referencedRelation: "fee_types"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "charges_item_fkey"
+      columns: ["school_id","fee_structure_item_id"]
+isOneToOne: false
+      referencedRelation: "fee_structure_items"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "charges_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "student_charges_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"student_discounts": {
+                  Row: {
+                    "amount": number,"created_at": string,"created_by": string | null,"discount_type_id": string,"enrollment_id": string,"id": string,"percentage": number | null,"reason": string,"revoke_reason": string | null,"revoked_at": string | null,"revoked_by": string | null,"school_id": string,"status": Database["public"]['Enums']["record_status"],"student_charge_id": string,"student_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"created_at"?: string,"created_by"?: string | null,"discount_type_id": string,"enrollment_id": string,"id"?: string,"percentage"?: number | null,"reason": string,"revoke_reason"?: string | null,"revoked_at"?: string | null,"revoked_by"?: string | null,"school_id": string,"status"?: Database["public"]['Enums']["record_status"],"student_charge_id": string,"student_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"created_at"?: string,"created_by"?: string | null,"discount_type_id"?: string,"enrollment_id"?: string,"id"?: string,"percentage"?: number | null,"reason"?: string,"revoke_reason"?: string | null,"revoked_at"?: string | null,"revoked_by"?: string | null,"school_id"?: string,"status"?: Database["public"]['Enums']["record_status"],"student_charge_id"?: string,"student_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "student_discounts_charge_fkey"
+      columns: ["school_id","student_id","student_charge_id"]
+isOneToOne: false
+      referencedRelation: "student_charge_balances"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "student_discounts_charge_fkey"
+      columns: ["school_id","student_id","student_charge_id"]
+isOneToOne: false
+      referencedRelation: "student_charges"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "student_discounts_enrollment_fkey"
+      columns: ["school_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","student_id","id"]
+    },{
+      foreignKeyName: "student_discounts_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "student_discounts_type_fkey"
+      columns: ["school_id","discount_type_id"]
+isOneToOne: false
+      referencedRelation: "discount_types"
+      referencedColumns: ["school_id","id"]
     }
                   ]
                 },"student_enrollments": {
@@ -970,7 +1438,73 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "student_charge_balances": {
+                  Row: {
+                    "academic_year_id": string | null,"adjustments": number | null,"amount": number | null,"cancelled_at": string | null,"created_at": string | null,"description": string | null,"discounts": number | null,"due_date": string | null,"effective_status": Database["public"]['Enums']["charge_status"] | null,"enrollment_id": string | null,"fee_structure_item_id": string | null,"fee_type_id": string | null,"id": string | null,"net_amount": number | null,"paid": number | null,"remaining": number | null,"school_id": string | null,"status": Database["public"]['Enums']["charge_status"] | null,"student_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "charges_enrollment_fkey"
+      columns: ["school_id","academic_year_id","student_id","enrollment_id"]
+isOneToOne: false
+      referencedRelation: "student_enrollments"
+      referencedColumns: ["school_id","academic_year_id","student_id","id"]
+    },{
+      foreignKeyName: "charges_fee_type_fkey"
+      columns: ["school_id","fee_type_id"]
+isOneToOne: false
+      referencedRelation: "fee_types"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "charges_item_fkey"
+      columns: ["school_id","fee_structure_item_id"]
+isOneToOne: false
+      referencedRelation: "fee_structure_items"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "charges_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    },{
+      foreignKeyName: "student_charges_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"student_ledger": {
+                  Row: {
+                    "academic_year_id": string | null,"amount": number | null,"description": string | null,"entity_id": string | null,"entry_date": string | null,"entry_type": string | null,"occurred_at": string | null,"school_id": string | null,"student_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"student_payment_credits": {
+                  Row: {
+                    "amount": number | null,"payment_date": string | null,"payment_id": string | null,"school_id": string | null,"student_id": string | null,"unallocated": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "payments_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "payments_student_ref"
+      columns: ["school_id","student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "accept_invitation":
@@ -978,6 +1512,12 @@ isOneToOne: false
                            },
 "announcement_audience_count":
 { Args: { "p_id": string }; Returns: number
+                           },
+"apply_credit":
+{ Args: { "p_allocations": Json,"p_payment_id": string }; Returns: number
+                           },
+"apply_discount":
+{ Args: { "p_charge_ids": (string)[],"p_discount_type_id": string,"p_reason": string }; Returns: number
                            },
 "archive_academic_year":
 { Args: { "p_year_id": string }; Returns: undefined
@@ -997,6 +1537,12 @@ isOneToOne: false
               "absent": number,"excused": number,"late": number,"present": number,"total": number
             }[]
                            },
+"cancel_charge":
+{ Args: { "p_charge_id": string,"p_reason": string }; Returns: undefined
+                           },
+"cancel_refund":
+{ Args: { "p_reason": string,"p_refund_id": string }; Returns: undefined
+                           },
 "claim_notification_deliveries":
 { Args: { "p_limit"?: number }; Returns: {
               "attempts": number,"channel": Database["public"]['Enums']["delivery_channel"],"data": Json,"destination": string,"id": string,"message": string,"notification_id": string,"priority": Database["public"]['Enums']["notification_priority"],"school_id": string,"title": string
@@ -1004,6 +1550,35 @@ isOneToOne: false
                            },
 "complete_notification_delivery":
 { Args: { "p_error"?: string,"p_id": string,"p_provider": string,"p_provider_message_id"?: string,"p_success": boolean }; Returns: Database["public"]['Enums']["delivery_status"]
+                           },
+"complete_payment_transaction":
+{ Args: { "p_failure_reason"?: string,"p_status": Database["public"]['Enums']["payment_transaction_status"],"p_transaction_id": string,"p_verified_amount"?: number }; Returns: Json
+                           },
+"create_adjustment":
+{ Args: { "p_amount": number,"p_charge_id": string,"p_increase"?: boolean,"p_reason": string,"p_type": Database["public"]['Enums']["adjustment_type"] }; Returns: string
+                           },
+"create_charge":
+{ Args: { "p_academic_year_id"?: string,"p_amount": number,"p_description": string,"p_due_date"?: string,"p_fee_type_id": string,"p_student_id": string }; Returns: string
+                           },
+"create_payment_intent":
+{ Args: { "p_charge_ids": (string)[],"p_provider": string,"p_student_id": string }; Returns: Json
+                           },
+"decide_refund":
+{ Args: { "p_approve": boolean,"p_note"?: string,"p_refund_id": string }; Returns: undefined
+                           },
+"finance_actor_names":
+{ Args: { "p_user_ids": (string)[] }; Returns: {
+              "name": string,"user_id": string
+            }[]
+                           },
+"finance_overview":
+{ Args: { "p_academic_year_id"?: string,"p_fee_type_id"?: string,"p_from"?: string,"p_grade_level_id"?: string,"p_method"?: Database["public"]['Enums']["payment_method"],"p_school_id": string,"p_section_id"?: string,"p_to"?: string }; Returns: Json
+                           },
+"finish_webhook_event":
+{ Args: { "p_error"?: string,"p_event_row_id": string,"p_status": string }; Returns: undefined
+                           },
+"generate_charges":
+{ Args: { "p_dry_run"?: boolean,"p_structure_id": string }; Returns: Json
                            },
 "get_my_context":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -1014,14 +1589,38 @@ isOneToOne: false
 "mark_notifications_read":
 { Args: { "p_ids"?: (string)[] }; Returns: number
                            },
+"my_finance_level":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"process_refund":
+{ Args: { "p_method": Database["public"]['Enums']["payment_method"],"p_reference": string,"p_refund_id": string }; Returns: undefined
+                           },
 "publish_announcement":
 { Args: { "p_id": string }; Returns: string
+                           },
+"record_payment":
+{ Args: { "p_allocations": Json,"p_amount": number,"p_idempotency_key": string,"p_method": Database["public"]['Enums']["payment_method"],"p_notes": string,"p_payment_date": string,"p_reference": string,"p_student_id": string }; Returns: Json
+                           },
+"record_webhook_event":
+{ Args: { "p_event_id": string,"p_event_type": string,"p_payload": Json,"p_provider": string,"p_signature_valid": boolean,"p_transaction_id"?: string }; Returns: Json
                            },
 "register_device":
 { Args: { "p_app_version"?: string,"p_device_type": Database["public"]['Enums']["device_type"],"p_push_token": string }; Returns: string
                            },
+"release_allocation":
+{ Args: { "p_allocation_id": string,"p_reason": string }; Returns: undefined
+                           },
+"request_refund":
+{ Args: { "p_amount": number,"p_payment_id": string,"p_reason": string }; Returns: string
+                           },
+"reverse_payment":
+{ Args: { "p_payment_id": string,"p_reason": string }; Returns: undefined
+                           },
 "review_grades":
 { Args: { "p_action": string,"p_ids": (string)[],"p_reason"?: string }; Returns: number
+                           },
+"revoke_discount":
+{ Args: { "p_discount_id": string,"p_reason": string }; Returns: undefined
                            },
 "run_communication_jobs":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -1038,6 +1637,9 @@ isOneToOne: false
 "set_current_academic_year":
 { Args: { "p_year_id": string }; Returns: undefined
                            },
+"set_transaction_checkout":
+{ Args: { "p_checkout_url": string,"p_provider_transaction_id": string,"p_transaction_id": string }; Returns: undefined
+                           },
 "transfer_enrollment":
 { Args: { "p_effective_date"?: string,"p_enrollment_id": string,"p_grade_level_id": string,"p_section_id": string }; Returns: string
                            },
@@ -1048,7 +1650,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "academic_year_status": "planned"|"active"|"archived","announcement_status": "draft"|"scheduled"|"published"|"archived","announcement_target_type": "school"|"grade_level"|"section"|"class"|"user","app_role": "super_admin"|"school_admin"|"teacher"|"student"|"parent","attendance_session_status": "open"|"locked","attendance_session_type": "daily"|"subject"|"event"|"custom","attendance_status": "present"|"absent"|"late"|"excused","coursework_status": "draft"|"published"|"archived","delivery_channel": "in_app"|"email"|"sms"|"push","delivery_status": "pending"|"processing"|"sent"|"delivered"|"failed"|"cancelled","device_type": "android"|"ios"|"web","enrollment_status": "enrolled"|"completed"|"transferred"|"withdrawn","gender": "male"|"female"|"other"|"unspecified","grade_status": "draft"|"submitted"|"approved"|"locked","grading_period_status": "upcoming"|"open"|"closed","guardian_relationship": "mother"|"father"|"guardian"|"grandparent"|"sibling"|"other","notification_priority": "low"|"normal"|"high"|"urgent","profile_status": "pending"|"active"|"inactive","record_status": "active"|"inactive","schedule_status": "active"|"inactive","school_status": "active"|"inactive","student_status": "active"|"inactive"|"graduated"|"transferred"|"withdrawn","submission_status": "submitted"|"late"|"reviewed","teacher_status": "active"|"inactive"|"resigned"|"retired"
+            "academic_year_status": "planned"|"active"|"archived","adjustment_type": "discount"|"waiver"|"penalty"|"credit"|"debit"|"correction","announcement_status": "draft"|"scheduled"|"published"|"archived","announcement_target_type": "school"|"grade_level"|"section"|"class"|"user","app_role": "super_admin"|"school_admin"|"teacher"|"student"|"parent"|"finance_admin"|"finance_staff","attendance_session_status": "open"|"locked","attendance_session_type": "daily"|"subject"|"event"|"custom","attendance_status": "present"|"absent"|"late"|"excused","charge_status": "pending"|"partially_paid"|"paid"|"overdue"|"cancelled","coursework_status": "draft"|"published"|"archived","delivery_channel": "in_app"|"email"|"sms"|"push","delivery_status": "pending"|"processing"|"sent"|"delivered"|"failed"|"cancelled","device_type": "android"|"ios"|"web","discount_calculation": "fixed"|"percentage","enrollment_status": "enrolled"|"completed"|"transferred"|"withdrawn","fee_frequency": "one_time"|"monthly"|"quarterly"|"semester"|"annual"|"custom","finance_access": "full"|"view"|"none","gender": "male"|"female"|"other"|"unspecified","grade_status": "draft"|"submitted"|"approved"|"locked","grading_period_status": "upcoming"|"open"|"closed","guardian_relationship": "mother"|"father"|"guardian"|"grandparent"|"sibling"|"other","notification_priority": "low"|"normal"|"high"|"urgent","payment_method": "cash"|"bank_transfer"|"check"|"card"|"e_wallet"|"online"|"other","payment_status": "completed"|"reversed","payment_transaction_status": "pending"|"processing"|"successful"|"failed"|"cancelled"|"expired"|"refunded","profile_status": "pending"|"active"|"inactive","receipt_status": "issued"|"voided","record_status": "active"|"inactive","refund_status": "requested"|"approved"|"rejected"|"processed"|"cancelled","schedule_status": "active"|"inactive","school_status": "active"|"inactive","student_status": "active"|"inactive"|"graduated"|"transferred"|"withdrawn","submission_status": "submitted"|"late"|"reviewed","teacher_status": "active"|"inactive"|"resigned"|"retired"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1164,7 +1766,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "academic_year_status": ["planned", "active", "archived"],"announcement_status": ["draft", "scheduled", "published", "archived"],"announcement_target_type": ["school", "grade_level", "section", "class", "user"],"app_role": ["super_admin", "school_admin", "teacher", "student", "parent"],"attendance_session_status": ["open", "locked"],"attendance_session_type": ["daily", "subject", "event", "custom"],"attendance_status": ["present", "absent", "late", "excused"],"coursework_status": ["draft", "published", "archived"],"delivery_channel": ["in_app", "email", "sms", "push"],"delivery_status": ["pending", "processing", "sent", "delivered", "failed", "cancelled"],"device_type": ["android", "ios", "web"],"enrollment_status": ["enrolled", "completed", "transferred", "withdrawn"],"gender": ["male", "female", "other", "unspecified"],"grade_status": ["draft", "submitted", "approved", "locked"],"grading_period_status": ["upcoming", "open", "closed"],"guardian_relationship": ["mother", "father", "guardian", "grandparent", "sibling", "other"],"notification_priority": ["low", "normal", "high", "urgent"],"profile_status": ["pending", "active", "inactive"],"record_status": ["active", "inactive"],"schedule_status": ["active", "inactive"],"school_status": ["active", "inactive"],"student_status": ["active", "inactive", "graduated", "transferred", "withdrawn"],"submission_status": ["submitted", "late", "reviewed"],"teacher_status": ["active", "inactive", "resigned", "retired"]
+            "academic_year_status": ["planned", "active", "archived"],"adjustment_type": ["discount", "waiver", "penalty", "credit", "debit", "correction"],"announcement_status": ["draft", "scheduled", "published", "archived"],"announcement_target_type": ["school", "grade_level", "section", "class", "user"],"app_role": ["super_admin", "school_admin", "teacher", "student", "parent", "finance_admin", "finance_staff"],"attendance_session_status": ["open", "locked"],"attendance_session_type": ["daily", "subject", "event", "custom"],"attendance_status": ["present", "absent", "late", "excused"],"charge_status": ["pending", "partially_paid", "paid", "overdue", "cancelled"],"coursework_status": ["draft", "published", "archived"],"delivery_channel": ["in_app", "email", "sms", "push"],"delivery_status": ["pending", "processing", "sent", "delivered", "failed", "cancelled"],"device_type": ["android", "ios", "web"],"discount_calculation": ["fixed", "percentage"],"enrollment_status": ["enrolled", "completed", "transferred", "withdrawn"],"fee_frequency": ["one_time", "monthly", "quarterly", "semester", "annual", "custom"],"finance_access": ["full", "view", "none"],"gender": ["male", "female", "other", "unspecified"],"grade_status": ["draft", "submitted", "approved", "locked"],"grading_period_status": ["upcoming", "open", "closed"],"guardian_relationship": ["mother", "father", "guardian", "grandparent", "sibling", "other"],"notification_priority": ["low", "normal", "high", "urgent"],"payment_method": ["cash", "bank_transfer", "check", "card", "e_wallet", "online", "other"],"payment_status": ["completed", "reversed"],"payment_transaction_status": ["pending", "processing", "successful", "failed", "cancelled", "expired", "refunded"],"profile_status": ["pending", "active", "inactive"],"receipt_status": ["issued", "voided"],"record_status": ["active", "inactive"],"refund_status": ["requested", "approved", "rejected", "processed", "cancelled"],"schedule_status": ["active", "inactive"],"school_status": ["active", "inactive"],"student_status": ["active", "inactive", "graduated", "transferred", "withdrawn"],"submission_status": ["submitted", "late", "reviewed"],"teacher_status": ["active", "inactive", "resigned", "retired"]
           }
         }
 } as const

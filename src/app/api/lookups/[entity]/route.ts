@@ -2,10 +2,11 @@ import { NextResponse } from "next/server"
 import { authorize } from "@/lib/auth/session"
 import { likePattern, orIlike } from "@/lib/list-params"
 import { createClient } from "@/lib/supabase/server"
+import { myFinanceLevel } from "@/lib/finance/access"
 
 /**
  * GET /api/lookups/:entity?q= — at most 10 matches for record pickers.
- * School admins only; scoped to their school (and by RLS).
+ * School admins (and finance users, for students); scoped to their school and by RLS.
  */
 export async function GET(request: Request, { params }: RouteContext<"/api/lookups/[entity]">) {
   const { entity } = await params
@@ -13,7 +14,9 @@ export async function GET(request: Request, { params }: RouteContext<"/api/looku
   if (entity !== "students" && entity !== "guardians" && entity !== "teachers") {
     return NextResponse.json({ error: "not_found" }, { status: 404 })
   }
-  const ctx = await authorize("school.records.manage")
+  // Finance users may look up students (to bill them / record payments); RLS
+  // gives them names and numbers only when their finance level allows it.
+  const ctx = (await authorize("school.records.manage")) ?? (entity === "students" && (await myFinanceLevel()) !== "none" ? await authorize("finance.access") : null)
   if (!ctx?.profile.school_id) return NextResponse.json({ error: "forbidden" }, { status: 403 })
 
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim().slice(0, 100)
