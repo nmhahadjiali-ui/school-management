@@ -3,7 +3,7 @@
 type Opt = { value: string; label: string }
 
 export const yearOptions = (years: { id: string; name: string; status: string; is_current: boolean }[]): Opt[] =>
-  years.map((y) => ({ value: y.id, label: `${y.name}${y.is_current ? " (current)" : y.status === "archived" ? " (archived)" : ""}` }))
+  years.map((y) => ({ value: y.id, label: `${y.name}${y.is_current ? " (current)" : y.status === "archived" ? " (archived)" : y.status === "planned" ? " (planned)" : ""}` }))
 
 export const gradeOptions = (grades: { id: string; name: string }[]): Opt[] => grades.map((g) => ({ value: g.id, label: g.name }))
 

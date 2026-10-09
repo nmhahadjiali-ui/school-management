@@ -2,7 +2,7 @@
 // authorization, cross-school isolation on profile pages, lookups API.
 import { before, describe, test } from "node:test"
 import assert from "node:assert/strict"
-import { APP_URL, buildStructure, buildTenants, http, sessionCookie } from "./helpers.mjs"
+import { APP_URL, buildStructure, buildTenants, http, insert, sessionCookie } from "./helpers.mjs"
 
 const skip = APP_URL ? false : "TEST_APP_URL not set (start the app to run HTTP tests)"
 let t, A, B, cookie
@@ -106,5 +106,27 @@ describe("lookups API", { skip }, () => {
     assert.equal((await http("/api/lookups/students?q=doe", cookie.teacherA)).status, 403)
     assert.equal((await http("/api/lookups/students?q=doe")).status, 401)
     assert.equal((await http("/api/lookups/profiles?q=a", cookie.adminA)).status, 404)
+  })
+})
+
+describe("academic year shown on sections and teaching loads", { skip }, () => {
+  test("new sections default to the year shown; empty years explain why nothing is listed", async () => {
+    const planned = await insert("academic_years", { school_id: t.schoolA.id, name: `2030-2031 ${Date.now() % 1e6}`, start_date: "2030-06-01", end_date: "2031-03-31", status: "planned" })
+
+    // Default view = current year: the form preselects it, not the newest (planned) year.
+    const html = await text("/sections", "adminA")
+    // The dialog's form is rendered in the browser; its props travel in the page's RSC payload.
+    const payload = html.replace(/\\"/g, '"')
+    const field = payload.match(/"defaultYearId":"([0-9a-f-]{36})"/)
+    assert.ok(field, "new-section form found in the page payload")
+    assert.equal(field[1], A.y2026.id)
+    assert.ok(html.includes("(planned)"), "planned years are labelled")
+
+    const sections = await text(`/sections?year=${planned.id}`, "adminA")
+    assert.ok(sections.includes(`No sections found in ${planned.name}`))
+    const loads = await text(`/teaching-loads?year=${planned.id}`, "adminA")
+    assert.ok(loads.includes("has no active sections yet"))
+    const current = await text("/teaching-loads", "adminA")
+    assert.ok(!current.includes("has no active sections yet"), "no warning when the year has sections")
   })
 })

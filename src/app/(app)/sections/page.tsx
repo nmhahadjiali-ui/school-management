@@ -29,6 +29,8 @@ export default async function SectionsPage({ searchParams }: PageProps<"/section
   const yearList = years.data ?? []
   const year = pickYear(yearList, typeof sp.year === "string" ? sp.year : undefined)
   const openYears = yearList.filter((y) => y.status !== "archived")
+  // New sections default to the year shown in the table (else the current / first open year).
+  const formYear = openYears.find((y) => y.id === year?.id) ?? openYears.find((y) => y.is_current) ?? openYears[0]
 
   return (
     <>
@@ -38,7 +40,7 @@ export default async function SectionsPage({ searchParams }: PageProps<"/section
         actions={
           openYears.length > 0 && (grades.data ?? []).length > 0 ? (
             <FormDialog trigger={<><Plus className="size-4" aria-hidden /> New section</>} title="New section" action={createSection} submitLabel="Create">
-              <SectionFields years={yearOptions(openYears)} grades={gradeOptions((grades.data ?? []).filter((g) => g.status === "active"))} teachers={teacherOptions(teachers.data ?? [])} />
+              <SectionFields years={yearOptions(openYears)} defaultYearId={formYear?.id} grades={gradeOptions((grades.data ?? []).filter((g) => g.status === "active"))} teachers={teacherOptions(teachers.data ?? [])} />
             </FormDialog>
           ) : null
         }
@@ -55,7 +57,7 @@ export default async function SectionsPage({ searchParams }: PageProps<"/section
         />
         {year && (
           <Suspense key={JSON.stringify(sp)} fallback={<TableSkeleton />}>
-            <SectionsTable schoolId={ctx.schoolId} yearId={year.id} sp={sp} />
+            <SectionsTable schoolId={ctx.schoolId} yearId={year.id} yearName={year.name} otherYears={yearList.length > 1} sp={sp} />
           </Suspense>
         )}
       </Card>
@@ -63,13 +65,20 @@ export default async function SectionsPage({ searchParams }: PageProps<"/section
   )
 }
 
-async function SectionsTable({ schoolId, yearId, sp }: { schoolId: string; yearId: string; sp: SearchParams }) {
+async function SectionsTable({ schoolId, yearId, yearName, otherYears, sp }: { schoolId: string; yearId: string; yearName: string; otherYears: boolean; sp: SearchParams }) {
   const p = parseListParams(sp, { sorts: SECTION_SORTS, defaultSort: "grade", filters: ["grade", "status"] })
   if (p.filters.grade && !isUuid(p.filters.grade)) delete p.filters.grade
   p.filters.year = yearId
   const page = await listSections(schoolId, p)
   if (page.error) return <Alert tone="error" className="m-4">Sections could not be loaded. Please refresh the page.</Alert>
-  if (page.total === 0) return <EmptyState title="No sections found" description="Create sections for this academic year." />
+  if (page.total === 0) {
+    return (
+      <EmptyState
+        title={`No sections found in ${yearName}`}
+        description={otherYears ? "Sections belong to one academic year. Create sections for this year, or choose another year in the Academic year filter." : "Create sections for this academic year."}
+      />
+    )
+  }
   const sort = { pathname: "/sections", searchParams: sp, current: p }
   return (
     <>

@@ -46,6 +46,22 @@ export default async function AssignmentsPage({ searchParams }: PageProps<"/teac
         }
       />
       {!year && <Alert tone="info" className="mb-4">Create an academic year first.</Alert>}
+      {year && sectionOpts.length === 0 && (
+        <Alert tone="info" className="mb-4">
+          {year.name} has no active sections yet, so there is nothing to assign teachers to. Teaching loads belong to one academic year:{" "}
+          <Link href={`/sections?year=${year.id}`} className="font-medium underline">create sections for {year.name}</Link>, or choose another year in the Academic year filter.
+        </Alert>
+      )}
+      {year && (teachers.data ?? []).length === 0 && (
+        <Alert tone="info" className="mb-4">
+          There are no active teachers yet. <Link href="/teachers" className="font-medium underline">Add teachers</Link> first.
+        </Alert>
+      )}
+      {year && (subjects.data ?? []).length === 0 && (
+        <Alert tone="info" className="mb-4">
+          There are no active subjects yet. <Link href="/subjects" className="font-medium underline">Add subjects</Link> first.
+        </Alert>
+      )}
       {year && (
         <Card>
           <ListToolbar

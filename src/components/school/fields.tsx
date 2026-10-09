@@ -50,11 +50,14 @@ export function SubjectFields({ subject }: { subject?: Subject }) {
 export function SectionFields({
   section,
   years,
+  defaultYearId,
   grades,
   teachers,
 }: {
   section?: Section
   years?: Option[]
+  /** Preselected year: the one the list is showing, so a new section appears in it. */
+  defaultYearId?: string
   grades?: Option[]
   teachers: Option[]
 }) {
@@ -62,7 +65,7 @@ export function SectionFields({
     <>
       {years && grades && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field as="select" name="academic_year_id" label="Academic year" options={years} required />
+          <Field as="select" name="academic_year_id" label="Academic year" options={years} defaultValue={defaultYearId} required />
           <Field as="select" name="grade_level_id" label="Grade level" options={withNone(grades, "Choose…")} required />
         </div>
       )}
