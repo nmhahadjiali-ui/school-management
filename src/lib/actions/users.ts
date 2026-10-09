@@ -1,12 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { authorize } from "@/lib/auth/session"
-import { isSchoolMemberRole } from "@/lib/auth/permissions"
+import { authorize, getUserContext } from "@/lib/auth/session"
+import { createClient } from "@/lib/supabase/server"
+import { provisionUserAs } from "@/lib/users/provision"
 import { denied, fail, formToObject, invalid, type ActionResult } from "@/lib/action-result"
-import { provisionUserSchema, updateMemberSchema, uuidSchema } from "@/lib/validations"
+import { updateMemberSchema, uuidSchema } from "@/lib/validations"
 import * as users from "@/services/users"
-import { getSchool } from "@/services/schools"
 
 /**
  * Create an account in a school.
@@ -15,37 +15,12 @@ import { getSchool } from "@/services/schools"
  * Uses the service key, so authorization here is mandatory.
  */
 export async function provisionUser(schoolId: string, _prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  if (!uuidSchema.safeParse(schoolId).success) return denied()
-  const ctx = (await authorize("platform.schools.manage")) ?? (await authorize("school.users.manage"))
-  if (!ctx) return denied()
-
-  const parsed = provisionUserSchema.safeParse(formToObject(formData))
-  if (!parsed.success) return invalid(parsed.error)
-
-  if (ctx.profile.role === "super_admin") {
-    // Confirm the school exists and is visible to this super admin.
-    const { data: school } = await getSchool(schoolId)
-    if (!school) return { ok: false, error: "The school was not found." }
-  } else {
-    if (ctx.profile.school_id !== schoolId) return denied()
-    if (!isSchoolMemberRole(parsed.data.role)) {
-      return { ok: false, error: "School admins can only add teachers, students and parents." }
-    }
+  const result = await provisionUserAs(await getUserContext(), await createClient(), schoolId, formToObject(formData))
+  if (result.ok) {
+    revalidatePath("/users")
+    revalidatePath("/platform", "layout")
   }
-
-  const { error } = await users.provisionUser({ ...parsed.data, schoolId })
-  if (error) {
-    if (error.code === "email_exists" || error.status === 422) {
-      return { ok: false, error: "Please correct the highlighted fields.", fieldErrors: { email: ["An account with this email already exists"] } }
-    }
-    if (error.code === "weak_password") {
-      return { ok: false, error: "Please choose a stronger password.", fieldErrors: { password: [error.message] } }
-    }
-    return fail(error, "provisionUser")
-  }
-  revalidatePath("/users")
-  revalidatePath("/platform", "layout")
-  return { ok: true, message: "Account created. Share the temporary password securely; the user can change it after signing in." }
+  return result
 }
 
 /** School admin (own school) or super admin: change a member's role/status. */

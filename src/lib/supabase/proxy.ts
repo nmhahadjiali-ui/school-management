@@ -2,9 +2,9 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 /** Routes reachable without a session. Everything else requires sign-in. */
-// /api/jobs authenticates with a bearer secret (cron), and payment webhooks
-// with the provider signature, not a session.
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/auth", "/api/jobs", "/api/payments/webhooks"]
+// /api/jobs authenticates with a bearer secret (cron), payment webhooks with
+// the provider signature, and /api/mobile with the app's bearer access token.
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/auth", "/api/jobs", "/api/payments/webhooks", "/api/mobile"]
 /** Pages a signed-in user has no reason to see. */
 const GUEST_ONLY_PATHS = ["/login", "/register", "/forgot-password"]
 

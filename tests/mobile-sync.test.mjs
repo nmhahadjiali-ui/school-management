@@ -115,3 +115,35 @@ describe("devices (push foundation)", () => {
     assert.equal(del.data.length, 1)
   })
 })
+
+describe("platform administration from the app (direct, under RLS)", () => {
+  test("super admin edits a school; unknown time zones are rejected for every client", async () => {
+    const sup = await signedIn(t.users.super.email)
+    const ok = await sup.from("schools").update({ timezone: "Asia/Manila" }).eq("id", t.schoolB.id).select("timezone").single()
+    assert.equal(ok.error, null)
+    assert.equal(ok.data.timezone, "Asia/Manila")
+
+    const bad = await sup.from("schools").update({ timezone: "Mars/Olympus" }).eq("id", t.schoolB.id).select("id").single()
+    assert.equal(bad.error?.code, "P0001")
+    assert.match(bad.error.message, /valid time zone/)
+    const created = await sup.from("schools").insert({ name: "Bad TZ", code: `TZ-${Date.now() % 1e6}`, timezone: "Nowhere" }).select("id")
+    assert.equal(created.error?.code, "P0001")
+  })
+
+  test("super admin toggles features and user status; school admins cannot reach other schools", async () => {
+    const sup = await signedIn(t.users.super.email)
+    const f = await sup.from("school_features").upsert({ school_id: t.schoolB.id, feature_key: "sms", enabled: true }, { onConflict: "school_id,feature_key" }).select("enabled").single()
+    assert.equal(f.data?.enabled, true)
+    const u = await sup.from("profiles").update({ status: "inactive" }).eq("id", t.users.teacherB.profile.id).select("status").single()
+    assert.equal(u.data?.status, "inactive")
+    await sup.from("profiles").update({ status: "active" }).eq("id", t.users.teacherB.profile.id)
+
+    const adminA = await signedIn(t.users.adminA.email)
+    const other = await adminA.from("school_features").upsert({ school_id: t.schoolB.id, feature_key: "sms", enabled: false }, { onConflict: "school_id,feature_key" }).select("id")
+    assert.ok(other.error || other.data.length === 0)
+    const status = await adminA.from("schools").update({ status: "inactive" }).eq("id", t.schoolB.id).select("id")
+    assert.equal(status.data?.length ?? 0, 0)
+    const { data } = await service.from("schools").select("status").eq("id", t.schoolB.id).single()
+    assert.equal(data.status, "active")
+  })
+})
