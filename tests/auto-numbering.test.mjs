@@ -52,13 +52,20 @@ describe("automatic numbering", () => {
     assert.equal(new Set(numbers).size, 20)
   })
 
+  test("free-text formats: without {####} the counter is added at the end", async () => {
+    await settings(adminB, t.schoolB.id, { employee_number_auto: true, employee_number_format: "ISF-{YY}/", employee_number_next: 5 })
+    assert.equal((await addTeacher(adminB, t.schoolB.id, "")).data.employee_number, `ISF-${year.slice(-2)}/5`)
+    await settings(adminB, t.schoolB.id, { employee_number_format: "Guro Ñ " })
+    assert.equal((await addTeacher(adminB, t.schoolB.id, "")).data.employee_number, "Guro Ñ 6")
+  })
+
   test("each school has its own counter and format", async () => {
     await settings(adminB, t.schoolB.id, { student_number_auto: true, student_number_format: "S{######}", student_number_next: 42 })
     assert.equal((await addStudent(adminB, t.schoolB.id, "")).data.student_number, "S000042")
   })
 
   test("invalid formats and counters are rejected by the database", async () => {
-    for (const bad of [{ student_number_format: "{YYYY}" }, { student_number_format: "A{##}{##}" }, { student_number_format: "<b>{###}" }, { employee_number_format: "x" }, { student_number_next: 0 }]) {
+    for (const bad of [{ student_number_format: "" }, { student_number_format: "A{##}{##}" }, { student_number_format: "a{b}" }, { employee_number_format: "x".repeat(41) }, { student_number_next: 0 }]) {
       const r = await settings(adminA, t.schoolA.id, bad)
       assert.ok(r.error, JSON.stringify(bad))
     }

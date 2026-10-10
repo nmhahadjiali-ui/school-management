@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Suspense } from "react"
-import { Plus } from "lucide-react"
+import { FileSpreadsheet, Plus } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
 import { LinkButton } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -29,7 +29,12 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
       <PageHeader
         title="Students"
         description="Student records are kept permanently; use the status instead of deleting."
-        actions={<LinkButton href="/students/new"><Plus className="size-4" aria-hidden /> New student</LinkButton>}
+        actions={
+          <>
+            <LinkButton href="/students/import" variant="secondary"><FileSpreadsheet className="size-4" aria-hidden /> Import from Excel</LinkButton>
+            <LinkButton href="/students/new"><Plus className="size-4" aria-hidden /> New student</LinkButton>
+          </>
+        }
       />
       <Card>
         <ListToolbar

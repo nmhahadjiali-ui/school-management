@@ -17,9 +17,9 @@ const base = { student_number_auto: "on", student_number_format: "STU-{YYYY}-{##
 
 describe("numbering settings (web)", { skip }, () => {
   test("invalid formats are explained; teachers cannot save", async () => {
-    const bad = (await save("adminA", { ...base, student_number_format: "STU" })).result
+    const bad = (await save("adminA", { ...base, student_number_format: "STU-{####}-{##}" })).result
     assert.equal(bad.ok, false)
-    assert.match(bad.fieldErrors.student_number_format[0], /counter/)
+    assert.match(bad.fieldErrors.student_number_format[0], /at most once/)
     assert.equal((await save("teacherA", base)).result.ok, false)
   })
 
