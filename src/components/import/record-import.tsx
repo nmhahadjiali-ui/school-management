@@ -14,8 +14,27 @@ type Preview = { rows: Row[]; valid: number; invalid: number; ignoredColumns: st
 const SHOWN = 300
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`
 
-/** Upload an Excel/CSV file, review every row, then import the valid ones. */
-export function StudentImport({ autoNumbers, nextNumber }: { autoNumbers: boolean; nextNumber?: string }) {
+/** Upload an Excel/CSV file, review every row, then import the valid ones (students or teachers). */
+export function RecordImport({
+  entity,
+  numberKey,
+  numberLabel,
+  numberRequired,
+  autoNumbers,
+  nextNumber,
+  extraColumns,
+}: {
+  entity: "students" | "teachers"
+  numberKey: string
+  numberLabel: string
+  /** Without automatic numbering, is the number required? */
+  numberRequired: boolean
+  autoNumbers: boolean
+  nextNumber?: string
+  /** Extra columns shown in the review table: [value key, heading]. */
+  extraColumns: [string, string][]
+}) {
+  const noun = entity.slice(0, -1)
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
@@ -32,7 +51,7 @@ export function StudentImport({ autoNumbers, nextNumber }: { autoNumbers: boolea
       const body = new FormData()
       body.set("file", file)
       body.set("mode", mode)
-      const res = await fetch("/api/students/import", { method: "POST", body })
+      const res = await fetch(`/api/import/${entity}`, { method: "POST", body })
       const json = await res.json().catch(() => ({ error: "Something went wrong. Please try again." }))
       if (!res.ok) {
         setError(json.error ?? "Something went wrong. Please try again.")
@@ -55,31 +74,34 @@ export function StudentImport({ autoNumbers, nextNumber }: { autoNumbers: boolea
   }
 
   const rows = preview ? (onlyProblems ? preview.rows.filter((r) => r.errors.length) : preview.rows) : []
+  const numberNote = autoNumbers ? (
+    <>
+      {" "}({numberLabel} is optional: blank ones get the next automatic number
+      {nextNumber ? <>, starting at <span className="font-mono">{nextNumber}</span></> : null}).
+    </>
+  ) : numberRequired ? (
+    <>
+      {" "}and <strong>{numberLabel}</strong>.
+    </>
+  ) : (
+    <> ({numberLabel} is optional).</>
+  )
 
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-sm">
         <p>
-          1. Download the template, fill in one student per row, and save it. Required: <strong>First name</strong>, <strong>Last name</strong>
-          {autoNumbers ? (
-            <>
-              {" "}(Student number is optional: blank numbers get the next automatic number
-              {nextNumber ? <>, starting at <span className="font-mono">{nextNumber}</span></> : null}).
-            </>
-          ) : (
-            <>
-              {" "}and <strong>Student number</strong>.
-            </>
-          )}
+          1. Download the template, fill in one {noun} per row, and save it. Required: <strong>First name</strong>, <strong>Last name</strong>
+          {numberNote}
         </p>
-        <LinkButton href="/api/students/import-template" variant="secondary" size="sm">
+        <LinkButton href={`/api/import/${entity}/template`} variant="secondary" size="sm">
           <Download className="size-4" aria-hidden /> Download Excel template
         </LinkButton>
-        <p>2. Choose your file (.xlsx or .csv, up to 1,000 students) and check it. Nothing is saved until you press Import.</p>
+        <p>2. Choose your file (.xlsx or .csv, up to 1,000 {entity}) and check it. Nothing is saved until you press Import.</p>
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="file"
-            aria-label="Student file"
+            aria-label={`${noun} file`}
             accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             onChange={(e) => {
               setFile(e.target.files?.[0] ?? null)
@@ -98,10 +120,10 @@ export function StudentImport({ autoNumbers, nextNumber }: { autoNumbers: boolea
       {error && <Alert tone="error">{error}</Alert>}
       {done && (
         <Alert tone="success">
-          Imported {plural(done.imported, "student")}
+          Imported {plural(done.imported, noun)}
           {done.skipped ? `; ${plural(done.skipped, "row")} skipped because of problems` : ""}.{" "}
-          <Link href="/students" className="font-medium underline">
-            View students
+          <Link href={`/${entity}`} className="font-medium underline">
+            View {entity}
           </Link>
         </Alert>
       )}
@@ -121,17 +143,18 @@ export function StudentImport({ autoNumbers, nextNumber }: { autoNumbers: boolea
             </label>
             <Button onClick={() => send("import")} disabled={preview.valid === 0 || busy !== null}>
               {busy === "import" && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              Import {plural(preview.valid, "student")}
+              Import {plural(preview.valid, noun)}
             </Button>
           </div>
           <Table label="Rows in the file">
             <thead>
               <tr>
                 <Th>Row</Th>
-                <Th>Student no.</Th>
+                <Th>{numberLabel}</Th>
                 <Th>Name</Th>
-                <Th>Birth date</Th>
-                <Th>Gender</Th>
+                {extraColumns.map(([key, heading]) => (
+                  <Th key={key}>{heading}</Th>
+                ))}
                 <Th>Problems</Th>
               </tr>
             </thead>
@@ -139,10 +162,13 @@ export function StudentImport({ autoNumbers, nextNumber }: { autoNumbers: boolea
               {rows.slice(0, SHOWN).map((r) => (
                 <tr key={r.row} className={r.errors.length ? "bg-red-50" : undefined}>
                   <Td className="tabular-nums text-muted">{r.row}</Td>
-                  <Td className="font-mono text-xs">{r.values.student_number || <span className="text-muted">{autoNumbers ? "automatic" : "—"}</span>}</Td>
+                  <Td className="font-mono text-xs">{r.values[numberKey] || <span className="text-muted">{autoNumbers ? "automatic" : "—"}</span>}</Td>
                   <Td>{[r.values.last_name, [r.values.first_name, r.values.middle_name, r.values.suffix].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</Td>
-                  <Td>{r.values.date_of_birth}</Td>
-                  <Td className="capitalize">{r.values.gender}</Td>
+                  {extraColumns.map(([key]) => (
+                    <Td key={key} className={key === "gender" ? "capitalize" : undefined}>
+                      {r.values[key]}
+                    </Td>
+                  ))}
                   <Td className="text-red-700">{r.errors.join("; ") || <span className="text-green-700">OK</span>}</Td>
                 </tr>
               ))}

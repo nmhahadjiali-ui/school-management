@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Card, CardBody } from "@/components/ui/card"
 import { PageHeader } from "@/components/ui/misc"
-import { StudentImport } from "@/components/students/student-import"
+import { RecordImport } from "@/components/import/record-import"
 import { requireSchoolAdmin } from "@/lib/auth/session"
 import { formatRecordNumber, schoolYearNow } from "@/lib/record-number"
 import { getSchoolSettings } from "@/services/settings"
@@ -18,7 +18,15 @@ export default async function ImportStudentsPage() {
       <PageHeader title="Import students" description="Add many students at once from an Excel or CSV file. You can enroll them and link guardians afterwards." />
       <Card>
         <CardBody>
-          <StudentImport autoNumbers={auto} nextNumber={next} />
+          <RecordImport
+            entity="students"
+            numberKey="student_number"
+            numberLabel="Student number"
+            numberRequired
+            autoNumbers={auto}
+            nextNumber={next}
+            extraColumns={[["date_of_birth", "Birth date"], ["gender", "Gender"]]}
+          />
         </CardBody>
       </Card>
     </>

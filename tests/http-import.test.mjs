@@ -1,4 +1,4 @@
-// Student import from Excel / CSV (POST /api/students/import). TEST_APP_URL.
+// Student and teacher import from Excel / CSV (POST /api/import/:entity). TEST_APP_URL.
 import { before, describe, test } from "node:test"
 import assert from "node:assert/strict"
 import ExcelJS from "exceljs"
@@ -20,11 +20,11 @@ async function xlsx(rows) {
   return new Blob([await wb.xlsx.writeBuffer()])
 }
 
-async function upload(who, blob, name, mode = "preview") {
+async function upload(who, blob, name, mode = "preview", entity = "students") {
   const body = new FormData()
   body.set("file", blob, name)
   body.set("mode", mode)
-  const res = await fetch(`${APP_URL}/api/students/import`, { method: "POST", body, headers: { cookie: cookie[who] } })
+  const res = await fetch(`${APP_URL}/api/import/${entity}`, { method: "POST", body, headers: { cookie: cookie[who] } })
   return { status: res.status, json: await res.json() }
 }
 
@@ -32,13 +32,13 @@ const num = (s) => `${RUN}-${s}`
 
 describe("student import", { skip }, () => {
   test("template downloads for school admins only", async () => {
-    const res = await http("/api/students/import-template", cookie.adminA)
+    const res = await http("/api/import/students/template", cookie.adminA)
     assert.equal(res.status, 200)
     assert.match(res.headers.get("content-type"), /spreadsheetml/)
     const wb = new ExcelJS.Workbook()
     await wb.xlsx.load(await res.arrayBuffer())
     assert.equal(wb.getWorksheet("Students").getRow(1).getCell(2).value, "First name")
-    assert.equal((await http("/api/students/import-template", cookie.teacherA)).status, 403)
+    assert.equal((await http("/api/import/students/template", cookie.teacherA)).status, 403)
   })
 
   test("preview checks every row; import adds only the valid ones", async () => {
@@ -125,5 +125,53 @@ describe("student import", { skip }, () => {
     await upload("adminB", file, "t.xlsx", "import")
     const { data } = await service.from("students").select("school_id").eq("student_number", num("T1")).single()
     assert.equal(data.school_id, t.schoolB.id)
+  })
+
+  test("teachers: import with optional, case-insensitive unique employee numbers", async () => {
+    const tpl = await http("/api/import/teachers/template", cookie.adminA)
+    assert.equal(tpl.status, 200)
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.load(await tpl.arrayBuffer())
+    assert.equal(wb.getWorksheet("Teachers").getRow(1).getCell(1).value, "Employee number")
+
+    await insert("teachers", { school_id: t.schoolA.id, employee_number: `E${RUN}-TAKEN`, first_name: "Old", last_name: "Teacher" })
+    const file = await xlsx([
+      ["Emp No", "First name", "Last name", "Email", "Subject", "Status"],
+      [`E${RUN}-1`, "Amina", "Macarambon", "AMINA.${RUN}@Example.com", "Mathematics", "Active"],
+      ["", "No", "Number", "", "Science", ""],
+      [`e${RUN}-1`, "Same", "Number", "", "", ""],
+      [`e${RUN}-taken`, "Taken", "Already", "", "", ""],
+      [`E${RUN}-5`, "Gone", "Away", "", "", "Retired"],
+      [`E${RUN}-6`, "Bad", "Status", "", "", "Fired"],
+    ].map((r) => r.map((c) => (typeof c === "string" ? c.replace("${RUN}", RUN) : c))))
+    const p = await upload("adminA", file, "teachers.xlsx", "preview", "teachers")
+    assert.equal(p.status, 200, JSON.stringify(p.json))
+    const errs = Object.fromEntries(p.json.rows.map((r) => [r.values.last_name, r.errors.join(" | ")]))
+    assert.equal(errs.Macarambon, "")
+    assert.equal(errs.Number, `Employee number e${RUN}-1 also appears on row 2`)
+    assert.match(errs.Already, /already used in your school/)
+    assert.equal(errs.Away, "")
+    assert.match(errs.Status, /Status is not valid/)
+    assert.equal(p.json.valid, 3)
+
+    const imp = await upload("adminA", file, "teachers.xlsx", "import", "teachers")
+    assert.deepEqual(imp.json, { imported: 3, skipped: 3 })
+    const { data } = await service.from("teachers").select("employee_number, email, specialization, status").eq("school_id", t.schoolA.id).in("last_name", ["Macarambon", "Number", "Away"]).order("last_name")
+    assert.deepEqual(data, [
+      { employee_number: `E${RUN}-5`, email: null, specialization: null, status: "retired" },
+      { employee_number: `E${RUN}-1`, email: `amina.${RUN}@example.com`.toLowerCase(), specialization: "Mathematics", status: "active" },
+      { employee_number: null, email: null, specialization: "Science", status: "active" },
+    ])
+  })
+
+  test("teachers: blank employee numbers get automatic numbers when that is on", async () => {
+    await service.from("school_settings").update({ employee_number_auto: true, employee_number_format: `T${RUN}-{##}`, employee_number_next: 3 }).eq("school_id", t.schoolB.id)
+    const file = await xlsx([["First name", "Last name"], ["One", "AutoT"], ["Two", "AutoT"]])
+    const imp = await upload("adminB", file, "auto.xlsx", "import", "teachers")
+    assert.equal(imp.json.imported, 2, JSON.stringify(imp.json))
+    const { data } = await service.from("teachers").select("employee_number").eq("school_id", t.schoolB.id).eq("last_name", "AutoT").order("employee_number")
+    assert.deepEqual(data.map((x) => x.employee_number), [`T${RUN}-03`, `T${RUN}-04`])
+    assert.equal((await upload("teacherA", file, "x.xlsx", "import", "teachers")).status, 403)
+    assert.equal((await http("/api/import/guardians/template", cookie.adminA)).status, 404)
   })
 })
