@@ -10,12 +10,24 @@ import { GradeLevelFields } from "@/components/school/fields"
 import { createGradeLevel, setGradeLevelStatus, updateGradeLevel } from "@/lib/actions/academic"
 import { requireSchoolAdmin } from "@/lib/auth/session"
 import { listGradeLevels } from "@/services/academic"
+import { listSetupTemplates } from "@/services/operations"
+import { Field } from "@/components/ui/form"
+import { TemplatePicker, type TemplateOption } from "@/components/academics/template-picker"
+import { applyGradeLevelTemplate, deleteGradingTemplate, saveGradingTemplate } from "@/lib/actions/templates"
+import { GRADE_PRESETS, formatGrade, type GradeItem } from "@/lib/grading-templates"
 
 export const metadata: Metadata = { title: "Grade levels" }
 
 export default async function GradeLevelsPage() {
   const ctx = await requireSchoolAdmin()
-  const { data: grades, error } = await listGradeLevels(ctx.schoolId)
+  const [{ data: grades, error }, { data: saved }] = await Promise.all([listGradeLevels(ctx.schoolId), listSetupTemplates(ctx.schoolId, "grade_levels")])
+  const have = new Set((grades ?? []).flatMap((g) => [`n:${g.name.toLowerCase()}`, `c:${g.code.toLowerCase()}`]))
+  const owned = (g: GradeItem) => have.has(`n:${g.name.toLowerCase()}`) || have.has(`c:${g.code.toLowerCase()}`)
+  const preview = (items: GradeItem[]) => items.map((g) => (owned(g) ? `${formatGrade(g)} · already added` : formatGrade(g)))
+  const templates: TemplateOption[] = [
+    ...GRADE_PRESETS.map((p) => ({ key: p.key, name: p.name, builtIn: true, preview: preview(p.items) })),
+    ...(saved ?? []).map((t) => ({ key: t.id, name: t.name, builtIn: false, preview: preview(t.items as GradeItem[]) })),
+  ]
   if (error) console.error("[GradeLevelsPage]", error.code, error.message)
 
   return (
@@ -24,9 +36,24 @@ export default async function GradeLevelsPage() {
         title="Grade levels"
         description="Your school's own grade structure (e.g. Nursery, Kinder, Grade 1 … Grade 12). Ordered by display order."
         actions={
-          <FormDialog trigger={<><Plus className="size-4" aria-hidden /> New grade level</>} title="New grade level" action={createGradeLevel} submitLabel="Create">
-            <GradeLevelFields />
-          </FormDialog>
+          <>
+            <TemplatePicker
+              title="Grade levels from a template"
+              description="Adds every grade level of the template at once. Grade levels you already have (same name or code) are kept as they are, so templates can be combined."
+              templates={templates}
+              onApply={applyGradeLevelTemplate}
+              onDelete={deleteGradingTemplate}
+            />
+            {!!grades?.length && (
+              <FormDialog trigger="Save as template" variant="secondary" title="Save these grade levels as a template" action={saveGradingTemplate.bind(null, "grade_levels", null)} submitLabel="Save template">
+                <p className="text-sm text-muted">Saves the active grade levels (name, code and order), up to 20.</p>
+                <Field name="name" label="Template name" placeholder="Our grade levels" required maxLength={80} />
+              </FormDialog>
+            )}
+            <FormDialog trigger={<><Plus className="size-4" aria-hidden /> New grade level</>} title="New grade level" action={createGradeLevel} submitLabel="Create">
+              <GradeLevelFields />
+            </FormDialog>
+          </>
         }
       />
       {error && <Alert tone="error" className="mb-4">Grade levels could not be loaded. Please refresh the page.</Alert>}

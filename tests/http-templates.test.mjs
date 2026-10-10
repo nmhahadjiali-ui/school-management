@@ -100,3 +100,38 @@ describe("grading templates", { skip }, () => {
     assert.ok(page.includes("Use a template") && page.includes("4 Quarters"))
   })
 })
+
+describe("grade level templates", { skip }, () => {
+  const grades = async (schoolId) => (await service.from("grade_levels").select("name, code, sort_order").eq("school_id", schoolId).order("sort_order")).data
+
+  test("presets add only the grade levels a school does not have yet, and can be combined", async () => {
+    // School B already has Grade 5 and Grade 6 (codes G5, G6) from the fixtures, plus a renamed "grade 1".
+    await insert("grade_levels", { school_id: t.schoolB.id, name: "grade 1", code: "ONE", sort_order: 1 })
+    const r = await act("applyGradeLevelTemplate", ["builtin:elementary"], "adminB", "/grade-levels")
+    assert.equal(r.ok, true, r.error)
+    assert.match(r.message, /Added 4 grade levels; 3 you already had were kept/)
+    const after = await grades(t.schoolB.id)
+    assert.deepEqual(after.map((g) => g.code), ["K", "ONE", "G2", "G3", "G4", "G5", "G6"])
+
+    const jhs = await act("applyGradeLevelTemplate", ["builtin:jhs"], "adminB", "/grade-levels")
+    assert.match(jhs.message, /Added 4 grade levels\./)
+    const again = await act("applyGradeLevelTemplate", ["builtin:jhs"], "adminB", "/grade-levels")
+    assert.equal(again.ok, true)
+    assert.match(again.message, /already has all of these/)
+    assert.equal((await grades(t.schoolB.id)).length, 11)
+  })
+
+  test("save the school's grade levels as a template and reuse it", async () => {
+    const saved = await act("saveGradingTemplate", ["grade_levels", null, null, asForm({ name: "B levels" })], "adminB", "/grade-levels")
+    assert.equal(saved.ok, true, saved.error)
+    const { data: tpl } = await service.from("setup_templates").select("id, items").eq("school_id", t.schoolB.id).eq("kind", "grade_levels").single()
+    assert.equal(tpl.items.length, 11)
+    assert.equal((await act("applyGradeLevelTemplate", [tpl.id], "adminA", "/grade-levels")).ok, false, "not visible to another school")
+    await service.from("grade_levels").delete().eq("school_id", t.schoolB.id).eq("code", "G10")
+    const r = await act("applyGradeLevelTemplate", [tpl.id], "adminB", "/grade-levels")
+    assert.match(r.message, /Added 1 grade level;/)
+    assert.equal((await act("applyGradeLevelTemplate", ["builtin:k12"], "teacherA", "/grade-levels")).ok, false)
+    const html = await (await http("/grade-levels", cookie.adminB)).text()
+    assert.ok(html.includes("Use a template") && html.includes("Complete K–12"))
+  })
+})

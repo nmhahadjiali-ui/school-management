@@ -60,3 +60,16 @@ describe("grading templates (date arithmetic, presets)", async () => {
     assert.deepEqual(presetBands("builtin:deped", 50).map((b) => b.minimum_score), [45, 42.5, 40, 37.5, 0])
   })
 })
+
+describe("grade level presets", async () => {
+  const { GRADE_PRESETS } = await import("../src/lib/grading-templates.ts")
+  test("codes and names are unique and ordered within every preset", () => {
+    for (const p of GRADE_PRESETS) {
+      assert.equal(new Set(p.items.map((g) => g.code)).size, p.items.length, p.key)
+      assert.equal(new Set(p.items.map((g) => g.name)).size, p.items.length, p.key)
+      assert.deepEqual([...p.items].sort((a, b) => a.sort_order - b.sort_order), p.items, p.key)
+      assert.ok(p.items.length <= 20)
+    }
+    assert.deepEqual(GRADE_PRESETS.find((p) => p.key === "builtin:k12").items.map((g) => g.code), ["K", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12"])
+  })
+})

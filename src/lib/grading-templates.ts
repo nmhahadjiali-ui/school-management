@@ -70,3 +70,26 @@ export function presetBands(key: string, maxScore: number): BandItem[] | null {
 }
 
 export const formatBand = (b: Pick<BandItem, "name" | "minimum_score" | "maximum_score">) => `${Number(b.minimum_score)}–${Number(b.maximum_score)} ${b.name}`
+
+// --- Grade levels ----------------------------------------------------------------
+export type GradeItem = { name: string; code: string; sort_order: number }
+
+const grade = (n: number): GradeItem => ({ name: `Grade ${n}`, code: `G${n}`, sort_order: n })
+const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => grade(from + i))
+const PRESCHOOL: GradeItem[] = [
+  { name: "Nursery", code: "N", sort_order: -2 },
+  { name: "Pre-Kindergarten", code: "PK", sort_order: -1 },
+  { name: "Kindergarten", code: "K", sort_order: 0 },
+]
+const KINDER = PRESCHOOL[2]
+
+/** Philippine K–12 structure. Applying adds only the grade levels a school does not have yet. */
+export const GRADE_PRESETS: { key: string; name: string; items: GradeItem[] }[] = [
+  { key: "builtin:preschool", name: "Preschool (Nursery, Pre-Kinder, Kinder)", items: PRESCHOOL },
+  { key: "builtin:elementary", name: "Elementary (Kindergarten – Grade 6)", items: [KINDER, ...range(1, 6)] },
+  { key: "builtin:jhs", name: "Junior High School (Grades 7–10)", items: range(7, 10) },
+  { key: "builtin:shs", name: "Senior High School (Grades 11–12)", items: range(11, 12) },
+  { key: "builtin:k12", name: "Complete K–12 (Kindergarten – Grade 12)", items: [KINDER, ...range(1, 12)] },
+]
+
+export const formatGrade = (g: GradeItem) => `${g.name} (${g.code})`

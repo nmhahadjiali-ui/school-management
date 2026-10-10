@@ -4,14 +4,14 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { denied, formToObject, invalid, type ActionResult } from "@/lib/action-result"
 import { dbFail, schoolAdmin } from "@/lib/actions/helpers"
-import { itemsToPeriods, periodsToItems, presetBands, presetPeriods, type BandItem, type PeriodItem } from "@/lib/grading-templates"
+import { GRADE_PRESETS, itemsToPeriods, periodsToItems, presetBands, presetPeriods, type BandItem, type GradeItem, type PeriodItem } from "@/lib/grading-templates"
 import { createClient } from "@/lib/supabase/server"
 import { uuidSchema } from "@/lib/validations"
 
-// One-click setup of grading periods / grading scales from a built-in preset
-// ("builtin:...") or one of the school's saved templates (uuid).
+// One-click setup of grading periods, grading scales and grade levels from a
+// built-in preset ("builtin:...") or one of the school's saved templates (uuid).
 
-type Kind = "grading_periods" | "grading_scales"
+type Kind = "grading_periods" | "grading_scales" | "grade_levels"
 
 const periodItems = z.array(
   z.object({
@@ -31,6 +31,14 @@ const bandItems = z.array(
     equivalent: z.string().trim().max(20).nullable(),
     description: z.string().trim().max(500).nullable(),
     is_passing: z.boolean(),
+  })
+).min(1).max(20)
+
+const gradeItems = z.array(
+  z.object({
+    name: z.string().trim().min(1).max(60),
+    code: z.string().trim().regex(/^[A-Za-z0-9_-]{1,20}$/),
+    sort_order: z.number().int().min(-1000).max(1000),
   })
 ).min(1).max(20)
 
@@ -99,7 +107,34 @@ export async function applyGradingScaleTemplate(key: string): Promise<ActionResu
   return { ok: true, message: `Grading scale replaced with ${bands.length} bands.` }
 }
 
-/** Save the current periods of a year (or the current grading scale) as a named template. */
+/** Add a template's grade levels; ones the school already has (same name or code) are kept as they are. */
+export async function applyGradeLevelTemplate(key: string): Promise<ActionResult> {
+  const ctx = await schoolAdmin()
+  if (!ctx) return denied()
+  let items: GradeItem[] | null = GRADE_PRESETS.find((p) => p.key === key)?.items ?? null
+  if (!items && !key.startsWith("builtin:")) {
+    const saved = gradeItems.safeParse(await savedItems("grade_levels", key, ctx.schoolId))
+    if (saved.success) items = saved.data
+  }
+  if (!items) return { ok: false, error: "The template was not found." }
+
+  const supabase = await createClient()
+  const { data: existing } = await supabase.from("grade_levels").select("name, code").eq("school_id", ctx.schoolId)
+  const names = new Set((existing ?? []).map((g) => g.name.toLowerCase()))
+  const codes = new Set((existing ?? []).map((g) => g.code.toLowerCase()))
+  const missing = items.filter((g) => !names.has(g.name.toLowerCase()) && !codes.has(g.code.toLowerCase()))
+  if (missing.length === 0) return { ok: true, message: "Your school already has all of these grade levels." }
+
+  // One insert: all missing grade levels are added, or none.
+  const { error } = await supabase.from("grade_levels").insert(missing.map((g) => ({ ...g, school_id: ctx.schoolId })))
+  if (error) return failPlain(error, "applyGradeLevelTemplate")
+  revalidatePath("/grade-levels", "layout")
+  const kept = items.length - missing.length
+  const keptNote = kept ? `; ${kept} you already had ${kept === 1 ? "was" : "were"} kept` : ""
+  return { ok: true, message: `Added ${missing.length} grade level${missing.length === 1 ? "" : "s"}${keptNote}.` }
+}
+
+/** Save the current periods of a year, the grading scale or the grade levels as a named template. */
 export async function saveGradingTemplate(kind: Kind, yearId: string | null, _prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
   const ctx = await schoolAdmin()
   if (!ctx) return denied()
@@ -107,7 +142,7 @@ export async function saveGradingTemplate(kind: Kind, yearId: string | null, _pr
   if (!parsed.success) return invalid(parsed.error)
   const supabase = await createClient()
 
-  let items: PeriodItem[] | BandItem[]
+  let items: PeriodItem[] | BandItem[] | GradeItem[]
   if (kind === "grading_periods") {
     if (!yearId || !uuidSchema.safeParse(yearId).success) return denied()
     const { data: year } = await supabase.from("academic_years").select("start_date").eq("id", yearId).eq("school_id", ctx.schoolId).maybeSingle()
@@ -118,6 +153,11 @@ export async function saveGradingTemplate(kind: Kind, yearId: string | null, _pr
     const { data: scales } = await supabase.from("grading_scales").select("name, minimum_score, maximum_score, equivalent, description, is_passing").eq("school_id", ctx.schoolId).order("minimum_score", { ascending: false })
     if (!scales?.length) return { ok: false, error: "There are no grading bands to save." }
     items = scales.map((s) => ({ ...s, minimum_score: Number(s.minimum_score), maximum_score: Number(s.maximum_score) }))
+  } else if (kind === "grade_levels") {
+    const { data: grades } = await supabase.from("grade_levels").select("name, code, sort_order").eq("school_id", ctx.schoolId).eq("status", "active").order("sort_order")
+    if (!grades?.length) return { ok: false, error: "There are no active grade levels to save." }
+    if (grades.length > 20) return { ok: false, error: "A template can hold at most 20 grade levels." }
+    items = grades
   } else {
     return denied()
   }
@@ -127,7 +167,7 @@ export async function saveGradingTemplate(kind: Kind, yearId: string | null, _pr
     if (error.code === "23505") return { ok: false, error: "Please correct the highlighted fields.", fieldErrors: { name: ["A template with this name already exists"] } }
     return dbFail(error, "saveGradingTemplate")
   }
-  revalidatePath(kind === "grading_periods" ? "/grading-periods" : "/grading-scales", "layout")
+  revalidatePath({ grading_periods: "/grading-periods", grading_scales: "/grading-scales", grade_levels: "/grade-levels" }[kind], "layout")
   return { ok: true, message: `Template “${parsed.data.name}” saved.` }
 }
 
@@ -140,5 +180,6 @@ export async function deleteGradingTemplate(id: string): Promise<ActionResult> {
   if (!data?.length) return { ok: false, error: "The template was not found." }
   revalidatePath("/grading-periods", "layout")
   revalidatePath("/grading-scales", "layout")
+  revalidatePath("/grade-levels", "layout")
   return { ok: true, message: "Template deleted." }
 }
