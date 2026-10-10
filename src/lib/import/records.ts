@@ -94,7 +94,7 @@ export const IMPORT_SPECS: Record<ImportEntity, Spec> = {
 export type ImportRow = { row: number; values: Record<string, string>; errors: string[] }
 export type ImportPreview = { rows: ImportRow[]; valid: number; invalid: number; ignoredColumns: string[] }
 
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "")
+export const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "")
 
 function cellText(v: ExcelJS.CellValue): string {
   if (v === null || v === undefined) return ""
@@ -109,7 +109,7 @@ function cellText(v: ExcelJS.CellValue): string {
 }
 
 /** Accepts 2014-03-05, 3/5/2014 and 03-05-2014 (month first, as Excel shows in the Philippines). */
-function normalizeDate(s: string): string {
+export function normalizeDate(s: string): string {
   if (!s || /^\d{4}-\d{2}-\d{2}$/.test(s)) return s
   const m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
   return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : s
@@ -156,7 +156,7 @@ function parseCsv(text: string): string[][] {
   return rows.map((r) => r.map((c) => c.trim()))
 }
 
-async function readTable(buffer: ArrayBuffer, fileName: string): Promise<string[][]> {
+export async function readTable(buffer: ArrayBuffer, fileName: string): Promise<string[][]> {
   if (/\.csv$/i.test(fileName)) return parseCsv(new TextDecoder("utf-8").decode(buffer))
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.load(buffer)

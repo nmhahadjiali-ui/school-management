@@ -23,8 +23,16 @@ export function RecordImport({
   autoNumbers,
   nextNumber,
   extraColumns,
+  formFields,
+  templateHref,
+  intro,
 }: {
-  entity: "students" | "teachers"
+  entity: "students" | "teachers" | "enrollments"
+  /** Extra fields sent with the file (e.g. the academic year). */
+  formFields?: Record<string, string>
+  templateHref?: string
+  /** Replaces the default step 1 text. */
+  intro?: React.ReactNode
   numberKey: string
   numberLabel: string
   /** Without automatic numbering, is the number required? */
@@ -51,6 +59,7 @@ export function RecordImport({
       const body = new FormData()
       body.set("file", file)
       body.set("mode", mode)
+      for (const [k, v] of Object.entries(formFields ?? {})) body.set(k, v)
       const res = await fetch(`/api/import/${entity}`, { method: "POST", body })
       const json = await res.json().catch(() => ({ error: "Something went wrong. Please try again." }))
       if (!res.ok) {
@@ -90,11 +99,13 @@ export function RecordImport({
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-sm">
-        <p>
-          1. Download the template, fill in one {noun} per row, and save it. Required: <strong>First name</strong>, <strong>Last name</strong>
-          {numberNote}
-        </p>
-        <LinkButton href={`/api/import/${entity}/template`} variant="secondary" size="sm">
+        {intro ?? (
+          <p>
+            1. Download the template, fill in one {noun} per row, and save it. Required: <strong>First name</strong>, <strong>Last name</strong>
+            {numberNote}
+          </p>
+        )}
+        <LinkButton href={templateHref ?? `/api/import/${entity}/template`} variant="secondary" size="sm">
           <Download className="size-4" aria-hidden /> Download Excel template
         </LinkButton>
         <p>2. Choose your file (.xlsx or .csv, up to 1,000 {entity}) and check it. Nothing is saved until you press Import.</p>

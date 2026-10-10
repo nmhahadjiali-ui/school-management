@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Suspense } from "react"
-import { Plus } from "lucide-react"
+import { FileSpreadsheet, Plus } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
+import { LinkButton } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { Badge, EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
@@ -37,9 +38,12 @@ export default async function EnrollmentsPage({ searchParams }: PageProps<"/enro
         description="Each student's placement per academic year. Closed placements are kept as history."
         actions={
           open ? (
-            <FormDialog trigger={<><Plus className="size-4" aria-hidden /> Enroll student</>} title={`Enroll a student in ${year.name}`} action={enrollStudent} submitLabel="Enroll">
-              <EnrollmentFields yearId={year.id} grades={gradeOptions((grades.data ?? []).filter((g) => g.status === "active"))} sections={sectionOptions(sectionList)} />
-            </FormDialog>
+            <>
+              <LinkButton href={`/enrollments/import?year=${year.id}`} variant="secondary"><FileSpreadsheet className="size-4" aria-hidden /> Import from Excel</LinkButton>
+              <FormDialog trigger={<><Plus className="size-4" aria-hidden /> Enroll student</>} title={`Enroll a student in ${year.name}`} action={enrollStudent} submitLabel="Enroll">
+                <EnrollmentFields yearId={year.id} grades={gradeOptions((grades.data ?? []).filter((g) => g.status === "active"))} sections={sectionOptions(sectionList)} />
+              </FormDialog>
+            </>
           ) : null
         }
       />
