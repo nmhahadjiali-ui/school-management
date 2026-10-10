@@ -87,3 +87,16 @@ describe("feature gates over HTTP", { skip }, () => {
     assert.equal((await http("/modules/sms", cookie.studentB)).status, 404)
   })
 })
+
+describe("feature availability labels", { skip }, () => {
+  test("platform settings and the school page label features; coming-soon ones cannot be switched on", async () => {
+    const settings = await (await http("/platform/settings", cookie.super)).text()
+    assert.ok(settings.includes("Coming soon") && settings.includes("Always included"))
+    const school = await (await http(`/platform/schools/${t.schoolA.id}`, cookie.super)).text()
+    assert.ok(school.includes("Coming soon"))
+    const { callAction } = await import("./helpers.mjs")
+    const r = (await callAction("setSchoolFeature", [t.schoolA.id, "inventory", true], cookie.super, "/platform/schools")).result
+    assert.equal(r.ok, false)
+    assert.match(r.error, /coming soon/)
+  })
+})

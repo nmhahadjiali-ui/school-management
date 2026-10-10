@@ -347,14 +347,14 @@ isOneToOne: false
                   ]
                 },"features": {
                   Row: {
-                    "created_at": string,"default_enabled": boolean,"description": string | null,"id": string,"key": string,"name": string,"updated_at": string
+                    "availability": string,"created_at": string,"default_enabled": boolean,"description": string | null,"id": string,"key": string,"name": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"default_enabled"?: boolean,"description"?: string | null,"id"?: string,"key": string,"name": string,"updated_at"?: string
+                    "availability"?: string,"created_at"?: string,"default_enabled"?: boolean,"description"?: string | null,"id"?: string,"key": string,"name": string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"default_enabled"?: boolean,"description"?: string | null,"id"?: string,"key"?: string,"name"?: string,"updated_at"?: string
+                    "availability"?: string,"created_at"?: string,"default_enabled"?: boolean,"description"?: string | null,"id"?: string,"key"?: string,"name"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     

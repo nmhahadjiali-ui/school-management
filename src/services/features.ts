@@ -2,11 +2,14 @@ import "server-only"
 import { createClient } from "@/lib/supabase/server"
 import type { Feature } from "@/types/domain"
 
+export type FeatureAvailability = "available" | "included" | "coming_soon"
+
 export type SchoolFeatureRow = {
   key: string
   name: string
   description: string | null
   enabled: boolean
+  availability: FeatureAvailability
 }
 
 export async function listFeatureCatalog() {
@@ -27,6 +30,7 @@ export async function listSchoolFeatures(schoolId: string) {
     name: f.name,
     description: f.description,
     enabled: enabled.get(f.key) ?? false,
+    availability: f.availability as FeatureAvailability,
   }))
   return { data, error: catalog.error ?? flags.error }
 }

@@ -16,6 +16,7 @@ import { uuidSchema } from "@/lib/validations"
 import { listSchoolFeatures } from "@/services/features"
 import { getSchool } from "@/services/schools"
 import { listUsers } from "@/services/users"
+import { featuresInTestMode } from "@/server/notifications/providers"
 
 export const metadata: Metadata = { title: "School" }
 
@@ -70,7 +71,7 @@ export default async function SchoolDetailPage({ params, searchParams }: PagePro
         </div>
         <Card className="self-start">
           <CardHeader title="Features" description="Optional modules for this school." />
-          <FeatureToggles schoolId={s.id} features={features.data} />
+          <FeatureToggles schoolId={s.id} features={features.data} testMode={[...featuresInTestMode()]} />
         </Card>
       </div>
     </>

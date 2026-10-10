@@ -88,3 +88,21 @@ describe("subject presets", async () => {
     }
   })
 })
+
+describe("feature groups", async () => {
+  const { groupFeatures } = await import("../src/lib/feature-groups.ts")
+  test("grouped Available → Test mode → Always included → Coming soon, alphabetical inside", () => {
+    const f = (key, name, availability = "available") => ({ key, name, availability })
+    const groups = groupFeatures(
+      [f("sms", "SMS"), f("library", "Library", "coming_soon"), f("grades", "Grades"), f("payments", "Payments", "included"), f("attendance", "Attendance"), f("inventory", "Inventory", "coming_soon"), f("email_notifications", "Email notifications")],
+      ["sms", "email_notifications"]
+    )
+    assert.deepEqual(groups.map((g) => [g.key, g.rows.map((r) => r.name)]), [
+      ["available", ["Attendance", "Grades"]],
+      ["test_mode", ["Email notifications", "SMS"]],
+      ["included", ["Payments"]],
+      ["coming_soon", ["Inventory", "Library"]],
+    ])
+    assert.deepEqual(groupFeatures([f("a", "A")], []).map((g) => g.key), ["available"], "empty groups are left out")
+  })
+})

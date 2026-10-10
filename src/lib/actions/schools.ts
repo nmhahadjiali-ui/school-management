@@ -57,6 +57,10 @@ export async function setSchoolFeature(schoolId: string, featureKey: string, ena
   if (!(await authorize("platform.schools.manage"))) return denied()
   if (!uuidSchema.safeParse(schoolId).success || !/^[a-z][a-z0-9_]{1,49}$/.test(featureKey)) return notFound
 
+  const { data: catalog } = await features.listFeatureCatalog()
+  const availability = catalog?.find((f) => f.key === featureKey)?.availability
+  if (enabled && availability === "coming_soon") return { ok: false, error: "This feature is coming soon and cannot be enabled yet." }
+
   const { error } = await features.setSchoolFeature(schoolId, featureKey, enabled)
   if (error) return fail(error, "setSchoolFeature")
   revalidatePath(`/platform/schools/${schoolId}`)

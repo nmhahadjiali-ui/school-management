@@ -79,3 +79,21 @@ export function getProviders() {
     push: pick<PushProvider>("push", process.env.PUSH_PROVIDER),
   }
 }
+
+/**
+ * Features whose delivery is only simulated on this server (no real vendor
+ * configured yet), for "Test mode" labels on the platform pages.
+ */
+export function featuresInTestMode(): Set<string> {
+  const live = (v: string | undefined) => {
+    const p = (v ?? "").trim().toLowerCase()
+    return p !== "" && p !== "simulator"
+  }
+  const firstPayment = (process.env.PAYMENT_PROVIDERS ?? "").split(",")[0]
+  const test = new Set<string>()
+  if (!live(process.env.EMAIL_PROVIDER)) test.add("email_notifications")
+  if (!live(process.env.SMS_PROVIDER)) test.add("sms")
+  if (!live(process.env.PUSH_PROVIDER)) test.add("push_notifications")
+  if (!live(firstPayment)) test.add("online_payments")
+  return test
+}

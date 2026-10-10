@@ -52,3 +52,25 @@ describe("feature flags", () => {
     assert.equal(off, false)
   })
 })
+
+describe("feature availability (coming soon / always included)", () => {
+  test("the catalog says which features are built", async () => {
+    const sup = await signedIn(t.users.super.email)
+    const { data } = await sup.from("features").select("key, availability")
+    const by = Object.fromEntries(data.map((f) => [f.key, f.availability]))
+    for (const k of ["advanced_reports", "inventory", "library", "online_enrollment"]) assert.equal(by[k], "coming_soon", k)
+    for (const k of ["payments", "parent_portal"]) assert.equal(by[k], "included", k)
+    for (const k of ["attendance", "grades", "billing", "announcements", "sms"]) assert.equal(by[k], "available", k)
+  })
+
+  test("coming-soon features cannot be enabled, even directly through the API", async () => {
+    const sup = await signedIn(t.users.super.email)
+    const bad = await sup.from("school_features").upsert({ school_id: t.schoolA.id, feature_key: "library", enabled: true }, { onConflict: "school_id,feature_key" }).select("id")
+    assert.equal(bad.error?.code, "P0001")
+    assert.match(bad.error.message, /coming soon/)
+    const off = await sup.from("school_features").upsert({ school_id: t.schoolA.id, feature_key: "library", enabled: false }, { onConflict: "school_id,feature_key" }).select("enabled").single()
+    assert.equal(off.error, null)
+    const ok = await sup.from("school_features").upsert({ school_id: t.schoolA.id, feature_key: "grades", enabled: true }, { onConflict: "school_id,feature_key" }).select("enabled").single()
+    assert.equal(ok.data?.enabled, true)
+  })
+})
