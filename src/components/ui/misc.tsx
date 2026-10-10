@@ -16,12 +16,13 @@ export function PageHeader({
 }) {
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
+      {/* Text and buttons share the row (the text wraps); they stack only on narrow screens. */}
+      <div className="min-w-0 flex-1 basis-80">
         {eyebrow && <p className="text-xs font-semibold uppercase tracking-wide text-brand">{eyebrow}</p>}
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
     </header>
   )
 }
