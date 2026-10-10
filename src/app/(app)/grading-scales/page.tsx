@@ -8,13 +8,28 @@ import { Badge, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/mi
 import { GradingScaleFields } from "@/components/academics/fields"
 import { createGradingScale, deleteGradingScale, updateGradingScale } from "@/lib/actions/operations"
 import { requireFeatureFor } from "@/lib/auth/session"
-import { listGradingScales } from "@/services/operations"
+import { listGradingScales, listSetupTemplates } from "@/services/operations"
+import { Field } from "@/components/ui/form"
+import { TemplatePicker, type TemplateOption } from "@/components/academics/template-picker"
+import { applyGradingScaleTemplate, deleteGradingTemplate, saveGradingTemplate } from "@/lib/actions/templates"
+import { SCALE_PRESETS, formatBand, presetBands, type BandItem } from "@/lib/grading-templates"
+import { getSchoolSettings } from "@/services/settings"
 
 export const metadata: Metadata = { title: "Grading scales" }
 
 export default async function GradingScalesPage() {
   const ctx = await requireFeatureFor("school.records.manage", "grades")
-  const { data: scales, error } = await listGradingScales(ctx.profile.school_id!)
+  const schoolId = ctx.profile.school_id!
+  const [{ data: scales, error }, { data: saved }, { data: settings }] = await Promise.all([
+    listGradingScales(schoolId),
+    listSetupTemplates(schoolId, "grading_scales"),
+    getSchoolSettings(schoolId),
+  ])
+  const max = Number(settings?.grade_max_score ?? 100)
+  const templates: TemplateOption[] = [
+    ...SCALE_PRESETS.map((p) => ({ key: p.key, name: p.name, builtIn: true, preview: (presetBands(p.key, max) ?? []).map(formatBand) })),
+    ...(saved ?? []).map((t) => ({ key: t.id, name: t.name, builtIn: false, preview: (t.items as BandItem[]).map(formatBand) })),
+  ]
 
   return (
     <>
@@ -22,9 +37,24 @@ export default async function GradingScalesPage() {
         title="Grading scale"
         description="How scores translate into descriptors for your school. A score falls in the band with the highest minimum it reaches. Maximum and passing scores are set in Settings."
         actions={
-          <FormDialog trigger={<><Plus className="size-4" aria-hidden /> Add band</>} title="Add grading band" action={createGradingScale} submitLabel="Add">
-            <GradingScaleFields />
-          </FormDialog>
+          <>
+            <TemplatePicker
+              title="Grading scale from a template"
+              description="Sets up the whole scale at once. Grades are stored as scores, so applying a template never changes a grade, only how scores are described."
+              templates={templates}
+              applyWarning={scales?.length ? `This replaces the current ${scales.length} band${scales.length === 1 ? "" : "s"}.` : undefined}
+              onApply={applyGradingScaleTemplate}
+              onDelete={deleteGradingTemplate}
+            />
+            {!!scales?.length && (
+              <FormDialog trigger="Save as template" variant="secondary" title="Save this grading scale as a template" action={saveGradingTemplate.bind(null, "grading_scales", null)} submitLabel="Save template">
+                <Field name="name" label="Template name" placeholder="Our grading scale" required maxLength={80} />
+              </FormDialog>
+            )}
+            <FormDialog trigger={<><Plus className="size-4" aria-hidden /> Add band</>} title="Add grading band" action={createGradingScale} submitLabel="Add">
+              <GradingScaleFields />
+            </FormDialog>
+          </>
         }
       />
       {error && <Alert tone="error" className="mb-4">The grading scale could not be loaded.</Alert>}

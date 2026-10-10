@@ -1147,6 +1147,26 @@ isOneToOne: false
       referencedColumns: ["school_id","id"]
     }
                   ]
+                },"setup_templates": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"id": string,"items": NonNullable<Json>,"kind": string,"name": string,"school_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"id"?: string,"items": NonNullable<Json>,"kind": string,"name": string,"school_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"id"?: string,"items"?: NonNullable<Json>,"kind"?: string,"name"?: string,"school_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "setup_templates_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"sms_usage": {
                   Row: {
                     "created_at": string,"id": string,"messages_failed": number,"messages_sent": number,"month": number,"school_id": string,"updated_at": string,"year": number
@@ -1635,6 +1655,9 @@ isOneToOne: false
                            },
 "release_allocation":
 { Args: { "p_allocation_id": string,"p_reason": string }; Returns: undefined
+                           },
+"replace_grading_scale":
+{ Args: { "p_bands": Json }; Returns: number
                            },
 "request_refund":
 { Args: { "p_amount": number,"p_payment_id": string,"p_reason": string }; Returns: string

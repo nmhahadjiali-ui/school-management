@@ -531,3 +531,9 @@ export async function attendanceDayTotals(schoolId: string, date: string) {
   const row = data?.[0]
   return { data: { sessions: Number(row?.sessions ?? 0), present: Number(row?.present ?? 0), absent: Number(row?.absent ?? 0), late: Number(row?.late ?? 0), excused: Number(row?.excused ?? 0) }, error }
 }
+
+/** The school's saved setup templates of one kind (grading periods / grading scales). */
+export async function listSetupTemplates(schoolId: string, kind: "grading_periods" | "grading_scales") {
+  const supabase = await createClient()
+  return supabase.from("setup_templates").select("id, name, items").eq("school_id", schoolId).eq("kind", kind).order("name")
+}
