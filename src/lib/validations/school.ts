@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { numberFormatProblem } from "@/lib/record-number"
 
 // Form input arrives as strings. These helpers normalise blanks and checkboxes.
 const blankToNull = (v: unknown) => (v === undefined || (typeof v === "string" && v.trim() === "") ? null : v)
@@ -58,6 +59,9 @@ export const studentSchema = z.object({
   address: optional(z.string().trim().max(500)),
   status: z.enum(["active", "inactive", "graduated", "transferred", "withdrawn"]),
 })
+
+/** New students: the number may be left blank when the school numbers students automatically. */
+export const newStudentSchema = studentSchema.extend({ student_number: optional(z.string().trim().max(50, "Student number is too long")) })
 
 export const teacherSchema = z.object({
   employee_number: optional(z.string().trim().max(50)),
@@ -120,3 +124,19 @@ export const assignmentSchema = z.object({
 })
 
 export const linkAccountSchema = z.object({ user_id: z.uuid("Choose an account") })
+
+// --- Automatic numbering ---------------------------------------------------------------
+const numberFormat = z.string().trim().superRefine((v, c) => {
+  const problem = numberFormatProblem(v)
+  if (problem) c.addIssue({ code: "custom", message: problem })
+})
+const nextNumber = z.coerce.number().int("Use a whole number").min(1, "At least 1").max(99999999)
+
+export const numberingSettingsSchema = z.object({
+  student_number_auto: checkbox,
+  student_number_format: numberFormat,
+  student_number_next: nextNumber,
+  employee_number_auto: checkbox,
+  employee_number_format: numberFormat,
+  employee_number_next: nextNumber,
+})

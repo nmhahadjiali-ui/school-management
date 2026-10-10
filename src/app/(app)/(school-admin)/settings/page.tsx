@@ -3,6 +3,8 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { Badge, PageHeader } from "@/components/ui/misc"
 import { SettingsForm } from "@/components/settings/settings-form"
 import { AcademicPolicyForm } from "@/components/settings/academic-policy-form"
+import { NumberingSettingsForm } from "@/components/settings/numbering-settings-form"
+import { schoolYearNow } from "@/lib/record-number"
 import { CommunicationSettingsForm } from "@/components/settings/communication-settings"
 import { EmptyState, Table, Td, Th } from "@/components/ui/misc"
 import { deliverySummary, recentFailures, smsUsage } from "@/services/communication"
@@ -42,6 +44,7 @@ export default async function SchoolSettingsPage() {
           </Card>
           <SettingsForm school={school.data} settings={settings.data} />
           <AcademicPolicyForm settings={settings.data} />
+          <NumberingSettingsForm settings={settings.data} year={schoolYearNow(school.data.timezone)} />
           <CommunicationSettingsForm settings={settings.data} available={{ email: has("email_notifications"), sms: has("sms"), push: has("push_notifications") }} />
           <Card>
             <CardHeader title="Delivery health (last 30 days)" description="Messages sent through external channels. In-app notifications are not counted here." />

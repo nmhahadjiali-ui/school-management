@@ -233,13 +233,18 @@ const section = (title: string, children: React.ReactNode) => (
   </fieldset>
 )
 
-export function StudentForm({ action, student, cancelHref }: { action: FormAction; student?: Student; cancelHref: string }) {
+/** `autoNumber`: the next automatic number (new students, when automatic numbering is on). */
+export function StudentForm({ action, student, cancelHref, autoNumber }: { action: FormAction; student?: Student; cancelHref: string; autoNumber?: string }) {
   return (
     <Form action={action} className="space-y-6">
       {section(
         "Personal information",
         <>
-          <Field name="student_number" label="Student number" defaultValue={student?.student_number} required />
+          {autoNumber ? (
+            <Field name="student_number" label="Student number" hint={`Leave blank to assign the next number automatically (${autoNumber}).`} />
+          ) : (
+            <Field name="student_number" label="Student number" defaultValue={student?.student_number} required />
+          )}
           <NameFields p={student} />
           <Field name="suffix" label="Suffix" placeholder="Jr." defaultValue={student?.suffix ?? ""} />
           <Field name="date_of_birth" label="Date of birth" type="date" defaultValue={student?.date_of_birth ?? ""} />
@@ -287,7 +292,8 @@ export function StudentForm({ action, student, cancelHref }: { action: FormActio
   )
 }
 
-export function TeacherForm({ action, teacher, cancelHref }: { action: FormAction; teacher?: Teacher; cancelHref: string }) {
+/** `autoNumber`: the next automatic employee number (new teachers, when automatic numbering is on). */
+export function TeacherForm({ action, teacher, cancelHref, autoNumber }: { action: FormAction; teacher?: Teacher; cancelHref: string; autoNumber?: string }) {
   return (
     <Form action={action} className="space-y-6">
       {section("Personal information", <NameFields p={teacher} />)}
@@ -301,7 +307,7 @@ export function TeacherForm({ action, teacher, cancelHref }: { action: FormActio
       {section(
         "Employment",
         <>
-          <Field name="employee_number" label="Employee number" defaultValue={teacher?.employee_number ?? ""} />
+          <Field name="employee_number" label="Employee number" defaultValue={teacher?.employee_number ?? ""} hint={autoNumber ? `Leave blank to assign the next number automatically (${autoNumber}).` : undefined} />
           <Field name="specialization" label="Specialization" defaultValue={teacher?.specialization ?? ""} />
           <Field
             as="select"

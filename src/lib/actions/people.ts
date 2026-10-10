@@ -13,6 +13,7 @@ import {
   guardianLinkUpdateSchema,
   guardianSchema,
   linkAccountSchema,
+  newStudentSchema,
   studentSchema,
   teacherSchema,
 } from "@/lib/validations/school"
@@ -45,7 +46,8 @@ async function createAndOpen<S extends z.ZodType>(
 }
 
 export async function createStudent(_p: ActionResult | null, fd: FormData) {
-  return createAndOpen(fd, studentSchema, (d, schoolId) => people.createStudent({ ...d, school_id: schoolId }), "/students", "createStudent")
+  // A blank number is filled in by the database when automatic numbering is on.
+  return createAndOpen(fd, newStudentSchema, (d, schoolId) => people.createStudent({ ...d, student_number: d.student_number ?? "", school_id: schoolId }), "/students", "createStudent")
 }
 
 export async function createTeacher(_p: ActionResult | null, fd: FormData) {
