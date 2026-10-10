@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation"
 import { Plus } from "lucide-react"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { ConfirmAction } from "@/components/ui/confirm-dialog"
+import { DeleteWithPassword } from "@/components/ui/delete-with-password"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { Badge, EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { DescriptionList } from "@/components/data/list"
@@ -57,6 +58,7 @@ export default async function SectionPage({ params }: PageProps<"/sections/[id]"
               ) : (
                 <ConfirmAction size="md" trigger="Reactivate" title="Reactivate this section?" description="It will accept enrollments again." confirmLabel="Reactivate" onConfirm={setSectionStatus.bind(null, section.id, "active")} />
               )}
+              <DeleteWithPassword size="md" kind="section" id={section.id} name={section.name} thing="section" redirectTo="/sections" />
             </>
           ) : null
         }

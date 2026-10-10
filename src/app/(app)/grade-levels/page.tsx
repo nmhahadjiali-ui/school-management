@@ -3,6 +3,7 @@ import { Plus } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
 import { ConfirmAction } from "@/components/ui/confirm-dialog"
+import { DeleteWithPassword } from "@/components/ui/delete-with-password"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { GradeLevelFields } from "@/components/school/fields"
@@ -60,6 +61,7 @@ export default async function GradeLevelsPage() {
                       ) : (
                         <ConfirmAction trigger="Reactivate" title={`Reactivate ${g.name}?`} description="It will be available for new sections and enrollments again." confirmLabel="Reactivate" onConfirm={setGradeLevelStatus.bind(null, g.id, "active")} />
                       )}
+                      <DeleteWithPassword kind="grade_level" id={g.id} name={g.name} thing="grade level" />
                     </div>
                   </Td>
                 </tr>

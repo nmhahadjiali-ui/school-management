@@ -4,6 +4,7 @@ import { Plus } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
 import { ConfirmAction } from "@/components/ui/confirm-dialog"
+import { DeleteWithPassword } from "@/components/ui/delete-with-password"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { ListToolbar } from "@/components/data/list-toolbar"
@@ -77,6 +78,7 @@ async function SubjectsTable({ schoolId, sp }: { schoolId: string; sp: SearchPar
                   ) : (
                     <ConfirmAction trigger="Reactivate" title={`Reactivate ${s.name}?`} description="It will be available for new assignments again." confirmLabel="Reactivate" onConfirm={setSubjectStatus.bind(null, s.id, "active")} />
                   )}
+                  <DeleteWithPassword kind="subject" id={s.id} name={s.name} thing="subject" />
                 </div>
               </Td>
             </tr>

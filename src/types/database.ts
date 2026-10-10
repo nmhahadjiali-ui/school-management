@@ -305,6 +305,26 @@ isOneToOne: false
       referencedColumns: ["school_id","id"]
     }
                   ]
+                },"client_operations": {
+                  Row: {
+                    "created_at": string,"id": string,"kind": string,"result": NonNullable<Json>,"school_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id": string,"kind": string,"result": NonNullable<Json>,"school_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"kind"?: string,"result"?: NonNullable<Json>,"school_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "client_operations_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"discount_types": {
                   Row: {
                     "calculation_type": Database["public"]['Enums']["discount_calculation"],"code": string,"created_at": string,"description": string | null,"id": string,"name": string,"school_id": string,"status": Database["public"]['Enums']["record_status"],"updated_at": string,"value": number
@@ -1601,6 +1621,9 @@ isOneToOne: false
 "publish_announcement":
 { Args: { "p_id": string }; Returns: string
                            },
+"rate_limit_hits":
+{ Args: { "p_bucket": string,"p_window_seconds": number }; Returns: number
+                           },
 "record_payment":
 { Args: { "p_allocations": Json,"p_amount": number,"p_idempotency_key": string,"p_method": Database["public"]['Enums']["payment_method"],"p_notes": string,"p_payment_date": string,"p_reference": string,"p_student_id": string }; Returns: Json
                            },
@@ -1645,6 +1668,9 @@ isOneToOne: false
                            },
 "set_transaction_checkout":
 { Args: { "p_checkout_url": string,"p_provider_transaction_id": string,"p_transaction_id": string }; Returns: undefined
+                           },
+"sync_attendance":
+{ Args: { "p_date": string,"p_op_id": string,"p_records": Json,"p_section_id": string,"p_subject_id"?: string }; Returns: Json
                            },
 "transfer_enrollment":
 { Args: { "p_effective_date"?: string,"p_enrollment_id": string,"p_grade_level_id": string,"p_section_id": string }; Returns: string

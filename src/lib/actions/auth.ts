@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { createHash } from "node:crypto"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { hitRateLimit } from "@/lib/rate-limit"
 import { fail, formToObject, invalid, type ActionResult } from "@/lib/action-result"
 import { safeRedirectPath } from "@/lib/utils"
 import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from "@/lib/validations"
@@ -24,18 +25,9 @@ async function clientKey() {
   return createHash("sha256").update(ip).digest("hex").slice(0, 32)
 }
 
-/** Shared (database) counter: works across every server instance. Fails open if the check itself errors. */
+/** Per-visitor limit (shared database counter, see hitRateLimit). */
 async function withinLimit(action: string, limit: number, windowSeconds: number) {
-  const { data, error } = await createAdminClient().rpc("hit_rate_limit", {
-    p_bucket: `${action}:${await clientKey()}`,
-    p_limit: limit,
-    p_window_seconds: windowSeconds,
-  })
-  if (error) {
-    console.error("[rateLimit]", error.code, error.message)
-    return true
-  }
-  return data === true
+  return hitRateLimit(`${action}:${await clientKey()}`, limit, windowSeconds)
 }
 
 export async function signIn(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
