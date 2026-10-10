@@ -135,3 +135,35 @@ describe("grade level templates", { skip }, () => {
     assert.ok(html.includes("Use a template") && html.includes("Complete K–12"))
   })
 })
+
+describe("subject templates", { skip }, () => {
+  const subjects = async (schoolId) => (await service.from("subjects").select("name, code").eq("school_id", schoolId).order("code")).data
+
+  test("presets add only missing subjects (Mathematics/MATH and Science/SCI exist already) and combine", async () => {
+    const r = await act("applySubjectTemplate", ["builtin:jhs"], "adminA", "/subjects")
+    assert.equal(r.ok, true, r.error)
+    assert.match(r.message, /Added 6 subjects; 2 you already had were kept/)
+    const codes = (await subjects(t.schoolA.id)).map((s) => s.code)
+    for (const c of ["FIL", "ENG", "AP", "VE", "MAPEH", "TLE", "MATH", "SCI"]) assert.ok(codes.includes(c), c)
+    assert.equal(codes.filter((c) => c === "MATH").length, 1)
+
+    const elem = await act("applySubjectTemplate", ["builtin:elementary"], "adminA", "/subjects")
+    assert.match(elem.message, /Added 3 subjects; 6 you already had were kept/, "GMRC, EPP, Makabansa are new")
+    const { data: mapeh } = await service.from("subjects").select("description").eq("school_id", t.schoolA.id).eq("code", "MAPEH").single()
+    assert.match(mapeh.description, /Music, Arts/)
+  })
+
+  test("save subjects as a template; other schools and teachers cannot use it", async () => {
+    await service.from("subjects").update({ status: "inactive" }).eq("school_id", t.schoolA.id).eq("code", "TLE")
+    const saved = await act("saveGradingTemplate", ["subjects", null, null, asForm({ name: "A subjects" })], "adminA", "/subjects")
+    assert.equal(saved.ok, true, saved.error)
+    const { data: tpl } = await service.from("setup_templates").select("id, items").eq("school_id", t.schoolA.id).eq("kind", "subjects").single()
+    assert.ok(!tpl.items.some((s) => s.code === "TLE"), "inactive subjects are not saved")
+    assert.equal((await act("applySubjectTemplate", [tpl.id], "adminB", "/subjects")).ok, false)
+    assert.equal((await act("applySubjectTemplate", ["builtin:alive"], "teacherA", "/subjects")).ok, false)
+    const r = await act("applySubjectTemplate", ["builtin:alive"], "adminB", "/subjects")
+    assert.match(r.message, /Added 2 subjects\./)
+    const html = await (await http("/subjects", cookie.adminA)).text()
+    assert.ok(html.includes("Use a template") && html.includes("Senior High School core subjects"))
+  })
+})

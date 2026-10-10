@@ -14,6 +14,12 @@ import { createSubject, setSubjectStatus, updateSubject } from "@/lib/actions/ac
 import { requireSchoolAdmin } from "@/lib/auth/session"
 import { parseListParams, type SearchParams } from "@/lib/list-params"
 import { listSubjects, SUBJECT_SORTS } from "@/services/academic"
+import { listSetupTemplates } from "@/services/operations"
+import { Field } from "@/components/ui/form"
+import { TemplatePicker, type TemplateOption } from "@/components/academics/template-picker"
+import { applySubjectTemplate, deleteGradingTemplate, saveGradingTemplate } from "@/lib/actions/templates"
+import { SUBJECT_PRESETS, formatSubject, type SubjectItem } from "@/lib/grading-templates"
+import { createClient } from "@/lib/supabase/server"
 
 export const metadata: Metadata = { title: "Subjects" }
 
@@ -22,15 +28,43 @@ const STATUS_FILTER = { name: "status", label: "Status", options: [{ value: "act
 export default async function SubjectsPage({ searchParams }: PageProps<"/subjects">) {
   const ctx = await requireSchoolAdmin()
   const sp = await searchParams
+  // All subject names/codes (any status), to mark template entries the school already has.
+  const supabase = await createClient()
+  const [{ data: existing }, { data: saved }] = await Promise.all([
+    supabase.from("subjects").select("name, code").eq("school_id", ctx.schoolId).limit(5000),
+    listSetupTemplates(ctx.schoolId, "subjects"),
+  ])
+  const have = new Set((existing ?? []).flatMap((s) => [`n:${s.name.toLowerCase()}`, `c:${s.code.toLowerCase()}`]))
+  const owned = (s: SubjectItem) => have.has(`n:${s.name.toLowerCase()}`) || have.has(`c:${s.code.toLowerCase()}`)
+  const preview = (items: SubjectItem[]) => items.map((s) => (owned(s) ? `${formatSubject(s)} · already added` : formatSubject(s)))
+  const templates: TemplateOption[] = [
+    ...SUBJECT_PRESETS.map((p) => ({ key: p.key, name: p.name, builtIn: true, preview: preview(p.items) })),
+    ...(saved ?? []).map((t) => ({ key: t.id, name: t.name, builtIn: false, preview: preview(t.items as SubjectItem[]) })),
+  ]
   return (
     <>
       <PageHeader
         title="Subjects"
         description="Subjects offered by your school. Teachers are assigned to subjects per section."
         actions={
-          <FormDialog trigger={<><Plus className="size-4" aria-hidden /> New subject</>} title="New subject" action={createSubject} submitLabel="Create">
-            <SubjectFields />
-          </FormDialog>
+          <>
+            <TemplatePicker
+              title="Subjects from a template"
+              description="Adds every subject of the template at once. Subjects you already have (same name or code) are kept as they are, so templates can be combined. You can rename or deactivate any subject afterwards."
+              templates={templates}
+              onApply={applySubjectTemplate}
+              onDelete={deleteGradingTemplate}
+            />
+            {!!existing?.length && (
+              <FormDialog trigger="Save as template" variant="secondary" title="Save these subjects as a template" action={saveGradingTemplate.bind(null, "subjects", null)} submitLabel="Save template">
+                <p className="text-sm text-muted">Saves the active subjects (name, code and description), up to 20.</p>
+                <Field name="name" label="Template name" placeholder="Our Grade 7 subjects" required maxLength={80} />
+              </FormDialog>
+            )}
+            <FormDialog trigger={<><Plus className="size-4" aria-hidden /> New subject</>} title="New subject" action={createSubject} submitLabel="Create">
+              <SubjectFields />
+            </FormDialog>
+          </>
         }
       />
       <Card>

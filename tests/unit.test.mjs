@@ -73,3 +73,18 @@ describe("grade level presets", async () => {
     assert.deepEqual(GRADE_PRESETS.find((p) => p.key === "builtin:k12").items.map((g) => g.code), ["K", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12"])
   })
 })
+
+describe("subject presets", async () => {
+  const { SUBJECT_PRESETS } = await import("../src/lib/grading-templates.ts")
+  test("valid, unique codes and names within every preset (fit the subject rules)", () => {
+    for (const p of SUBJECT_PRESETS) {
+      assert.equal(new Set(p.items.map((s) => s.code.toLowerCase())).size, p.items.length, p.key)
+      assert.equal(new Set(p.items.map((s) => s.name.toLowerCase())).size, p.items.length, p.key)
+      for (const s of p.items) {
+        assert.match(s.code, /^[A-Za-z0-9_-]{1,20}$/, s.code)
+        assert.ok(s.name.length <= 100, s.name)
+      }
+      assert.ok(p.items.length <= 20)
+    }
+  })
+})

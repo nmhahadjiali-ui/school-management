@@ -93,3 +93,58 @@ export const GRADE_PRESETS: { key: string; name: string; items: GradeItem[] }[] 
 ]
 
 export const formatGrade = (g: GradeItem) => `${g.name} (${g.code})`
+
+// --- Subjects ----------------------------------------------------------------------
+export type SubjectItem = { name: string; code: string; description: string | null }
+
+const subj = (name: string, code: string, description: string | null = null): SubjectItem => ({ name, code, description })
+const CORE = [subj("Filipino", "FIL"), subj("English", "ENG"), subj("Mathematics", "MATH"), subj("Science", "SCI"), subj("Araling Panlipunan", "AP")]
+const MAPEH = subj("MAPEH", "MAPEH", "Music, Arts, Physical Education and Health")
+
+/** Common DepEd subjects. Applying adds only the subjects a school does not have yet. Edit freely afterwards. */
+export const SUBJECT_PRESETS: { key: string; name: string; items: SubjectItem[] }[] = [
+  {
+    key: "builtin:elementary",
+    name: "Elementary (Grades 1–6)",
+    items: [
+      ...CORE,
+      subj("Good Manners and Right Conduct", "GMRC"),
+      MAPEH,
+      subj("Edukasyon Pantahanan at Pangkabuhayan", "EPP"),
+      subj("Makabansa", "MAKABANSA", "Grades 1–3"),
+    ],
+  },
+  {
+    key: "builtin:jhs",
+    name: "Junior High School (Grades 7–10)",
+    items: [...CORE, subj("Values Education", "VE"), MAPEH, subj("Technology and Livelihood Education", "TLE")],
+  },
+  {
+    key: "builtin:shs-core",
+    name: "Senior High School core subjects",
+    items: [
+      subj("Oral Communication in Context", "ORALCOM"),
+      subj("Reading and Writing Skills", "READWRITE"),
+      subj("Komunikasyon at Pananaliksik sa Wika at Kulturang Pilipino", "KOMPAN"),
+      subj("Pagbasa at Pagsusuri ng Iba't Ibang Teksto Tungo sa Pananaliksik", "PAGBASA"),
+      subj("21st Century Literature from the Philippines and the World", "LIT21"),
+      subj("Contemporary Philippine Arts from the Regions", "CPAR"),
+      subj("Media and Information Literacy", "MIL"),
+      subj("General Mathematics", "GENMATH"),
+      subj("Statistics and Probability", "STATPROB"),
+      subj("Earth and Life Science", "ELS"),
+      subj("Physical Science", "PHYSCI"),
+      subj("Introduction to the Philosophy of the Human Person", "PHILO"),
+      subj("Personal Development", "PERDEV"),
+      subj("Understanding Culture, Society and Politics", "UCSP"),
+      subj("Physical Education and Health", "PEH"),
+    ],
+  },
+  {
+    key: "builtin:alive",
+    name: "ALIVE (Arabic Language and Islamic Values Education)",
+    items: [subj("Arabic Language", "ARABIC"), subj("Islamic Values Education", "IVE")],
+  },
+]
+
+export const formatSubject = (s: SubjectItem) => `${s.name} (${s.code})`
