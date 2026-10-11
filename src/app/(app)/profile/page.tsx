@@ -6,7 +6,7 @@ import { ProfileForms } from "@/components/profile/profile-forms"
 import { getUserId, requirePermission } from "@/lib/auth/session"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { setMyAvatar } from "@/lib/actions/images"
-import { photoSrc } from "@/lib/images"
+import { canUploadPhoto, photoSrc } from "@/lib/images"
 
 export const metadata: Metadata = { title: "Profile" }
 
@@ -20,20 +20,23 @@ export default async function ProfilePage() {
       <PageHeader title="Profile" description="Your personal details and password." />
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
-          <Card>
-            <CardHeader title="Profile photo" />
-            <CardBody>
-              <ImageUpload
-                bucket="photos"
-                folder={`${profile.school_id ?? "platform"}/users/${userId}`}
-                currentSrc={photoSrc(profile.avatar_path, profile.avatar_url)}
-                onSave={setMyAvatar}
-                label="photo"
-                shape="circle"
-                fallback={<span className="text-xl font-semibold">{initials}</span>}
-              />
-            </CardBody>
-          </Card>
+          {/* Students and parents do not upload pictures. */}
+          {canUploadPhoto(profile.role) && (
+            <Card>
+              <CardHeader title="Profile photo" />
+              <CardBody>
+                <ImageUpload
+                  bucket="photos"
+                  folder={`${profile.school_id ?? "platform"}/users/${userId}`}
+                  currentSrc={photoSrc(profile.avatar_path, profile.avatar_url)}
+                  onSave={setMyAvatar}
+                  label="photo"
+                  shape="circle"
+                  fallback={<span className="text-xl font-semibold">{initials}</span>}
+                />
+              </CardBody>
+            </Card>
+          )}
           <ProfileForms profile={profile} />
         </div>
         <Card className="self-start">

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { denied, fail, type ActionResult } from "@/lib/action-result"
 import { schoolAdmin } from "@/lib/actions/helpers"
 import { authorize } from "@/lib/auth/session"
-import { LOGO_PATH, STUDENT_PHOTO_PATH, USER_PHOTO_PATH } from "@/lib/images"
+import { LOGO_PATH, STUDENT_PHOTO_PATH, USER_PHOTO_PATH, canUploadPhoto } from "@/lib/images"
 import { createClient } from "@/lib/supabase/server"
 import { uuidSchema } from "@/lib/validations"
 
@@ -48,7 +48,7 @@ export async function setSchoolLogo(schoolId: string, path: string | null): Prom
 /** Any signed-in user: their own profile photo. */
 export async function setMyAvatar(path: string | null): Promise<ActionResult> {
   const ctx = await authorize("profile.self")
-  if (!ctx) return denied()
+  if (!ctx || !canUploadPhoto(ctx.profile.role)) return denied()
   const supabase = await createClient()
   const { data: claims } = await supabase.auth.getClaims()
   const userId = claims?.claims?.sub

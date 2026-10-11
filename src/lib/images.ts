@@ -31,3 +31,6 @@ export function photoSrc(path: string | null | undefined, externalUrl?: string |
   if (path) return `/api/photos?path=${encodeURIComponent(path)}`
   return externalUrl || null
 }
+
+/** Students and parents do not upload profile pictures; staff and admins may. */
+export const canUploadPhoto = (role: string) => role !== "student" && role !== "parent"
