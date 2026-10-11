@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ROLE_LABELS } from "@/lib/auth/permissions"
 import { Alert } from "@/components/ui/alert"
 import { LinkButton } from "@/components/ui/button"
 import { Card, CardHeader } from "@/components/ui/card"
@@ -13,7 +14,7 @@ import type { UserContext } from "@/types/domain"
 export async function FinanceDashboard({ ctx }: { ctx: UserContext }) {
   const schoolId = ctx.profile.school_id
   const level = await myFinanceLevel()
-  const header = <PageHeader eyebrow={ctx.school?.name} title={`Welcome, ${ctx.profile.first_name || fullName(ctx.profile)}`} />
+  const header = <PageHeader eyebrow={ctx.school?.name} title={`Welcome, ${ctx.profile.first_name || fullName(ctx.profile)} (${ROLE_LABELS[ctx.profile.role]})`} />
   if (!schoolId || level === "none") {
     return (
       <>

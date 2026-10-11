@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ROLE_LABELS } from "@/lib/auth/permissions"
 import { Suspense } from "react"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { EmptyState, PageHeader, RoleBadge } from "@/components/ui/misc"
@@ -7,25 +8,21 @@ import { ChildrenList } from "@/components/school/children-list"
 import { StudentAcademics } from "@/components/academics/student-academics"
 import { TeacherDashboard } from "@/components/dashboard/teacher-dashboard"
 import { AnnouncementsCard } from "@/components/dashboard/announcements-card"
-import { FEATURE_LABELS } from "@/lib/features"
 import { formatDateTime } from "@/lib/dates"
 import { fullName } from "@/lib/utils"
 import { studentEnrollments } from "@/services/academic"
 import { myNotifications } from "@/services/operations"
 import type { UserContext } from "@/types/domain"
 
-const CORE = new Set(["schedules", "attendance", "grades", "coursework", "notifications"])
-
 /** Teacher / student / parent dashboard. All data is scoped by RLS to the viewer. */
 export function MemberDashboard({ ctx }: { ctx: UserContext }) {
   const { profile, school, features, record, current_academic_year: year } = ctx
   const recordHref = record ? `/${record.type === "guardian" ? "guardians" : `${record.type}s`}/${record.id}` : null
-  const modules = features.filter((f) => !CORE.has(f))
   const skeleton = <Card><TableSkeleton rows={3} /></Card>
 
   return (
     <>
-      <PageHeader eyebrow={school?.name} title={`Welcome, ${profile.first_name || fullName(profile)}`} description={year ? `Academic year ${year.name}` : undefined} />
+      <PageHeader eyebrow={school?.name} title={`Welcome, ${profile.first_name || fullName(profile)} (${ROLE_LABELS[profile.role]})`} description={year ? `Academic year ${year.name}` : undefined} />
       <div className="space-y-6">
         {record?.type === "teacher" && year && (
           <Suspense fallback={skeleton}>
@@ -75,18 +72,6 @@ export function MemberDashboard({ ctx }: { ctx: UserContext }) {
               </div>
             </CardBody>
           </Card>
-          {modules.length > 0 && (
-            <Card>
-              <CardHeader title="Other modules" description="Optional modules enabled for your school." />
-              <ul className="divide-y divide-border">
-                {modules.map((key) => (
-                  <li key={key}>
-                    <Link href={`/modules/${key}`} className="block px-5 py-3 text-sm font-medium hover:bg-slate-50">{FEATURE_LABELS[key] ?? key}</Link>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
         </div>
       </div>
     </>
