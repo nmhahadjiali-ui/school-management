@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, startTransition, useActionState, useContext, useId, useRef } from "react"
-import { Loader2 } from "lucide-react"
+import { createContext, startTransition, useActionState, useContext, useId, useRef, useState } from "react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import type { ActionResult } from "@/lib/action-result"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
@@ -89,6 +89,7 @@ export function Field(props: FieldProps) {
   const { name, label, hint, className } = props
   const { state } = useContext(FormContext)
   const id = useId()
+  const [showPassword, setShowPassword] = useState(false)
   const errors = state && !state.ok ? state.fieldErrors?.[name] : undefined
   const describedBy = errors ? `${id}-error` : hint ? `${id}-hint` : undefined
   const common = { id, name, "aria-invalid": errors ? true : undefined, "aria-describedby": describedBy }
@@ -108,6 +109,25 @@ export function Field(props: FieldProps) {
   } else if (props.as === "textarea") {
     const { as: _as, name: _n, label: _l, hint: _h, className: _c, ...rest } = props
     control = <textarea rows={3} {...rest} {...common} className={inputClass} />
+  } else if (props.type === "password") {
+    // Password: an eye button shows or hides what was typed.
+    const { as: _as, name: _n, label: _l, hint: _h, className: _c, type: _t, ...rest } = props
+    control = (
+      <div className="relative">
+        <input {...rest} {...common} type={showPassword ? "text" : "password"} className={cn(inputClass, "pr-10")} />
+        <button
+          type="button"
+          onClick={() => setShowPassword((v) => !v)}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-pressed={showPassword}
+          aria-controls={id}
+          title={showPassword ? "Hide password" : "Show password"}
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-muted hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+        >
+          {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+        </button>
+      </div>
+    )
   } else {
     const { as: _as, name: _n, label: _l, hint: _h, className: _c, ...rest } = props
     control = <input {...rest} {...common} className={cn(inputClass, rest.type === "color" && "h-10 p-1")} />
