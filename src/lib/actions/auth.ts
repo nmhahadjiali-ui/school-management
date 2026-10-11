@@ -44,7 +44,8 @@ export async function signIn(_prev: ActionResult | null, formData: FormData): Pr
     // Same message for unknown email and wrong password (no account enumeration).
     return { ok: false, error: "Invalid email or password." }
   }
-  redirect(safeRedirectPath(formData.get("next") as string | null))
+  // Brief welcome (school logo and name), then the requested page.
+  redirect(`/welcome?next=${encodeURIComponent(safeRedirectPath(formData.get("next") as string | null))}`)
 }
 
 export async function register(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
