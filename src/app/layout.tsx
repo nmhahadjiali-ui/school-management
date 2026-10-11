@@ -8,8 +8,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    // Browser extensions (password managers, translators, "webcrx" bridges...) add
+    // attributes to <html>/<body> before React loads. Ignore those two tags only;
+    // mismatches anywhere inside the page are still reported.
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   )
 }
