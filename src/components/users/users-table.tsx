@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { ConfirmAction } from "@/components/ui/confirm-dialog"
 import { EmptyState, RoleBadge, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { updateMember } from "@/lib/actions/users"
+import { deleteUserAccount } from "@/lib/actions/user-delete"
+import { DeleteWithPassword } from "@/components/ui/delete-with-password"
 import { ROLE_LABELS, SCHOOL_MEMBER_ROLES, isSchoolMemberRole } from "@/lib/auth/permissions"
 import { formatDate, fullName } from "@/lib/utils"
 import type { AppRole, ProfileStatus } from "@/types/domain"
@@ -81,6 +83,19 @@ function RowActions({ user, mode, onError }: { user: UserRow; mode: Props["mode"
           Reactivate
         </Button>
       ) : null}
+      {/* Deleting accounts: super admin only (platform pages). */}
+      {mode === "platform" && <DeleteWithPassword
+        onConfirm={deleteUserAccount.bind(null, user.id)}
+        name={fullName(user)}
+        thing="account"
+        note={
+          <>
+            This permanently deletes the login account of {fullName(user)} ({user.email}); it cannot be undone. Their history (attendance, grades, audit log)
+            is kept but will no longer show who did it, and their school record stays without a login. Accounts that handled payments are kept;
+            deactivate those instead.
+          </>
+        }
+      />}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
 import { ConfirmAction } from "@/components/ui/confirm-dialog"
 import { DeleteWithPassword } from "@/components/ui/delete-with-password"
+import { deleteSetupRecord } from "@/lib/actions/setup-delete"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { ListToolbar } from "@/components/data/list-toolbar"
@@ -107,7 +108,7 @@ export default async function GradingPeriodsPage({ searchParams }: PageProps<"/g
                           {p.status === "open" && (
                             <ConfirmAction destructive trigger="Close" title={`Close ${p.name}?`} description="Teachers can no longer enter or change grades for this period. You can still review, approve and lock submitted grades." confirmLabel="Close period" onConfirm={setGradingPeriodStatus.bind(null, p.id, "closed")} />
                           )}
-                          <DeleteWithPassword kind="grading_period" id={p.id} name={p.name} thing="grading period" />
+                          <DeleteWithPassword onConfirm={deleteSetupRecord.bind(null, "grading_period", p.id)} name={p.name} thing="grading period" />
                         </div>
                       )}
                     </Td>

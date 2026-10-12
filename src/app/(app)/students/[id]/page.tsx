@@ -21,8 +21,6 @@ import { formatDate } from "@/lib/utils"
 import { uuidSchema } from "@/lib/validations"
 import { listGradeLevels, listSectionOptions, studentEnrollments } from "@/services/academic"
 import { getStudent, studentGuardians } from "@/services/people"
-import { ImageUpload } from "@/components/ui/image-upload"
-import { setStudentPhoto } from "@/lib/actions/images"
 import { photoSrc } from "@/lib/images"
 import type { Student, UserContext } from "@/types/domain"
 
@@ -71,7 +69,7 @@ export default async function StudentPage({ params, searchParams }: PageProps<"/
           </Suspense>
         </div>
         <div className="space-y-6">
-          <StudentPhoto student={student} isAdmin={isAdmin} />
+          <StudentPhoto student={student} />
           <Card>
             <CardHeader title="Personal information" />
             <CardBody>
@@ -242,28 +240,16 @@ async function Guardians({ student, isAdmin }: { student: Student; isAdmin: bool
   )
 }
 
-/** Visible to everyone who can open the record (the image itself is re-checked by Storage RLS); admins can change it. */
-function StudentPhoto({ student, isAdmin }: { student: Student; isAdmin: boolean }) {
+/** An existing student photo, for everyone who can open the record (the image is re-checked by Storage RLS). Photos are not uploaded here. */
+function StudentPhoto({ student }: { student: Student }) {
   const src = photoSrc(student.photo_path, student.photo_url)
-  const initials = `${student.first_name.charAt(0)}${student.last_name.charAt(0)}`.toUpperCase()
-  if (!isAdmin && !src) return null
+  if (!src) return null
   return (
     <Card>
       <CardHeader title="Photo" />
       <CardBody>
-        {isAdmin ? (
-          <ImageUpload
-            bucket="photos"
-            folder={`${student.school_id}/students/${student.id}`}
-            currentSrc={src}
-            onSave={setStudentPhoto.bind(null, student.id)}
-            label="photo"
-            fallback={<span className="text-xl font-semibold">{initials}</span>}
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- signed URL via /api/photos
-          <img src={src!} alt={`Photo of ${student.first_name}`} className="size-32 rounded-lg border border-border object-cover" />
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element -- signed URL via /api/photos */}
+        <img src={src} alt={`Photo of ${student.first_name}`} className="size-32 rounded-lg border border-border object-cover" />
       </CardBody>
     </Card>
   )

@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 import { denied, fail, type ActionResult } from "@/lib/action-result"
-import { schoolAdmin } from "@/lib/actions/helpers"
 import { authorize } from "@/lib/auth/session"
-import { LOGO_PATH, STUDENT_PHOTO_PATH, USER_PHOTO_PATH, canUploadPhoto } from "@/lib/images"
+import { LOGO_PATH, USER_PHOTO_PATH, canUploadPhoto } from "@/lib/images"
 import { createClient } from "@/lib/supabase/server"
 import { uuidSchema } from "@/lib/validations"
 
@@ -63,25 +62,5 @@ export async function setMyAvatar(path: string | null): Promise<ActionResult> {
   }
   if (old && old !== path) await removeObject("photos", old)
   revalidatePath("/", "layout")
-  return { ok: true, message: path ? "Photo updated." : "Photo removed." }
-}
-
-/** School admin: a student's photo. */
-export async function setStudentPhoto(studentId: string, path: string | null): Promise<ActionResult> {
-  if (!uuidSchema.safeParse(studentId).success) return denied()
-  const ctx = await schoolAdmin()
-  if (!ctx) return denied()
-  const supabase = await createClient()
-  const { data: student } = await supabase.from("students").select("id, school_id, photo_path").eq("id", studentId).maybeSingle()
-  if (!student || student.school_id !== ctx.schoolId) return denied()
-  if (path !== null && !STUDENT_PHOTO_PATH(ctx.schoolId, studentId).test(path)) return badPath
-
-  const { error } = await supabase.from("students").update({ photo_path: path }).eq("id", studentId).select("id").single()
-  if (error) {
-    await removeObject("photos", path)
-    return fail(error, "setStudentPhoto")
-  }
-  if (student.photo_path && student.photo_path !== path) await removeObject("photos", student.photo_path)
-  revalidatePath(`/students/${studentId}`)
   return { ok: true, message: path ? "Photo updated." : "Photo removed." }
 }

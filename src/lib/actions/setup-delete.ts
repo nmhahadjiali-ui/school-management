@@ -1,10 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient as createPlainClient } from "@supabase/supabase-js"
 import { denied, fail, type ActionResult } from "@/lib/action-result"
 import { schoolAdmin } from "@/lib/actions/helpers"
-import { hitRateLimit, rateLimitHits } from "@/lib/rate-limit"
+import { confirmPassword } from "@/lib/auth/confirm-password"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { uuidSchema } from "@/lib/validations"
@@ -84,34 +83,13 @@ const KINDS: Record<SetupKind, { table: string; label: string; path: string; ins
 
 const listJoin = (parts: string[]) => (parts.length < 2 ? parts.join("") : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`)
 
-/** True when `password` is the signed-in admin's password. Uses a throwaway session, revoked at once. */
-async function passwordMatches(email: string, password: string) {
-  const verifier = createPlainClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-  const { error } = await verifier.auth.signInWithPassword({ email, password })
-  if (error) return false
-  await verifier.auth.signOut({ scope: "local" })
-  return true
-}
-
 export async function deleteSetupRecord(kind: SetupKind, id: string, password: string): Promise<ActionResult> {
   const spec = KINDS[kind]
   if (!spec || !uuidSchema.safeParse(id).success) return denied()
   const ctx = await schoolAdmin()
   if (!ctx) return denied()
-  if (typeof password !== "string" || password.length === 0 || password.length > 72) {
-    return { ok: false, error: "Enter your password to confirm.", fieldErrors: { password: ["Enter your password"] } }
-  }
-
-  // Wrong passwords are limited per account (5 per 15 minutes); correct ones never count.
-  const bucket = `delete-confirm-failed:${ctx.profile.id}`
-  const tooMany = { ok: false as const, error: "Too many incorrect passwords. Please wait 15 minutes and try again." }
-  if ((await rateLimitHits(bucket, 900)) >= 5) return tooMany
-  if (!(await passwordMatches(ctx.profile.email, password))) {
-    if (!(await hitRateLimit(bucket, 5, 900))) return tooMany
-    return { ok: false, error: "That password is not correct.", fieldErrors: { password: ["Incorrect password"] } }
-  }
+  const unconfirmed = await confirmPassword(ctx.profile, password)
+  if (unconfirmed) return unconfirmed
 
   const supabase = await createClient()
   const { data: record } = await supabase.from(spec.table as "sections").select("id, name").eq("id", id).eq("school_id", ctx.schoolId).maybeSingle()

@@ -6,24 +6,26 @@ import { Loader2, Trash2 } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
-import { deleteSetupRecord, type SetupKind } from "@/lib/actions/setup-delete"
+import type { ActionResult } from "@/lib/action-result"
 
 /**
- * "Delete" button for school setup records (school admins only). Opens a
- * dialog that explains the deletion is permanent and asks for the admin's
- * password; the server re-checks everything and refuses records in use.
+ * "Delete" button for permanent deletions (setup records, user accounts).
+ * Opens a dialog that explains the deletion is permanent and asks for the
+ * admin's password; the server re-checks everything.
  */
 export function DeleteWithPassword({
-  kind,
-  id,
+  onConfirm,
   name,
   thing,
+  note,
   redirectTo,
   size = "sm",
 }: {
-  kind: SetupKind
-  id: string
+  /** Server action, called with the typed password (e.g. deleteSetupRecord.bind(null, kind, id)). */
+  onConfirm: (password: string) => Promise<ActionResult>
   name: string
+  /** Replaces the default explanation under the title. */
+  note?: React.ReactNode
   /** Lower-case noun for the dialog text, e.g. "section". */
   thing: string
   /** Where to go after deleting (detail pages); lists just refresh. */
@@ -48,7 +50,7 @@ export function DeleteWithPassword({
     e.preventDefault()
     startTransition(async () => {
       setError(null)
-      const result = await deleteSetupRecord(kind, id, password)
+      const result = await onConfirm(password)
       if (!result.ok) {
         setError(result.error)
         setPassword("")
@@ -86,9 +88,9 @@ export function DeleteWithPassword({
             <h2 id={titleId} className="text-lg font-semibold">
               Delete {thing} “{name}”?
             </h2>
-            <p className="text-sm text-muted">
-              This permanently deletes the {thing} and cannot be undone. A {thing} that is already in use can&apos;t be deleted.
-            </p>
+            <div className="text-sm text-muted">
+              {note ?? <>This permanently deletes the {thing} and cannot be undone. A {thing} that is already in use can&apos;t be deleted.</>}
+            </div>
             {error && <Alert tone="error">{error}</Alert>}
             <div className="space-y-1">
               <label htmlFor={passwordId} className="text-sm font-medium">

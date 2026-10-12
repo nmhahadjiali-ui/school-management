@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
 import { ConfirmAction } from "@/components/ui/confirm-dialog"
 import { DeleteWithPassword } from "@/components/ui/delete-with-password"
+import { deleteSetupRecord } from "@/lib/actions/setup-delete"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { Badge, EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { AcademicYearFields } from "@/components/school/fields"
@@ -86,12 +87,12 @@ export default async function AcademicYearsPage() {
                           confirmLabel="Archive year"
                           onConfirm={archiveAcademicYear.bind(null, y.id)}
                         />
-                        {!y.is_current && <DeleteWithPassword kind="academic_year" id={y.id} name={y.name} thing="academic year" />}
+                        {!y.is_current && <DeleteWithPassword onConfirm={deleteSetupRecord.bind(null, "academic_year", y.id)} name={y.name} thing="academic year" />}
                       </div>
                     )}
                     {y.status === "archived" && !y.is_current && (
                       <div className="flex justify-end">
-                        <DeleteWithPassword kind="academic_year" id={y.id} name={y.name} thing="academic year" />
+                        <DeleteWithPassword onConfirm={deleteSetupRecord.bind(null, "academic_year", y.id)} name={y.name} thing="academic year" />
                       </div>
                     )}
                   </Td>
