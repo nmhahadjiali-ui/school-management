@@ -154,13 +154,13 @@ export function TimeSlotFields({ defaultDays = [7, 1, 2, 3, 4], existing = [] }:
           {rows.map((r, i) => {
             const problem = rowProblem(r, i)
             return (
-            <li key={i} className={cn("flex items-center gap-2 px-3 py-1.5 text-sm", problem && (problem.block ? "bg-red-50" : "bg-amber-50"))}>
+            <li key={i} className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 text-sm", problem && (problem.block ? "bg-red-50" : "bg-amber-50"))}>
               <span className="w-6 text-xs text-muted tabular-nums">{i + 1}.</span>
               <input type="time" value={r.start} aria-label={`Slot ${i + 1} start`} onChange={(e) => setRow(i, { start: e.target.value })} className={input} />
               <span className="text-muted">–</span>
               <input type="time" value={r.end} aria-label={`Slot ${i + 1} end`} onChange={(e) => setRow(i, { end: e.target.value })} className={input} />
-              <span className={cn("flex-1 text-xs", problem?.block ? "text-red-700" : "text-amber-800")}>{problem?.text}</span>
-              <button type="button" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))} className="rounded p-1 text-muted hover:bg-slate-100 hover:text-red-700" aria-label={`Remove slot ${i + 1}`}>
+              <span className={cn("order-last w-full text-xs empty:hidden sm:order-none sm:w-auto sm:flex-1", problem?.block ? "text-red-700" : "text-amber-800")}>{problem?.text}</span>
+              <button type="button" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))} className="ml-auto rounded p-1 text-muted hover:bg-slate-100 hover:text-red-700 sm:ml-0" aria-label={`Remove slot ${i + 1}`}>
                 <Trash2 className="size-4" aria-hidden />
               </button>
             </li>
