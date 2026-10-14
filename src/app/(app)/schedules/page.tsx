@@ -14,7 +14,7 @@ import { addTimeSlots, createSchedule } from "@/lib/actions/operations"
 import { applySlotTemplate, deleteGradingTemplate, saveGradingTemplate } from "@/lib/actions/templates"
 import { requireFeatureFor } from "@/lib/auth/session"
 import { isUuid } from "@/lib/list-params"
-import { sectionOptions, teacherOptions, yearOptions } from "@/lib/options"
+import { gradeOptions, sectionOptions, teacherOptions, yearOptions } from "@/lib/options"
 import { SLOT_PRESETS, slotPreview, type SlotItem } from "@/lib/schedule-slots"
 import { listAcademicYears, listSectionOptions, pickYear } from "@/services/academic"
 import { listActiveTeachers } from "@/services/people"
@@ -36,21 +36,29 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
       </>
     )
   }
-  const section = typeof sp.section === "string" && isUuid(sp.section) ? sp.section : undefined
-  const teacher = typeof sp.teacher === "string" && isUuid(sp.teacher) ? sp.teacher : undefined
-  const [sections, teachers, loads, slots, saved, schedule] = await Promise.all([
+  const [sections, teachers, loads, slots, saved] = await Promise.all([
     listSectionOptions(schoolId, year.id),
     listActiveTeachers(schoolId),
     teachingLoads(schoolId, year.id),
     listTimeSlots(schoolId, year.id),
     listSetupTemplates(schoolId, "schedule_slots"),
-    listSchedules({ schoolId, yearId: year.id, sectionId: section, teacherId: teacher }),
   ])
-  const sectionList = (sections.data ?? []) as { id: string; name: string; grade_level: { name: string } | null }[]
+  const allSections = (sections.data ?? []) as { id: string; name: string; grade_level_id: string; grade_level: { name: string } | null }[]
+  const grades = [...new Map(allSections.map((s) => [s.grade_level_id, { id: s.grade_level_id, name: s.grade_level?.name ?? "" }])).values()]
+  // Ids from the URL only count when they belong to this year's lists (a year change leaves stale ones behind).
+  const pick = (v: unknown, ids: string[]) => (typeof v === "string" && isUuid(v) && ids.includes(v) ? v : undefined)
+  const grade = pick(sp.grade, grades.map((g) => g.id))
+  const sectionList = grade ? allSections.filter((s) => s.grade_level_id === grade) : allSections
+  const section = pick(sp.section, sectionList.map((s) => s.id))
+  const teacher = pick(sp.teacher, (teachers.data ?? []).map((t) => t.id))
+  const gradeSectionIds = grade && !section ? sectionList.map((s) => s.id) : undefined
+  const schedule = await listSchedules({ schoolId, yearId: year.id, sectionId: section, sectionIds: gradeSectionIds, teacherId: teacher })
   const toOption = (l: (typeof loads.data)[number]) => ({ value: l.id, label: `${loadLabel(l)} · ${l.teacher.last_name}, ${l.teacher.first_name}` })
   const loadOptions = loads.data.map(toOption)
-  // Adding to a slot offers only the chosen section's / teacher's classes.
-  const slotLoadOptions = loads.data.filter((l) => (!section || l.section_id === section) && (!teacher || l.teacher_id === teacher)).map(toOption)
+  // "Add class" offers only the classes of the chosen grade / section / teacher.
+  const slotLoadOptions = loads.data
+    .filter((l) => (!section || l.section_id === section) && (!gradeSectionIds || gradeSectionIds.includes(l.section_id)) && (!teacher || l.teacher_id === teacher))
+    .map(toOption)
   const loadId = (r: { section_id: string; subject_id: string; teacher_id: string }) =>
     loads.data.find((l) => l.section_id === r.section_id && l.subject_id === r.subject_id && l.teacher_id === r.teacher_id)?.id ?? ""
   const editable = year.status !== "archived"
@@ -59,6 +67,21 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
     ...(saved.data ?? []).map((t) => ({ key: t.id, name: t.name, builtIn: false, preview: slotPreview(t.items as SlotItem[]) })),
   ]
   const error = schedule.error || slots.error
+
+  // Overview (no section/teacher chosen): one row per section, grouped under its grade level.
+  const loadsOf = (sectionId: string) => loads.data.filter((l) => l.section_id === sectionId).map(toOption)
+  const bands = section || teacher
+    ? null
+    : (grade ? grades.filter((g) => g.id === grade) : grades)
+        .map((g) => ({
+          key: g.id,
+          sections: allSections
+            .filter((x) => x.grade_level_id === g.id)
+            .map((x) => ({ id: x.id, title: `${g.name} – ${x.name}`, rows: schedule.data.filter((r) => r.section_id === x.id) })),
+        }))
+        .filter((g) => g.sections.length > 0)
+  // Classes of sections no longer in the active list (e.g. deactivated) still show, at the end.
+  const orphanRows = bands && !grade ? schedule.data.filter((r) => !allSections.some((x) => x.id === r.section_id)) : []
 
   return (
     <>
@@ -98,22 +121,53 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
       <Card>
         <ListToolbar
           filters={[
-            { name: "year", label: "Academic year", options: yearOptions(years ?? []), allLabel: `${year.name} (default)` },
-            { name: "section", label: "Section", options: sectionOptions(sectionList), allLabel: "All sections" },
+            { name: "year", label: "Academic year", options: yearOptions(years ?? []), allLabel: `${year.name} (default)`, clears: ["grade", "section"] },
+            { name: "grade", label: "Grade level", options: gradeOptions(grades), allLabel: "All grade levels", clears: ["section"] },
+            { name: "section", label: "Section", options: sectionOptions(sectionList), allLabel: grade ? "All sections of the grade" : "All sections" },
             { name: "teacher", label: "Teacher", options: teacherOptions(teachers.data ?? []), allLabel: "All teachers" },
           ]}
         />
-        <ScheduleBoard
-          yearId={year.id}
-          slots={slots.data}
-          rows={schedule.data}
-          loads={slotLoadOptions}
-          allLoads={loadOptions}
-          loadId={loadId}
-          show={section ? "teacher" : teacher ? "section" : "both"}
-          single={Boolean(section || teacher)}
-          editable={editable}
-        />
+        <p className="border-b border-border px-4 py-2 text-xs text-muted">
+          {section || teacher
+            ? `Showing ${[section && sectionOptions(sectionList).find((o) => o.value === section)?.label, teacher && teacherOptions(teachers.data ?? []).find((o) => o.value === teacher)?.label].filter(Boolean).join(" · ")}: `
+            : grade
+              ? `Showing ${grades.find((g) => g.id === grade)?.name} (${sectionList.length} section${sectionList.length === 1 ? "" : "s"}): `
+              : `Showing all ${allSections.length} sections: `}
+          {schedule.data.length} class{schedule.data.length === 1 ? "" : "es"} a week.
+          {!section && !teacher && " One row per section, grouped by grade level."}
+        </p>
+        {bands && bands.length > 0 && (slots.data.length > 0 || schedule.data.length > 0) ? (
+          <>
+            {bands.map((g) => (
+              <div key={g.key}>
+                {g.sections.map((x) => (
+                  <section key={x.id} aria-labelledby={`section-${x.id}`} className="border-t border-border">
+                    <h2 id={`section-${x.id}`} className="border-l-4 border-brand bg-brand/5 px-4 py-1.5 text-sm font-semibold">{x.title}</h2>
+                    <ScheduleBoard yearId={year.id} slots={slots.data} rows={x.rows} loads={loadsOf(x.id)} allLoads={loadOptions} loadId={loadId} show="teacher" single editable={editable} />
+                  </section>
+                ))}
+              </div>
+            ))}
+            {orphanRows.length > 0 && (
+              <section aria-labelledby="grade-other" className="border-t border-border">
+                <h2 id="grade-other" className="border-l-4 border-slate-400 bg-slate-100 px-4 py-1.5 text-sm font-semibold">Other sections (no longer active)</h2>
+                <ScheduleBoard yearId={year.id} slots={[]} rows={orphanRows} loads={[]} allLoads={loadOptions} loadId={loadId} show="both" single={false} editable={editable} />
+              </section>
+            )}
+          </>
+        ) : (
+          <ScheduleBoard
+            yearId={year.id}
+            slots={slots.data}
+            rows={schedule.data}
+            loads={slotLoadOptions}
+            allLoads={loadOptions}
+            loadId={loadId}
+            show={section ? "teacher" : teacher ? "section" : "both"}
+            single={Boolean(section || teacher)}
+            editable={editable}
+          />
+        )}
       </Card>
     </>
   )

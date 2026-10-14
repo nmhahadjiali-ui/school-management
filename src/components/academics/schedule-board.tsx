@@ -52,6 +52,8 @@ export function ScheduleBoard({
     if (!byKey.has(k)) byKey.set(k, { id: null, day_of_week: r.day_of_week, start_time: r.start_time, end_time: r.end_time, classes: [] })
     byKey.get(k)!.classes.push(r)
   }
+  const sectionLabel = (r: ScheduleRow) => `${r.section.grade_level.name} – ${r.section.name}`
+  for (const s of byKey.values()) s.classes.sort((a, b) => sectionLabel(a).localeCompare(sectionLabel(b), undefined, { numeric: true }))
   const all = [...byKey.values()].sort((a, b) => a.start_time.localeCompare(b.start_time) || a.end_time.localeCompare(b.end_time))
   const days = [...new Set(all.map((s) => s.day_of_week))].sort(sundayFirst)
   if (days.length === 0) {
@@ -74,6 +76,7 @@ export function ScheduleBoard({
                       <p className="tabular-nums text-[11px] font-medium text-muted">
                         {time}
                         {!s.id && <span className="font-normal"> · custom time</span>}
+                        {s.classes.length > 1 && <span className="font-normal"> · {s.classes.length} classes</span>}
                       </p>
                       {editable && s.id && (
                         <div className={EDIT_ONLY}>
@@ -91,11 +94,10 @@ export function ScheduleBoard({
                     {s.classes.length === 0 && <p className="text-xs text-slate-400">Free</p>}
                     {s.classes.map((r) => (
                       <div key={r.id} className="rounded-md bg-brand/10 px-2 py-1.5">
-                        <p className="text-[13px] font-medium leading-snug">{r.subject.name}</p>
+                        {/* Overview (no section/teacher chosen): section first, so a busy slot reads as a list of sections. */}
+                        <p className="text-[13px] font-medium leading-snug">{show === "both" ? sectionLabel(r) : r.subject.name}</p>
                         <p className="text-xs leading-snug text-muted">
-                          {show !== "teacher" && `${r.section.grade_level.name} – ${r.section.name}`}
-                          {show === "both" && " · "}
-                          {show !== "section" && `${r.teacher.first_name} ${r.teacher.last_name}`}
+                          {show === "both" ? `${r.subject.name} · ${r.teacher.first_name} ${r.teacher.last_name}` : show === "teacher" ? `${r.teacher.first_name} ${r.teacher.last_name}` : sectionLabel(r)}
                           {r.room && ` · Room ${r.room}`}
                         </p>
                         {editable && (

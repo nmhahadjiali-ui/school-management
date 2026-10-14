@@ -4,7 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { Loader2, Search } from "lucide-react"
 
-export type FilterDef = { name: string; label: string; options: { value: string; label: string }[]; allLabel?: string }
+/** `clears`: other filters reset when this one changes (e.g. a year change clears that year's section). */
+export type FilterDef = { name: string; label: string; options: { value: string; label: string }[]; allLabel?: string; clears?: string[] }
 
 /**
  * Search box + filter selects that write to the URL (the server does the
@@ -57,8 +58,8 @@ export function ListToolbar({ searchPlaceholder, filters = [] }: { searchPlaceho
         <select
           key={f.name}
           aria-label={f.label}
-          value={params.get(f.name) ?? ""}
-          onChange={(e) => update({ [f.name]: e.target.value })}
+          value={f.options.some((o) => o.value === params.get(f.name)) ? params.get(f.name)! : ""}
+          onChange={(e) => update({ [f.name]: e.target.value, ...Object.fromEntries((f.clears ?? []).map((c) => [c, ""])) })}
           className="h-9 max-w-56 rounded-md border border-border bg-surface px-2 text-sm"
         >
           <option value="">{f.allLabel ?? `All ${f.label.toLowerCase()}`}</option>
