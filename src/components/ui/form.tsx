@@ -80,7 +80,7 @@ type FieldProps = {
   className?: string
 } & (
   | ({ as?: "input" } & React.ComponentProps<"input">)
-  | ({ as: "select"; options: { value: string; label: string }[] } & React.ComponentProps<"select">)
+  | ({ as: "select"; options: { value: string; label: string; disabled?: boolean }[] } & React.ComponentProps<"select">)
   | ({ as: "textarea" } & React.ComponentProps<"textarea">)
 )
 
@@ -100,7 +100,7 @@ export function Field(props: FieldProps) {
     control = (
       <select {...rest} {...common} className={inputClass}>
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </option>
         ))}

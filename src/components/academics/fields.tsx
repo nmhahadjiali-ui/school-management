@@ -1,12 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { CheckboxField, Field } from "@/components/ui/form"
 import type { GradingPeriod, GradingScale } from "@/types/domain"
 
 type Option = { value: string; label: string }
 const withNone = (options: Option[], label: string) => [{ value: "", label }, ...options]
 
-export const DAY_OPTIONS: Option[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d, i) => ({ value: String(i + 1), label: d }))
+/** Sunday first (values stay ISO: 1 = Monday … 7 = Sunday). */
+export const DAY_OPTIONS: Option[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d, i) => ({ value: String(i || 7), label: d }))
 
 export function GradingPeriodFields({ period, nextSequence }: { period?: GradingPeriod; nextSequence?: number }) {
   return (
@@ -55,6 +57,42 @@ export function ScheduleFields({
         <Field name="end_time" label="End" type="time" defaultValue={value?.end_time.slice(0, 5) ?? "09:00"} required />
       </div>
       <Field name="room" label="Room" defaultValue={value?.room ?? ""} />
+    </>
+  )
+}
+
+/**
+ * Add a class to one day: choose one of the day's time slots (taken ones are
+ * disabled) or a custom time, then the subject · section · teacher.
+ */
+export function DayClassFields({ day, slots, loads }: { day: number; slots: { start_time: string; end_time: string; label: string; taken: boolean }[]; loads: Option[] }) {
+  const free = slots.find((s) => !s.taken)
+  const [time, setTime] = useState(free ? `${free.start_time.slice(0, 5)}-${free.end_time.slice(0, 5)}` : "custom")
+  const [start, end] = time === "custom" ? ["", ""] : time.split("-")
+  return (
+    <>
+      <input type="hidden" name="day_of_week" value={day} />
+      <Field
+        as="select"
+        name="slot"
+        label="Time slot"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
+        options={[...slots.map((s) => ({ value: `${s.start_time.slice(0, 5)}-${s.end_time.slice(0, 5)}`, label: s.taken ? `${s.label} (taken)` : s.label, disabled: s.taken })), { value: "custom", label: "Custom time…" }]}
+      />
+      {time === "custom" ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field name="start_time" label="Start" type="time" defaultValue="08:00" required />
+          <Field name="end_time" label="End" type="time" defaultValue="09:00" required />
+        </div>
+      ) : (
+        <>
+          <input type="hidden" name="start_time" value={start} />
+          <input type="hidden" name="end_time" value={end} />
+        </>
+      )}
+      <Field as="select" name="teaching_load_id" label="Subject · section · teacher" defaultValue="" options={withNone(loads, "Choose…")} required hint="Only assigned teaching loads can be scheduled." />
+      <Field name="room" label="Room" />
     </>
   )
 }

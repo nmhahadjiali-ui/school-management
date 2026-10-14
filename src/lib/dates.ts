@@ -23,6 +23,9 @@ export function addDays(date: string, days: number) {
 
 export const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const
 
+/** Sort ISO weekdays for display: Sunday first, then Monday … Saturday. */
+export const sundayFirst = (a: number, b: number) => (a % 7) - (b % 7)
+
 /** "08:00:00" -> "8:00 AM" */
 export function formatTime(t: string) {
   const [h, m] = t.split(":").map(Number)

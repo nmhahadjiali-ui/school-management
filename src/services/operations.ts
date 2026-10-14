@@ -166,6 +166,41 @@ export async function deleteSchedule(id: string) {
   return supabase.from("class_schedules").delete().eq("id", id).select("id").single()
 }
 
+// --- Schedule time slots (bell schedule) -----------------------------------------------------
+export type TimeSlot = { id: string; day_of_week: number; start_time: string; end_time: string }
+
+export async function listTimeSlots(schoolId: string, yearId: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("schedule_time_slots")
+    .select("id, day_of_week, start_time, end_time")
+    .eq("school_id", schoolId)
+    .eq("academic_year_id", yearId)
+    .order("day_of_week")
+    .order("start_time")
+    .limit(500)
+  return { data: (data ?? []) as TimeSlot[], error }
+}
+
+/** Insert slots in one statement (all or nothing); ones that already exist are skipped. */
+export async function insertTimeSlots(schoolId: string, yearId: string, slots: { day_of_week: number; start_time: string; end_time: string }[]) {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("schedule_time_slots")
+    .upsert(slots.map((s) => ({ ...s, school_id: schoolId, academic_year_id: yearId })), { onConflict: "academic_year_id,day_of_week,start_time,end_time", ignoreDuplicates: true })
+    .select("id")
+  return { added: data?.length ?? 0, error }
+}
+
+export async function deleteTimeSlots(filter: { schoolId: string; id?: string; yearId?: string; day?: number }) {
+  const supabase = await createClient()
+  let query = supabase.from("schedule_time_slots").delete().eq("school_id", filter.schoolId)
+  if (filter.id) query = query.eq("id", filter.id)
+  if (filter.yearId) query = query.eq("academic_year_id", filter.yearId)
+  if (filter.day) query = query.eq("day_of_week", filter.day)
+  return query.select("id")
+}
+
 // --- Attendance ------------------------------------------------------------------------------
 export type RosterRow = { enrollment_id: string; student: { id: string; student_number: string; first_name: string; last_name: string } }
 
@@ -533,7 +568,7 @@ export async function attendanceDayTotals(schoolId: string, date: string) {
 }
 
 /** The school's saved setup templates of one kind (grading periods, grading scales, grade levels, subjects). */
-export async function listSetupTemplates(schoolId: string, kind: "grading_periods" | "grading_scales" | "grade_levels" | "subjects") {
+export async function listSetupTemplates(schoolId: string, kind: "grading_periods" | "grading_scales" | "grade_levels" | "subjects" | "schedule_slots") {
   const supabase = await createClient()
   return supabase.from("setup_templates").select("id, name, items").eq("school_id", schoolId).eq("kind", kind).order("name")
 }

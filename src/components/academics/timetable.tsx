@@ -1,5 +1,5 @@
 import { EmptyState } from "@/components/ui/misc"
-import { formatTime, WEEKDAYS } from "@/lib/dates"
+import { formatTime, sundayFirst, WEEKDAYS } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 import type { ScheduleRow } from "@/services/operations"
 
@@ -20,7 +20,7 @@ export function Timetable({
   actions?: (row: ScheduleRow) => React.ReactNode
 }) {
   if (rows.length === 0) return <EmptyState title="No classes scheduled" />
-  const days = [...new Set(rows.map((r) => r.day_of_week))].sort()
+  const days = [...new Set(rows.map((r) => r.day_of_week))].sort(sundayFirst)
   return (
     <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]">
       {days.map((day) => (

@@ -1049,6 +1049,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"schedule_time_slots": {
+                  Row: {
+                    "academic_year_id": string,"created_at": string,"day_of_week": number,"end_time": string,"id": string,"school_id": string,"start_time": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "academic_year_id": string,"created_at"?: string,"day_of_week": number,"end_time": string,"id"?: string,"school_id": string,"start_time": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "academic_year_id"?: string,"created_at"?: string,"day_of_week"?: number,"end_time"?: string,"id"?: string,"school_id"?: string,"start_time"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "schedule_time_slots_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "schedule_time_slots_year_ref"
+      columns: ["school_id","academic_year_id"]
+isOneToOne: false
+      referencedRelation: "academic_years"
+      referencedColumns: ["school_id","id"]
+    }
+                  ]
                 },"school_features": {
                   Row: {
                     "configuration": NonNullable<Json>,"created_at": string,"enabled": boolean,"feature_key": string,"id": string,"school_id": string,"updated_at": string

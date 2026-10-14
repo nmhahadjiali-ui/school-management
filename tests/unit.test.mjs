@@ -106,3 +106,35 @@ describe("feature groups", async () => {
     assert.deepEqual(groupFeatures([f("a", "A")], []).map((g) => g.key), ["available"], "empty groups are left out")
   })
 })
+
+const { parseTimeRanges, slotPreview, SLOT_PRESETS } = await import("../src/lib/schedule-slots.ts")
+
+describe("parseTimeRanges (schedule time slots)", () => {
+  test("reads comma / new-line separated ranges", () => {
+    assert.deepEqual(parseTimeRanges("8:00-9:30, 9:30-11:00\n13:30 – 15:00").ranges, [
+      { start_time: "08:00", end_time: "09:30" },
+      { start_time: "09:30", end_time: "11:00" },
+      { start_time: "13:30", end_time: "15:00" },
+    ])
+  })
+  test("understands am/pm, also on the end time only", () => {
+    assert.deepEqual(parseTimeRanges("1:00pm-2:30pm, 1-2:30pm, 11:00-12:30pm").ranges, [
+      { start_time: "13:00", end_time: "14:30" },
+      { start_time: "11:00", end_time: "12:30" },
+    ])
+  })
+  test("reports unreadable and backwards ranges", () => {
+    const r = parseTimeRanges("8:00-9:30, abc, 10:00-9:00, 25:00-26:00")
+    assert.equal(r.ranges.length, 1)
+    assert.equal(r.errors.length, 3)
+  })
+})
+
+describe("slotPreview", () => {
+  test("groups consecutive days with the same times", () => {
+    assert.deepEqual(slotPreview(SLOT_PRESETS.find((p) => p.key === "builtin:mon-sat-90").items), [
+      "Mon–Fri: 08:00–09:30, 09:30–11:00, 11:00–12:30, 13:30–15:00, 15:00–16:30",
+      "Sat: 08:00–09:30, 09:30–11:00, 11:00–12:30",
+    ])
+  })
+})

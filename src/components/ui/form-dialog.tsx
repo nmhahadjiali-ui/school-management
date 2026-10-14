@@ -19,6 +19,7 @@ export function FormDialog({
   submitLabel = "Save",
   variant = "primary",
   size = "md",
+  triggerClassName,
   children,
 }: {
   trigger: React.ReactNode
@@ -28,6 +29,7 @@ export function FormDialog({
   submitLabel?: string
   variant?: "primary" | "secondary" | "ghost"
   size?: "sm" | "md"
+  triggerClassName?: string
   children: React.ReactNode
 }) {
   const ref = useRef<HTMLDialogElement>(null)
@@ -39,6 +41,7 @@ export function FormDialog({
       <Button
         variant={variant}
         size={size}
+        className={triggerClassName}
         onClick={() => {
           setOpenCount((n) => n + 1)
           ref.current?.showModal()

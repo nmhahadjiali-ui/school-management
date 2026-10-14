@@ -7,6 +7,7 @@ import { denied, formToObject, invalid, type ActionResult } from "@/lib/action-r
 import { dbFail, manage, schoolAdmin } from "@/lib/actions/helpers"
 import { authorize } from "@/lib/auth/session"
 import { zonedToIso } from "@/lib/dates"
+import { parseTimeRanges, slotsAddedMessage } from "@/lib/schedule-slots"
 import { uuidSchema } from "@/lib/validations"
 import {
   academicSettingsSchema,
@@ -145,6 +146,48 @@ export async function updateSchedule(id: string, _p: ActionResult | null, fd: Fo
 export async function deleteSchedule(id: string) {
   if (!valid(id)) return badId
   return manage(null, none, () => ops.deleteSchedule(id), { context: "deleteSchedule", success: "Class removed from the schedule.", revalidate: ["/schedules", "/schedule"] })
+}
+
+// --- Schedule time slots ------------------------------------------------------------------
+/** Add typed time ranges ("8:00-9:30, 9:30-11:00") to each chosen day; slots that already exist are skipped. */
+export async function addTimeSlots(yearId: string, _p: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const ctx = await schoolAdmin()
+  if (!ctx) return denied()
+  if (!valid(yearId)) return badId
+  const days = [...new Set(fd.getAll("days").map(Number))].filter((d) => Number.isInteger(d) && d >= 1 && d <= 7)
+  const { ranges, errors } = parseTimeRanges(String(fd.get("times") ?? ""))
+  const fieldErrors: Record<string, string[]> = {}
+  if (!days.length) fieldErrors.days = ["Choose at least one day"]
+  if (errors.length) fieldErrors.times = errors
+  else if (!ranges.length) fieldErrors.times = ["Enter at least one time range"]
+  if (Object.keys(fieldErrors).length) return { ok: false, error: "Please correct the highlighted fields.", fieldErrors }
+  const slots = days.flatMap((day_of_week) => ranges.map((r) => ({ day_of_week, ...r })))
+  const { added, error } = await ops.insertTimeSlots(ctx.schoolId, yearId, slots)
+  if (error) return dbFail(error, "addTimeSlots")
+  revalidatePath("/schedules", "layout")
+  return { ok: true, message: slotsAddedMessage(added, slots.length) }
+}
+
+export async function deleteTimeSlot(id: string) {
+  if (!valid(id)) return badId
+  return manage(null, none, async (_d, ctx) => {
+    const { data, error } = await ops.deleteTimeSlots({ schoolId: ctx.schoolId, id })
+    return error || data?.length ? { error } : badId
+  }, {
+    context: "deleteTimeSlot",
+    success: "Time slot removed. Classes in it are kept.",
+    revalidate: ["/schedules"],
+  })
+}
+
+/** Remove every time slot of one day (classes are kept). */
+export async function clearDayTimeSlots(yearId: string, day: number) {
+  if (!valid(yearId) || !Number.isInteger(day) || day < 1 || day > 7) return badId
+  return manage(null, none, (_d, ctx) => ops.deleteTimeSlots({ schoolId: ctx.schoolId, yearId, day }), {
+    context: "clearDayTimeSlots",
+    success: "Time slots removed. Classes are kept.",
+    revalidate: ["/schedules"],
+  })
 }
 
 // --- Attendance ----------------------------------------------------------------------------

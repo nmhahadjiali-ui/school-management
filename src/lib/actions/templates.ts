@@ -5,13 +5,15 @@ import { z } from "zod"
 import { denied, formToObject, invalid, type ActionResult } from "@/lib/action-result"
 import { dbFail, schoolAdmin } from "@/lib/actions/helpers"
 import { GRADE_PRESETS, SUBJECT_PRESETS, itemsToPeriods, periodsToItems, presetBands, presetPeriods, type BandItem, type GradeItem, type PeriodItem, type SubjectItem } from "@/lib/grading-templates"
+import { SLOT_PRESETS, slotsAddedMessage, type SlotItem } from "@/lib/schedule-slots"
 import { createClient } from "@/lib/supabase/server"
+import { insertTimeSlots } from "@/services/operations"
 import { uuidSchema } from "@/lib/validations"
 
 // One-click setup of grading periods, grading scales and grade levels from a
 // built-in preset ("builtin:...") or one of the school's saved templates (uuid).
 
-type Kind = "grading_periods" | "grading_scales" | "grade_levels" | "subjects"
+type Kind = "grading_periods" | "grading_scales" | "grade_levels" | "subjects" | "schedule_slots"
 
 const periodItems = z.array(
   z.object({
@@ -49,6 +51,11 @@ const subjectItems = z.array(
     description: z.string().trim().max(1000).nullable(),
   })
 ).min(1).max(20)
+
+const hhmm = z.string().regex(/^([01]d|2[0-3]):[0-5]d$/)
+const slotItems = z.array(
+  z.object({ day_of_week: z.number().int().min(1).max(7), start_time: hhmm, end_time: hhmm }).refine((s) => s.start_time < s.end_time)
+).min(1).max(100)
 
 const templateName = z.object({ name: z.string().trim().min(1, "Name is required").max(80, "Name is too long") })
 
@@ -115,6 +122,22 @@ export async function applyGradingScaleTemplate(key: string): Promise<ActionResu
   return { ok: true, message: `Grading scale replaced with ${bands.length} bands.` }
 }
 
+/** Add a template's time slots to an academic year; slots it already has are kept. */
+export async function applySlotTemplate(yearId: string, key: string): Promise<ActionResult> {
+  const ctx = await schoolAdmin()
+  if (!ctx || !uuidSchema.safeParse(yearId).success) return denied()
+  let items: SlotItem[] | null = SLOT_PRESETS.find((p) => p.key === key)?.items ?? null
+  if (!items && !key.startsWith("builtin:")) {
+    const saved = slotItems.safeParse(await savedItems("schedule_slots", key, ctx.schoolId))
+    if (saved.success) items = saved.data
+  }
+  if (!items) return { ok: false, error: "The template was not found." }
+  const { added, error } = await insertTimeSlots(ctx.schoolId, yearId, items)
+  if (error) return failPlain(error, "applySlotTemplate")
+  revalidatePath("/schedules", "layout")
+  return { ok: true, message: slotsAddedMessage(added, items.length) }
+}
+
 /** Add a template's grade levels; ones the school already has (same name or code) are kept as they are. */
 export async function applyGradeLevelTemplate(key: string): Promise<ActionResult> {
   const ctx = await schoolAdmin()
@@ -167,7 +190,7 @@ export async function saveGradingTemplate(kind: Kind, yearId: string | null, _pr
   if (!parsed.success) return invalid(parsed.error)
   const supabase = await createClient()
 
-  let items: PeriodItem[] | BandItem[] | GradeItem[] | SubjectItem[]
+  let items: PeriodItem[] | BandItem[] | GradeItem[] | SubjectItem[] | SlotItem[]
   if (kind === "grading_periods") {
     if (!yearId || !uuidSchema.safeParse(yearId).success) return denied()
     const { data: year } = await supabase.from("academic_years").select("start_date").eq("id", yearId).eq("school_id", ctx.schoolId).maybeSingle()
@@ -188,6 +211,12 @@ export async function saveGradingTemplate(kind: Kind, yearId: string | null, _pr
     if (!subjects?.length) return { ok: false, error: "There are no active subjects to save." }
     if (subjects.length > 20) return { ok: false, error: "A template can hold at most 20 subjects." }
     items = subjects
+  } else if (kind === "schedule_slots") {
+    if (!yearId || !uuidSchema.safeParse(yearId).success) return denied()
+    const { data: slots } = await supabase.from("schedule_time_slots").select("day_of_week, start_time, end_time").eq("academic_year_id", yearId).eq("school_id", ctx.schoolId).order("day_of_week").order("start_time")
+    if (!slots?.length) return { ok: false, error: "There are no time slots to save." }
+    if (slots.length > 100) return { ok: false, error: "A template can hold at most 100 time slots." }
+    items = slots.map((s) => ({ day_of_week: s.day_of_week, start_time: s.start_time.slice(0, 5), end_time: s.end_time.slice(0, 5) }))
   } else {
     return denied()
   }
@@ -197,7 +226,7 @@ export async function saveGradingTemplate(kind: Kind, yearId: string | null, _pr
     if (error.code === "23505") return { ok: false, error: "Please correct the highlighted fields.", fieldErrors: { name: ["A template with this name already exists"] } }
     return dbFail(error, "saveGradingTemplate")
   }
-  revalidatePath({ grading_periods: "/grading-periods", grading_scales: "/grading-scales", grade_levels: "/grade-levels", subjects: "/subjects" }[kind], "layout")
+  revalidatePath({ grading_periods: "/grading-periods", grading_scales: "/grading-scales", grade_levels: "/grade-levels", subjects: "/subjects", schedule_slots: "/schedules" }[kind], "layout")
   return { ok: true, message: `Template “${parsed.data.name}” saved.` }
 }
 
@@ -212,5 +241,6 @@ export async function deleteGradingTemplate(id: string): Promise<ActionResult> {
   revalidatePath("/grading-scales", "layout")
   revalidatePath("/grade-levels", "layout")
   revalidatePath("/subjects", "layout")
+  revalidatePath("/schedules", "layout")
   return { ok: true, message: "Template deleted." }
 }
