@@ -87,7 +87,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
                 </FormDialog>
               )}
               <FormDialog trigger={<><Clock className="size-4" aria-hidden /> Add time slots</>} title={`Add time slots (${year.name})`} description="Choose the days, then describe the periods. The slots are listed below and can be adjusted one by one." action={addTimeSlots.bind(null, year.id)} submitLabel="Add time slots">
-                <TimeSlotFields />
+                <TimeSlotFields existing={slots.data} />
               </FormDialog>
             </>
           ) : null

@@ -167,6 +167,12 @@ export function CheckboxField({ name, label, defaultChecked, hint }: { name: str
   )
 }
 
+/** All Server Action field errors for `name` in the enclosing <Form>. */
+export function useFieldErrors(name: string) {
+  const { state } = useContext(FormContext)
+  return (state && !state.ok ? state.fieldErrors?.[name] : undefined) ?? []
+}
+
 /** First Server Action field error for `name` in the enclosing <Form>. */
 export function useFieldError(name: string) {
   const { state } = useContext(FormContext)

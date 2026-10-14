@@ -62,6 +62,30 @@ export const SLOT_PRESETS: { key: string; name: string; items: SlotItem[] }[] = 
   },
 ]
 
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+type Range = { start_time: string; end_time: string }
+const hm = (r: Range) => ({ start_time: r.start_time.slice(0, 5), end_time: r.end_time.slice(0, 5) })
+/** Half-open: 08:00-09:00 does not overlap 09:00-10:00. */
+export const rangesOverlap = (a: Range, b: Range) => hm(a).start_time < hm(b).end_time && hm(b).start_time < hm(a).end_time
+const sameRange = (a: Range, b: Range) => hm(a).start_time === hm(b).start_time && hm(a).end_time === hm(b).end_time
+const fmt = (r: Range) => `${hm(r).start_time}–${hm(r).end_time}`
+
+/**
+ * Overlaps among new ranges, and between new ranges and existing slots on the
+ * chosen days. Exact duplicates of an existing slot are not conflicts (they are skipped).
+ */
+export function slotConflicts(ranges: Range[], days: number[], existing: SlotItem[]): string[] {
+  const out: string[] = []
+  ranges.forEach((a, i) => ranges.slice(i + 1).forEach((b) => rangesOverlap(a, b) && out.push(`${fmt(a)} overlaps ${fmt(b)}.`)))
+  for (const day of [...days].sort((a, b) => (a % 7) - (b % 7))) {
+    for (const r of ranges) {
+      const e = existing.find((s) => s.day_of_week === day && !sameRange(s, r) && rangesOverlap(s, r))
+      if (e) out.push(`${fmt(r)} overlaps the existing ${DAY_NAMES[day - 1]} ${fmt(e)} slot.`)
+    }
+  }
+  return out
+}
+
 export function slotsAddedMessage(added: number, total: number) {
   if (!added) return "All of these time slots already exist."
   const kept = total - added

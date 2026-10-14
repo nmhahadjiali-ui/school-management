@@ -138,3 +138,16 @@ describe("slotPreview", () => {
     ])
   })
 })
+
+const { slotConflicts } = await import("../src/lib/schedule-slots.ts")
+
+describe("slotConflicts (no overlapping time slots)", () => {
+  const existing = [{ day_of_week: 1, start_time: "08:00:00", end_time: "09:00:00" }]
+  test("touching ranges and exact duplicates are fine", () => {
+    assert.deepEqual(slotConflicts([{ start_time: "08:00", end_time: "09:00" }, { start_time: "09:00", end_time: "10:00" }], [1], existing), [])
+  })
+  test("flags overlaps among new ranges and with existing slots on the chosen days only", () => {
+    const r = slotConflicts([{ start_time: "08:30", end_time: "09:30" }, { start_time: "09:00", end_time: "10:00" }], [1, 2], existing)
+    assert.deepEqual(r, ["08:30–09:30 overlaps 09:00–10:00.", "08:30–09:30 overlaps the existing Monday 08:00–09:00 slot."])
+  })
+})

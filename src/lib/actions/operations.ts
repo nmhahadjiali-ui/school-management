@@ -7,7 +7,7 @@ import { denied, formToObject, invalid, type ActionResult } from "@/lib/action-r
 import { dbFail, manage, schoolAdmin } from "@/lib/actions/helpers"
 import { authorize } from "@/lib/auth/session"
 import { zonedToIso } from "@/lib/dates"
-import { parseTimeRanges, slotsAddedMessage } from "@/lib/schedule-slots"
+import { parseTimeRanges, slotConflicts, slotsAddedMessage } from "@/lib/schedule-slots"
 import { uuidSchema } from "@/lib/validations"
 import {
   academicSettingsSchema,
@@ -161,6 +161,15 @@ export async function addTimeSlots(yearId: string, _p: ActionResult | null, fd: 
   if (errors.length) fieldErrors.times = errors
   else if (!ranges.length) fieldErrors.times = ["Enter at least one time range"]
   if (Object.keys(fieldErrors).length) return { ok: false, error: "Please correct the highlighted fields.", fieldErrors }
+  if (fd.get("no_overlap") === "on") {
+    const { data: existing, error } = await ops.listTimeSlots(ctx.schoolId, yearId)
+    if (error) return dbFail(error, "addTimeSlots")
+    const conflicts = slotConflicts(ranges, days, existing)
+    if (conflicts.length) {
+      const more = conflicts.length > 5 ? [`…and ${conflicts.length - 5} more.`] : []
+      return { ok: false, error: "Some time slots overlap. Adjust them, or untick “Don't allow overlapping time slots”.", fieldErrors: { times: [...conflicts.slice(0, 5), ...more] } }
+    }
+  }
   const slots = days.flatMap((day_of_week) => ranges.map((r) => ({ day_of_week, ...r })))
   const { added, error } = await ops.insertTimeSlots(ctx.schoolId, yearId, slots)
   if (error) return dbFail(error, "addTimeSlots")
