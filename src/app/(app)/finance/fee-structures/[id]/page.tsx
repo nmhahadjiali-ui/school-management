@@ -2,16 +2,15 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
-import { Field } from "@/components/ui/form"
 import { FormDialog } from "@/components/ui/form-dialog"
 import { EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { Amount } from "@/components/finance/finance-ui"
-import { DeleteItemButton, GenerateCharges, StructureItemDialog } from "@/components/finance/finance-actions"
+import { DeleteItemButton, FeeStructureFields, GenerateCharges, StructureItemDialog, type StructureSection } from "@/components/finance/finance-actions"
 import { saveFeeStructure } from "@/lib/actions/finance"
 import { atLeast, requireFinance } from "@/lib/finance/access"
 import { isUuid } from "@/lib/list-params"
 import { gradeOptions } from "@/lib/options"
-import { listGradeLevels } from "@/services/academic"
+import { listGradeLevels, listSchoolSections } from "@/services/academic"
 import { getFeeStructure, listFeeTypes, listStructureItems, structureChargeCount } from "@/services/finance"
 
 export const metadata: Metadata = { title: "Fee structure" }
@@ -24,7 +23,7 @@ export default async function FeeStructurePage({ params }: PageProps<"/finance/f
   if (!isUuid(id)) notFound()
   const { data: s } = await getFeeStructure(id)
   if (!s) notFound()
-  const [{ data: items }, { data: feeTypes }, { data: grades }] = await Promise.all([listStructureItems(id), listFeeTypes(ctx.schoolId, true), listGradeLevels(ctx.schoolId)])
+  const [{ data: items }, { data: feeTypes }, { data: grades }, { data: sections }] = await Promise.all([listStructureItems(id), listFeeTypes(ctx.schoolId, true), listGradeLevels(ctx.schoolId), listSchoolSections(ctx.schoolId)])
   const generated = await structureChargeCount((items ?? []).map((i) => i.id))
   const isAdmin = atLeast(ctx.level, "admin")
   const cur = ctx.currency
@@ -36,15 +35,16 @@ export default async function FeeStructurePage({ params }: PageProps<"/finance/f
       <PageHeader
         eyebrow={`Fee structure · ${s.academic_year?.name}`}
         title={s.name}
-        description={`${s.section ? `Section ${s.section.name}` : s.grade_level ? s.grade_level.name : "All enrolled students"} · ${generated} charge${generated === 1 ? "" : "s"} generated so far`}
+        description={`${s.section ? `${s.grade_level?.name ? `${s.grade_level.name} – ` : "Section "}${s.section.name}` : s.grade_level ? s.grade_level.name : "All enrolled students"} · ${generated} charge${generated === 1 ? "" : "s"} generated so far`}
         actions={isAdmin && (
           <FormDialog trigger="Edit" variant="secondary" title="Edit fee structure" action={saveFeeStructure.bind(null, id)}>
-            <input type="hidden" name="academic_year_id" value={s.academic_year_id} />
-            <Field name="name" label="Name" required defaultValue={s.name} maxLength={150} />
-            <Field as="select" name="grade_level_id" label="Grade level" defaultValue={s.grade_level_id ?? ""} options={[{ value: "", label: "All grade levels" }, ...gradeOptions(grades ?? [])]} />
-            <input type="hidden" name="section_id" value={s.section_id ?? ""} />
-            <Field as="textarea" name="description" label="Description" defaultValue={s.description ?? ""} maxLength={1000} />
-            <Field as="select" name="status" label="Status" defaultValue={s.status} options={[{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }]} />
+            <FeeStructureFields
+              years={[{ value: s.academic_year_id, label: s.academic_year?.name ?? "" }]}
+              grades={gradeOptions(grades ?? [])}
+              sections={(sections ?? []) as StructureSection[]}
+              value={s}
+              yearLocked
+            />
           </FormDialog>
         )}
       />

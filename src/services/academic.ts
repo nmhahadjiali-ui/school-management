@@ -128,6 +128,19 @@ async function enrolledCounts(sectionIds: string[]) {
 }
 
 /** Sections for selects (enrollment / assignment forms). */
+/** Active sections of every academic year (for pickers that filter by year and grade in the browser). */
+export async function listSchoolSections(schoolId: string) {
+  const supabase = await createClient()
+  return supabase
+    .from("sections")
+    .select("id, name, academic_year_id, grade_level_id, grade_level:grade_levels!sections_grade_level_fkey(name, sort_order)")
+    .eq("school_id", schoolId)
+    .eq("status", "active")
+    .order("grade_level(sort_order)")
+    .order("name")
+    .limit(2000)
+}
+
 export async function listSectionOptions(schoolId: string, academicYearId: string) {
   const supabase = await createClient()
   return supabase

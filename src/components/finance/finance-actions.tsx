@@ -39,6 +39,88 @@ export function FeeTypeDialog({ feeType }: { feeType?: { id: string; name: strin
   )
 }
 
+export type StructureSection = { id: string; name: string; academic_year_id: string; grade_level_id: string; grade_level: { name: string } | null }
+
+/**
+ * Name, academic year, grade level, section and description of a fee
+ * structure. The section list follows the chosen year and grade; picking a
+ * section also sets its grade (the database requires them to match).
+ * `yearLocked`: the year cannot change (editing).
+ */
+export function FeeStructureFields({
+  years,
+  grades,
+  sections,
+  value,
+  yearLocked = false,
+}: {
+  years: Opt[]
+  grades: Opt[]
+  sections: StructureSection[]
+  value?: { name: string; academic_year_id: string; grade_level_id: string | null; section_id: string | null; description: string | null; status?: string }
+  yearLocked?: boolean
+}) {
+  const [year, setYear] = useState(value?.academic_year_id ?? years[0]?.value ?? "")
+  const [grade, setGrade] = useState(value?.grade_level_id ?? "")
+  const [section, setSection] = useState(value?.section_id ?? "")
+  const sectionChoices = sections.filter((s) => s.academic_year_id === year && (!grade || s.grade_level_id === grade))
+  const yearLabel = years.find((y) => y.value === year)?.label ?? ""
+
+  return (
+    <>
+      <Field name="name" label="Name" required defaultValue={value?.name} maxLength={150} placeholder="e.g. Grade 7 — SY 2026-2027" />
+      <div className="grid gap-4 sm:grid-cols-3">
+        {yearLocked ? (
+          <div className="space-y-1.5">
+            <input type="hidden" name="academic_year_id" value={year} />
+            <p className="text-sm font-medium">Academic year</p>
+            <p className="py-2 text-sm text-muted">{yearLabel}</p>
+          </div>
+        ) : (
+          <Field
+            as="select"
+            name="academic_year_id"
+            label="Academic year"
+            required
+            value={year}
+            onChange={(e) => {
+              setYear(e.target.value)
+              setSection("")
+            }}
+            options={years}
+          />
+        )}
+        <Field
+          as="select"
+          name="grade_level_id"
+          label="Grade level"
+          value={grade}
+          onChange={(e) => {
+            setGrade(e.target.value)
+            if (section && !sections.some((s) => s.id === section && s.grade_level_id === e.target.value)) setSection("")
+          }}
+          options={[{ value: "", label: "All grade levels" }, ...grades]}
+        />
+        <Field
+          as="select"
+          name="section_id"
+          label="Section"
+          value={section}
+          onChange={(e) => {
+            setSection(e.target.value)
+            const s = sections.find((x) => x.id === e.target.value)
+            if (s) setGrade(s.grade_level_id)
+          }}
+          options={[{ value: "", label: grade ? "All sections of the grade" : "All sections" }, ...sectionChoices.map((s) => ({ value: s.id, label: `${s.grade_level?.name ?? ""} – ${s.name}` }))]}
+          hint={sectionChoices.length === 0 ? "No sections in this year yet." : undefined}
+        />
+      </div>
+      <Field as="textarea" name="description" label="Description" defaultValue={value?.description ?? ""} maxLength={1000} />
+      {value?.status && <Field as="select" name="status" label="Status" defaultValue={value.status} options={statusOptions} />}
+    </>
+  )
+}
+
 export function DiscountTypeDialog({ discountType }: { discountType?: { id: string; name: string; code: string; calculation_type: string; value: number; description: string | null; status: string } }) {
   return (
     <FormDialog

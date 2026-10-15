@@ -102,11 +102,13 @@ export async function saveDiscountType(discountTypeId: string | null, _prev: Act
   }, { context: "saveDiscountType", success: discountTypeId ? "Discount type updated." : "Discount type created." })
 }
 
+// A blank or missing grade/section means "all" (null).
+const optionalId = z.preprocess((v) => (v === "" || v === undefined ? null : v), id.nullable())
 const structureSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(150),
   academic_year_id: id,
-  grade_level_id: z.preprocess((v) => (v === "" ? null : v), id.nullable()),
-  section_id: z.preprocess((v) => (v === "" ? null : v), id.nullable()),
+  grade_level_id: optionalId,
+  section_id: optionalId,
   description: optionalText(1000),
   status: z.enum(["active", "inactive"]).default("active"),
 })

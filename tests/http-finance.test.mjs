@@ -119,6 +119,29 @@ describe("payment entry over HTTP", { skip }, () => {
   })
 })
 
+describe("fee setup over HTTP", { skip }, () => {
+  const structure = (extra = {}) => ({ name: `Structure ${crypto.randomUUID().slice(0, 8)}`, academic_year_id: A.y2026.id, grade_level_id: "", description: "", ...extra })
+
+  test("a finance admin creates a structure from the New form (no section field sent)", async () => {
+    const r = await act("saveFeeStructure", [null, null, { __form: structure() }], "financeA", "/finance/fee-structures")
+    assert.match(r.redirect ?? "", /^\/finance\/fee-structures\/[0-9a-f-]{36}/, JSON.stringify(r.result))
+  })
+
+  test("a structure can be limited to a section of its grade and year only", async () => {
+    const ok = await act("saveFeeStructure", [null, null, { __form: structure({ grade_level_id: A.g6.id, section_id: A.g6b.id }) }], "financeA", "/finance/fee-structures")
+    assert.match(ok.redirect ?? "", /^\/finance\/fee-structures\//, JSON.stringify(ok.result))
+    const otherYear = await act("saveFeeStructure", [null, null, { __form: structure({ section_id: A.g5a.id }) }], "financeA", "/finance/fee-structures")
+    assert.equal(otherYear.result?.ok, false, "section of another academic year")
+    const otherGrade = await act("saveFeeStructure", [null, null, { __form: structure({ grade_level_id: A.g5.id, section_id: A.g6b.id }) }], "financeA", "/finance/fee-structures")
+    assert.equal(otherGrade.result?.ok, false, "section of another grade")
+  })
+
+  test("finance staff cannot create structures", async () => {
+    const r = await act("saveFeeStructure", [null, null, { __form: structure() }], "staffA", "/finance/fee-structures")
+    assert.equal(r.result?.ok, false)
+  })
+})
+
 describe("CSV exports", { skip }, () => {
   test("finance users only, and spreadsheet formulas are neutralised", async () => {
     const c = await chargeFor(A.sibling.id, A.labItem.id)
