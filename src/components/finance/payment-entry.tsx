@@ -63,6 +63,13 @@ export function PaymentEntry({
     setAlloc(next)
   }
 
+  /** Put whatever is still unapplied on this charge (capped at its balance). */
+  function fillCharge(c: OpenCharge) {
+    const current = parseMoney(alloc[c.id]) ? cents(parseMoney(alloc[c.id])) : 0
+    const take = Math.min(cents(c.remaining), Math.max(0, leftover + current))
+    setAlloc({ ...alloc, [c.id]: take > 0 ? toAmount(take) : "" })
+  }
+
   function review() {
     setResult(null)
     const problems: string[] = []
@@ -134,35 +141,77 @@ export function PaymentEntry({
             </label>
           </fieldset>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {/* Live allocation summary: stays in view while scrolling a long list of charges. */}
+            <div className="sticky top-14 z-10 grid grid-cols-3 gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm lg:top-2" aria-live="polite">
+              <div>
+                <p className="text-xs text-muted">Amount received</p>
+                <p className="font-semibold tabular-nums">{formatMoney(amountCents / 100, currency)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Applied to charges</p>
+                <p className="font-semibold tabular-nums">{formatMoney(allocated / 100, currency)}</p>
+              </div>
+              <div className={leftover < 0 ? "text-red-700" : leftover > 0 ? "text-brand" : "text-green-700"}>
+                <p className="text-xs">{leftover < 0 ? "Over-applied by" : "Remaining to apply"}</p>
+                <p className="text-lg font-semibold leading-tight tabular-nums">{formatMoney(Math.abs(leftover) / 100, currency)}</p>
+                <p className="text-[11px] leading-tight">
+                  {leftover < 0 ? "Lower an amount below" : !amountCents ? "Enter the amount received" : leftover === 0 ? "Fully applied" : "Kept as credit if not applied"}
+                </p>
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-semibold">Apply to charges</h3>
-              <Button variant="secondary" size="sm" disabled={!amountCents || reviewing} onClick={autoAllocate}>Auto-apply (oldest due first)</Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" disabled={allocated === 0 || reviewing} onClick={() => setAlloc({})}>Clear</Button>
+                <Button variant="secondary" size="sm" disabled={!amountCents || reviewing} onClick={autoAllocate}>Auto-apply (oldest due first)</Button>
+              </div>
             </div>
             {charges.length === 0 ? (
               <p className="text-sm text-muted">This student has no unpaid charges. The whole payment will be kept as credit.</p>
             ) : (
               <Table label="Unpaid charges">
-                <thead><tr><Th>Charge</Th><Th>Due</Th><Th className="text-right">Balance</Th><Th className="w-40 text-right">Apply</Th></tr></thead>
+                <thead><tr><Th>Charge</Th><Th>Due</Th><Th className="text-right">Balance</Th><Th className="w-52 text-right">Apply</Th><Th className="text-right">Balance after</Th></tr></thead>
                 <tbody>
-                  {charges.map((c) => (
-                    <tr key={c.id}>
-                      <Td>{c.description}{c.effective_status === "overdue" && <span className="ml-2 text-xs text-red-700">overdue</span>}</Td>
-                      <Td>{c.due_date ?? "—"}</Td>
-                      <Td className="text-right tabular-nums">{formatMoney(c.remaining, currency)}</Td>
-                      <Td>
-                        <input aria-label={`Amount for ${c.description}`} className={`${inputClass} text-right`} inputMode="decimal" disabled={reviewing} value={alloc[c.id] ?? ""} onChange={(e) => setAlloc({ ...alloc, [c.id]: e.target.value })} />
-                      </Td>
-                    </tr>
-                  ))}
+                  {charges.map((c) => {
+                    const raw = alloc[c.id]
+                    const applied = parseMoney(raw) ? cents(parseMoney(raw)) : 0
+                    const invalid = Boolean(raw) && (!parseMoney(raw) || applied > cents(c.remaining))
+                    const after = cents(c.remaining) - applied
+                    const canFill = !reviewing && applied < cents(c.remaining) && leftover > 0
+                    return (
+                      <tr key={c.id} className={applied > 0 && !invalid ? "bg-brand/5" : undefined}>
+                        <Td>{c.description}{c.effective_status === "overdue" && <span className="ml-2 text-xs text-red-700">overdue</span>}</Td>
+                        <Td className="whitespace-nowrap">{c.due_date ?? "—"}</Td>
+                        <Td className="text-right tabular-nums">{formatMoney(c.remaining, currency)}</Td>
+                        <Td>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <input
+                              aria-label={`Amount for ${c.description}`}
+                              aria-invalid={invalid || undefined}
+                              className={`${inputClass} w-32 text-right`}
+                              inputMode="decimal"
+                              placeholder="0.00"
+                              disabled={reviewing}
+                              value={raw ?? ""}
+                              onChange={(e) => setAlloc({ ...alloc, [c.id]: e.target.value })}
+                            />
+                            <Button size="sm" variant="secondary" disabled={!canFill} onClick={() => fillCharge(c)} title="Apply what is left (up to this balance)">Max</Button>
+                          </div>
+                        </Td>
+                        <Td className="whitespace-nowrap text-right tabular-nums">
+                          {invalid ? <span className="text-xs text-red-700">{parseMoney(raw) ? "More than the balance" : "Invalid amount"}</span>
+                            : applied === 0 ? <span className="text-muted">{formatMoney(c.remaining, currency)}</span>
+                            : after === 0 ? <span className="text-green-700">Paid in full</span>
+                            : formatMoney(after / 100, currency)}
+                        </Td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </Table>
             )}
-            <p className="text-sm">
-              Applied: <span className="font-medium tabular-nums">{formatMoney(allocated / 100, currency)}</span>
-              {" · "}
-              {leftover >= 0 ? <>Unapplied (kept as credit): <span className="font-medium tabular-nums">{formatMoney(leftover / 100, currency)}</span></> : <span className="text-red-700">Over-applied by {formatMoney(-leftover / 100, currency)}</span>}
-            </p>
           </div>
 
           {!reviewing ? (
