@@ -6,9 +6,9 @@ import { EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components
 import { Amount, studentLabel } from "@/components/finance/finance-ui"
 import { RefundActions } from "@/components/finance/finance-actions"
 import { atLeast, requireFinance } from "@/lib/finance/access"
-import { formatDateTime } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 import { actorNames, financeSettings, listRefunds, studentsById } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Refunds" }
 
@@ -25,7 +25,6 @@ export default async function RefundsPage({ searchParams }: PageProps<"/finance/
   const [{ data, error }, { data: settings }] = await Promise.all([listRefunds(ctx.schoolId, tab === "processed" ? "processed" : undefined), financeSettings(ctx.schoolId)])
   const rows = (data ?? []).filter((r) => tab !== "open" || r.status === "requested" || r.status === "approved")
   const [students, names] = await Promise.all([studentsById(rows.map((r) => r.student_id)), actorNames(rows.flatMap((r) => [r.requested_by, r.approved_by, r.processed_by]))])
-  const tz = ctx.school?.timezone
   const by = (uid: string | null) => (uid ? (names.get(uid) ?? "Staff member") : null)
 
   return (
@@ -59,9 +58,9 @@ export default async function RefundsPage({ searchParams }: PageProps<"/finance/
                   <Td className="text-right"><Amount value={r.amount} currency={ctx.currency} /></Td>
                   <Td><StatusBadge status={r.status} /></Td>
                   <Td className="text-xs text-muted">
-                    Requested {formatDateTime(r.created_at, tz)}{by(r.requested_by) && ` by ${by(r.requested_by)}`}
-                    {r.decided_at && <span className="block">{r.status === "rejected" ? "Rejected" : "Approved"} {formatDateTime(r.decided_at, tz)}{by(r.approved_by) && ` by ${by(r.approved_by)}`}</span>}
-                    {r.processed_at && <span className="block">Paid out {formatDateTime(r.processed_at, tz)}{r.refund_reference && ` · ${r.refund_reference}`}</span>}
+                    Requested <DateText value={r.created_at} time />{by(r.requested_by) && ` by ${by(r.requested_by)}`}
+                    {r.decided_at && <span className="block">{r.status === "rejected" ? "Rejected" : "Approved"} <DateText value={r.decided_at} time />{by(r.approved_by) && ` by ${by(r.approved_by)}`}</span>}
+                    {r.processed_at && <span className="block">Paid out <DateText value={r.processed_at} time />{r.refund_reference && ` · ${r.refund_reference}`}</span>}
                   </Td>
                   <Td>{atLeast(ctx.level, "staff") && <RefundActions refundId={r.id} status={r.status} canManage={atLeast(ctx.level, "admin")} />}</Td>
                 </tr>

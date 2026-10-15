@@ -2,10 +2,11 @@ import Link from "next/link"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { Badge, EmptyState, StatusBadge } from "@/components/ui/misc"
 import { Timetable } from "@/components/academics/timetable"
-import { formatDateTime, isoWeekday, todayIn } from "@/lib/dates"
+import { isoWeekday, todayIn } from "@/lib/dates"
 import { studentEnrollments } from "@/services/academic"
 import { listGradingPeriods, listGradingScales, listSchedules, scaleFor, studentAttendanceSummary, studentGrades, upcomingCoursework } from "@/services/operations"
 import type { UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 type Student = { id: string; school_id: string; first_name: string }
 
@@ -128,7 +129,7 @@ export async function StudentAcademics({ student, ctx }: { student: Student; ctx
                 <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm">
                   <Link href={`/coursework/${w.id}`} className="font-medium text-brand hover:underline">{w.title}</Link>
                   <span className="text-muted">
-                    <Badge>{w.subject.code}</Badge> due {formatDateTime(w.due_at, ctx.school?.timezone)}
+                    <Badge>{w.subject.code}</Badge> due <DateText value={w.due_at} time />
                   </span>
                 </li>
               ))}

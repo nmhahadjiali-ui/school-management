@@ -10,13 +10,14 @@ import { Badge, EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/com
 import { ListToolbar } from "@/components/data/list-toolbar"
 import { Pagination, SortTh, TableSkeleton } from "@/components/data/list"
 import { requireActiveUser } from "@/lib/auth/session"
-import { formatDateTime, isPast } from "@/lib/dates"
+import { isPast } from "@/lib/dates"
 import { isUuid, parseListParams, type SearchParams } from "@/lib/list-params"
 import { sectionOptions, subjectOptions } from "@/lib/options"
 import { createClient } from "@/lib/supabase/server"
 import { listActiveSubjects, listSectionOptions, studentEnrollments } from "@/services/academic"
 import { COURSEWORK_SORTS, listCoursework } from "@/services/operations"
 import type { UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Assignments" }
 
@@ -113,7 +114,7 @@ async function CourseworkTable({ ctx, yearId, sp }: { ctx: UserContext; yearId: 
               <tr key={a.id} className="hover:bg-slate-50">
                 <Td><Link href={`/coursework/${a.id}`} className="font-medium text-brand hover:underline">{a.title}</Link></Td>
                 <Td>{a.subject.name} <span className="text-muted">· {a.section.grade_level.name} – {a.section.name}</span></Td>
-                <Td className={overdue ? "text-muted" : ""}>{a.due_at ? formatDateTime(a.due_at, ctx.school?.timezone) : "—"}</Td>
+                <Td className={overdue ? "text-muted" : ""}>{a.due_at ? <DateText value={a.due_at} time /> : "—"}</Td>
                 <Td>
                   {studentId ? (
                     sub ? <StatusBadge status={sub} /> : overdue ? <Badge tone="red">Missing</Badge> : <Badge tone="amber">To do</Badge>

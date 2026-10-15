@@ -9,10 +9,11 @@ import { Badge, PageHeader, StatusBadge } from "@/components/ui/misc"
 import { DescriptionList } from "@/components/data/list"
 import { archiveAnnouncement, publishAnnouncement, unscheduleAnnouncement } from "@/lib/actions/communication"
 import { getUserId, requireActiveUser } from "@/lib/auth/session"
-import { formatDateTime } from "@/lib/dates"
+import { displayDate, type DateFormat } from "@/lib/dates"
 import { uuidSchema } from "@/lib/validations"
 import { describeTargets } from "@/server/announcements"
 import { announcementDeliveryStats, audienceCount, getAnnouncement } from "@/services/communication"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Announcement" }
 
@@ -26,6 +27,8 @@ export default async function AnnouncementPage({ params, searchParams }: PagePro
   if (!a) notFound()
 
   const tz = ctx.school?.timezone
+  /** Dates inside text, in the school's date format. */
+  const dt = (v: string | null | undefined, time = false) => displayDate(v, ctx.settings?.date_format as DateFormat | undefined, tz, time)
   const userId = await getUserId()
   const manager = ctx.profile.role === "school_admin" || a.author_user_id === userId
   const [labels, count, stats] = manager ? await Promise.all([describeTargets([a]), audienceCount(a.id), announcementDeliveryStats(a.id)]) : [null, 0, null]
@@ -59,13 +62,13 @@ export default async function AnnouncementPage({ params, searchParams }: PagePro
           ) : null
         }
       />
-      {saved === "publish" && <Alert tone="success" className="mb-6">{a.status === "scheduled" ? `Scheduled for ${formatDateTime(a.publish_at, tz)}.` : `Published to ${stats?.recipients ?? count} recipient(s).`}</Alert>}
+      {saved === "publish" && <Alert tone="success" className="mb-6">{a.status === "scheduled" ? `Scheduled for ${dt(a.publish_at, true)}.` : `Published to ${stats?.recipients ?? count} recipient(s).`}</Alert>}
       {saved === "draft" && <Alert tone="info" className="mb-6">Saved.</Alert>}
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <Card>
           <CardBody>
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{a.content}</p>
-            <p className="mt-6 text-xs text-muted">{a.published_at ? `Published ${formatDateTime(a.published_at, tz)}` : "Not published yet"}{a.expires_at ? ` · ${expired ? "Expired" : "Expires"} ${formatDateTime(a.expires_at, tz)}` : ""}</p>
+            <p className="mt-6 text-xs text-muted">{a.published_at ? `Published ${dt(a.published_at, true)}` : "Not published yet"}{a.expires_at ? ` · ${expired ? "Expired" : "Expires"} ${dt(a.expires_at, true)}` : ""}</p>
           </CardBody>
         </Card>
         {manager && (
@@ -77,8 +80,8 @@ export default async function AnnouncementPage({ params, searchParams }: PagePro
                   ["Audience", <ul key="a" className="list-disc pl-4">{(labels?.get(a.id) ?? []).map((l) => <li key={l}>{l}</li>)}</ul>],
                   ["Reaches", `${count} account${count === 1 ? "" : "s"} (current)`],
                   ["Notified", stats?.recipients === null || stats === null ? "—" : `${stats.recipients} account${stats.recipients === 1 ? "" : "s"}`],
-                  ["Publish", a.publish_at ? formatDateTime(a.publish_at, tz) : "Immediately"],
-                  ["Expires", a.expires_at ? formatDateTime(a.expires_at, tz) : "Never"],
+                  ["Publish", a.publish_at ? <DateText key="p" value={a.publish_at} time /> : "Immediately"],
+                  ["Expires", a.expires_at ? <DateText key="e" value={a.expires_at} time /> : "Never"],
                 ]}
               />
             </CardBody>

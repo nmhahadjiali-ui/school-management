@@ -3,12 +3,13 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { PageHeader, RoleBadge, StatCard } from "@/components/ui/misc"
 import Link from "next/link"
 import { getSchoolStats } from "@/services/stats"
-import { formatDateTime, todayIn } from "@/lib/dates"
+import { todayIn } from "@/lib/dates"
 import { attendanceDayTotals, pendingGradeCount, schoolActivity, upcomingCount } from "@/services/operations"
 import { EmptyState } from "@/components/ui/misc"
 import { AnnouncementsCard } from "@/components/dashboard/announcements-card"
 import { fullName } from "@/lib/utils"
 import type { UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 export async function SchoolDashboard({ ctx }: { ctx: UserContext }) {
   const { profile, school, current_academic_year: year } = ctx
@@ -83,7 +84,7 @@ export async function SchoolDashboard({ ctx }: { ctx: UserContext }) {
 
       {on("announcements") && (
         <div className="mb-8">
-          <AnnouncementsCard schoolId={school!.id} timezone={school?.timezone} />
+          <AnnouncementsCard schoolId={school!.id} />
         </div>
       )}
 
@@ -96,7 +97,7 @@ export async function SchoolDashboard({ ctx }: { ctx: UserContext }) {
             {activity.data.map((a) => (
               <li key={a.id} className="flex justify-between gap-3 px-5 py-2.5 text-sm">
                 <span className="font-mono text-xs">{a.action}</span>
-                <span className="text-muted">{formatDateTime(a.created_at, school?.timezone)}</span>
+                <span className="text-muted"><DateText value={a.created_at} time /></span>
               </li>
             ))}
           </ul>

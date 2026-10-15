@@ -10,11 +10,11 @@ import { Badge, EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/com
 import { ListToolbar } from "@/components/data/list-toolbar"
 import { Pagination, SortTh, TableSkeleton } from "@/components/data/list"
 import { requireActiveUser, getUserId } from "@/lib/auth/session"
-import { formatDateTime } from "@/lib/dates"
 import { parseListParams, type SearchParams } from "@/lib/list-params"
 import { canAuthor, describeTargets } from "@/server/announcements"
 import { ANNOUNCEMENT_SORTS, announcementFeed, listAnnouncements } from "@/services/communication"
 import type { UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Announcements" }
 
@@ -86,8 +86,8 @@ async function ManageTable({ ctx, sp, mineOnly }: { ctx: UserContext; sp: Search
                 </Td>
                 <Td className="max-w-xs text-muted">{(audiences.get(a.id) ?? []).join("; ") || "—"}</Td>
                 <Td>{expired ? <Badge>Expired</Badge> : <StatusBadge status={a.status} />}</Td>
-                <Td className="whitespace-nowrap text-muted">{formatDateTime(a.published_at ?? a.publish_at, ctx.school?.timezone)}</Td>
-                <Td className="whitespace-nowrap text-muted">{a.expires_at ? formatDateTime(a.expires_at, ctx.school?.timezone) : "—"}</Td>
+                <Td className="whitespace-nowrap text-muted"><DateText value={a.published_at ?? a.publish_at} time /></Td>
+                <Td className="whitespace-nowrap text-muted">{a.expires_at ? <DateText value={a.expires_at} time /> : "—"}</Td>
               </tr>
             )
           })}
@@ -113,7 +113,7 @@ async function Feed({ ctx }: { ctx: UserContext }) {
               <Link href={`/announcements/${a.id}`} className="font-semibold text-brand hover:underline">{a.title}</Link>
               {(a.priority === "high" || a.priority === "urgent") && <span className="ml-2"><Badge tone="red">{a.priority}</Badge></span>}
               <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm">{a.content}</p>
-              <p className="mt-1 text-xs text-muted">{formatDateTime(a.published_at, ctx.school?.timezone)}</p>
+              <p className="mt-1 text-xs text-muted"><DateText value={a.published_at} time /></p>
             </li>
           ))}
         </ul>

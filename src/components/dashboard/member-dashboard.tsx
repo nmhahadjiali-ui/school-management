@@ -8,11 +8,11 @@ import { ChildrenList } from "@/components/school/children-list"
 import { StudentAcademics } from "@/components/academics/student-academics"
 import { TeacherDashboard } from "@/components/dashboard/teacher-dashboard"
 import { AnnouncementsCard } from "@/components/dashboard/announcements-card"
-import { formatDateTime } from "@/lib/dates"
 import { fullName } from "@/lib/utils"
 import { studentEnrollments } from "@/services/academic"
 import { myNotifications } from "@/services/operations"
 import type { UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 /** Teacher / student / parent dashboard. All data is scoped by RLS to the viewer. */
 export function MemberDashboard({ ctx }: { ctx: UserContext }) {
@@ -46,12 +46,12 @@ export function MemberDashboard({ ctx }: { ctx: UserContext }) {
         <div className="grid gap-6 lg:grid-cols-2">
           {features.includes("announcements") && profile.school_id && (
             <Suspense fallback={skeleton}>
-              <AnnouncementsCard schoolId={profile.school_id} timezone={school?.timezone} />
+              <AnnouncementsCard schoolId={profile.school_id} />
             </Suspense>
           )}
           {features.includes("notifications") && record?.type !== "teacher" && (
             <Suspense fallback={skeleton}>
-              <RecentNotifications timezone={school?.timezone} />
+              <RecentNotifications />
             </Suspense>
           )}
           <Card>
@@ -78,7 +78,7 @@ export function MemberDashboard({ ctx }: { ctx: UserContext }) {
   )
 }
 
-async function RecentNotifications({ timezone }: { timezone?: string }) {
+async function RecentNotifications() {
   const { data } = await myNotifications(5)
   return (
     <Card>
@@ -91,7 +91,7 @@ async function RecentNotifications({ timezone }: { timezone?: string }) {
             <li key={n.id} className="px-5 py-3 text-sm">
               <p className={n.read_at ? "" : "font-semibold"}>{n.title}</p>
               <p className="text-muted">{n.message}</p>
-              <p className="text-xs text-muted">{formatDateTime(n.created_at, timezone)}</p>
+              <p className="text-xs text-muted"><DateText value={n.created_at} time /></p>
             </li>
           ))}
         </ul>

@@ -59,7 +59,7 @@ export type LinkedRecord = { type: "teacher" | "student" | "guardian"; id: strin
 export type UserContext = {
   profile: Omit<Profile, "user_id">
   school: Pick<School, "id" | "name" | "code" | "logo_url" | "timezone" | "status"> | null
-  settings: Pick<SchoolSettings, "primary_color" | "currency"> | null
+  settings: Pick<SchoolSettings, "primary_color" | "currency" | "date_format"> | null
   current_academic_year: Pick<AcademicYear, "id" | "name" | "start_date" | "end_date"> | null
   record: LinkedRecord | null
   /** Profile active AND (super admin OR school active). */

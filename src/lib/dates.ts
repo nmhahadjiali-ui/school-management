@@ -70,3 +70,33 @@ export function isoToZonedInput(iso: string | null, timeZone = "UTC") {
 export function isPast(iso: string | null | undefined) {
   return iso ? new Date(iso).getTime() < Date.now() : false
 }
+
+/** School setting for how dates are shown (school_settings.date_format). */
+export const DATE_FORMATS = [
+  { value: "medium", label: "Mar 30, 2026" },
+  { value: "long", label: "March 30, 2026" },
+  { value: "iso", label: "2026-03-30" },
+] as const
+export type DateFormat = (typeof DATE_FORMATS)[number]["value"]
+
+/**
+ * A date ("2026-03-30") or timestamp in the school's date format. Plain dates
+ * are calendar days and never shift with the time zone; timestamps are shown
+ * in `timeZone`. `withTime` adds the time of day to timestamps.
+ */
+export function displayDate(value: string | null | undefined, format: DateFormat = "medium", timeZone?: string, withTime = false) {
+  if (!value) return "—"
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value)
+  const at = new Date(dateOnly ? `${value}T00:00:00Z` : value)
+  if (Number.isNaN(at.getTime())) return value
+  const fmt = (locale: string, opts: Intl.DateTimeFormatOptions) => {
+    try {
+      return new Intl.DateTimeFormat(locale, { ...opts, timeZone: dateOnly ? "UTC" : timeZone }).format(at)
+    } catch {
+      return new Intl.DateTimeFormat(locale, { ...opts, timeZone: dateOnly ? "UTC" : undefined }).format(at)
+    }
+  }
+  // en-CA formats as YYYY-MM-DD.
+  const date = format === "iso" ? (dateOnly ? value : fmt("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" })) : fmt("en-US", { dateStyle: format })
+  return withTime && !dateOnly ? `${date}, ${fmt("en-US", { timeStyle: "short" })}` : date
+}

@@ -9,10 +9,11 @@ import { PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { Amount, studentLabel } from "@/components/finance/finance-ui"
 import { ApplyCreditButton, RefundActions, ReleaseAllocationButton, RequestRefundButton, ReversePaymentButton } from "@/components/finance/finance-actions"
 import { atLeast, requireFinance } from "@/lib/finance/access"
-import { formatDateTime } from "@/lib/dates"
+import { displayDate, type DateFormat } from "@/lib/dates"
 import { isUuid } from "@/lib/list-params"
 import { METHOD_LABELS } from "@/lib/money"
 import { actorNames, getPayment, openCharges, paymentDetails, studentsById } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Payment" }
 
@@ -28,6 +29,8 @@ export default async function PaymentPage({ params, searchParams }: PageProps<"/
   const receipt = p.receipts?.[0] ?? null
   const cur = p.currency.trim()
   const tz = ctx.school?.timezone
+  /** Dates inside text, in the school's date format. */
+  const dt = (v: string | null | undefined, time = false) => displayDate(v, ctx.settings?.date_format as DateFormat | undefined, tz, time)
   const completed = p.status === "completed"
   const credit = Number(details.unallocated ?? 0)
   const canCollect = atLeast(ctx.level, "staff")
@@ -42,12 +45,12 @@ export default async function PaymentPage({ params, searchParams }: PageProps<"/
     ["Reference", p.reference_number ?? "—"],
     ["Payment date", p.payment_date],
     ["Receipt", receipt ? <Link key="r" href={`/receipts/${receipt.id}`} className="font-mono text-brand hover:underline">{receipt.receipt_number}{receipt.status === "voided" ? " (void)" : ""}</Link> : "—"],
-    ["Recorded", p.payment_method === "online" ? `${formatDateTime(p.created_at, tz)} — confirmed by the payment provider` : `${formatDateTime(p.created_at, tz)} by ${by(p.received_by)}`],
+    ["Recorded", p.payment_method === "online" ? `${dt(p.created_at, true)} — confirmed by the payment provider` : `${dt(p.created_at, true)} by ${by(p.received_by)}`],
     ["Unapplied credit", <Amount key="c" value={credit} currency={cur} />],
     ["Notes", p.notes ?? "—"],
   ]
   if (p.transaction) info.push(["Provider reference", `${p.transaction.provider} · ${p.transaction.provider_transaction_id ?? "—"}`])
-  if (p.reversed_at) info.push(["Reversed", `${formatDateTime(p.reversed_at, tz)} by ${by(p.reversed_by)}: ${p.reversal_reason}`])
+  if (p.reversed_at) info.push(["Reversed", `${dt(p.reversed_at, true)} by ${by(p.reversed_by)}: ${p.reversal_reason}`])
 
   return (
     <>
@@ -83,7 +86,7 @@ export default async function PaymentPage({ params, searchParams }: PageProps<"/
                 {details.allocations.map((a) => (
                   <tr key={a.id}>
                     <Td><Link href={`/finance/charges/${a.student_charge_id}`} className="text-brand hover:underline">{a.charge?.description}</Link></Td>
-                    <Td>{a.charge?.due_date ?? "—"}</Td>
+                    <Td><DateText value={a.charge?.due_date} /></Td>
                     <Td className="text-right"><Amount value={a.amount} currency={cur} /></Td>
                     <Td>{a.released_at ? <span className="text-xs text-muted">Released: {a.release_reason}</span> : <StatusBadge status="active" />}</Td>
                     <Td className="text-right">{completed && canManage && !a.released_at && <ReleaseAllocationButton allocationId={a.id} />}</Td>
@@ -100,7 +103,7 @@ export default async function PaymentPage({ params, searchParams }: PageProps<"/
                 <tbody>
                   {details.refunds.map((r) => (
                     <tr key={r.id}>
-                      <Td className="text-xs">{formatDateTime(r.created_at, tz)}<span className="block text-muted">by {by(r.requested_by)}</span></Td>
+                      <Td className="text-xs"><DateText value={r.created_at} time /><span className="block text-muted">by {by(r.requested_by)}</span></Td>
                       <Td className="text-muted">{r.reason}{r.decision_note && <span className="block text-xs">Note: {r.decision_note}</span>}</Td>
                       <Td className="text-right"><Amount value={r.amount} currency={cur} /></Td>
                       <Td><StatusBadge status={r.status} /></Td>

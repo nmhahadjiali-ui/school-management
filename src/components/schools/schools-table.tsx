@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { EmptyState, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { LinkButton } from "@/components/ui/button"
-import { formatDate } from "@/lib/utils"
 import type { SchoolWithUserCount } from "@/services/schools"
+import { DateText } from "@/components/ui/date-text"
 
 export function SchoolsTable({ schools }: { schools: SchoolWithUserCount[] }) {
   if (schools.length === 0) {
@@ -38,7 +38,7 @@ export function SchoolsTable({ schools }: { schools: SchoolWithUserCount[] }) {
               <StatusBadge status={s.status} />
             </Td>
             <Td className="text-right tabular-nums">{s.user_count}</Td>
-            <Td className="text-muted">{formatDate(s.created_at)}</Td>
+            <Td className="text-muted"><DateText value={s.created_at} /></Td>
           </tr>
         ))}
       </tbody>

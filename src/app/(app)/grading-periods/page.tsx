@@ -12,18 +12,21 @@ import { GradingPeriodFields } from "@/components/academics/fields"
 import { createGradingPeriod, setGradingPeriodStatus, updateGradingPeriod } from "@/lib/actions/operations"
 import { requireFeatureFor } from "@/lib/auth/session"
 import { yearOptions } from "@/lib/options"
-import { formatDate } from "@/lib/utils"
+import { displayDate, type DateFormat } from "@/lib/dates"
 import { listAcademicYears, pickYear } from "@/services/academic"
 import { listGradingPeriods, listSetupTemplates } from "@/services/operations"
 import { Field } from "@/components/ui/form"
 import { TemplatePicker, type TemplateOption } from "@/components/academics/template-picker"
 import { applyGradingPeriodTemplate, deleteGradingTemplate, saveGradingTemplate } from "@/lib/actions/templates"
 import { PERIOD_PRESETS, itemsToPeriods, presetPeriods, type PeriodItem, type PeriodRow } from "@/lib/grading-templates"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Grading periods" }
 
 export default async function GradingPeriodsPage({ searchParams }: PageProps<"/grading-periods">) {
   const ctx = await requireFeatureFor("school.records.manage", "grades")
+  /** Dates inside text, in the school's date format. */
+  const dt = (v: string | null | undefined, time = false) => displayDate(v, ctx.settings?.date_format as DateFormat | undefined, ctx.school?.timezone, time)
   const sp = await searchParams
   const schoolId = ctx.profile.school_id!
   const { data: years } = await listAcademicYears(schoolId)
@@ -31,7 +34,7 @@ export default async function GradingPeriodsPage({ searchParams }: PageProps<"/g
   const { data: periods, error } = year ? await listGradingPeriods(schoolId, year.id) : { data: [], error: null }
   const editable = year && year.status !== "archived"
   const { data: saved } = editable && !periods?.length ? await listSetupTemplates(schoolId, "grading_periods") : { data: [] }
-  const describe = (rows: PeriodRow[]) => rows.map((r) => `${r.name} (${r.code}): ${formatDate(r.start_date, "UTC")} – ${formatDate(r.end_date, "UTC")}`)
+  const describe = (rows: PeriodRow[]) => rows.map((r) => `${r.name} (${r.code}): ${dt(r.start_date)} – ${dt(r.end_date)}`)
   const templates: TemplateOption[] = year
     ? [
         ...PERIOD_PRESETS.map((p) => ({ key: p.key, name: p.name, builtIn: true, preview: describe(presetPeriods(p.key, year.start_date, year.end_date) ?? []) })),
@@ -53,7 +56,7 @@ export default async function GradingPeriodsPage({ searchParams }: PageProps<"/g
               {!periods?.length ? (
                 <TemplatePicker
                   title={`Grading periods from a template (${year.name})`}
-                  description={`Creates all periods of ${year.name} at once. Built-in templates split the year (${formatDate(year.start_date, "UTC")} – ${formatDate(year.end_date, "UTC")}) evenly; you can edit the dates afterwards.`}
+                  description={`Creates all periods of ${year.name} at once. Built-in templates split the year (${dt(year.start_date)} – ${dt(year.end_date)}) evenly; you can edit the dates afterwards.`}
                   templates={templates}
                   onApply={applyGradingPeriodTemplate.bind(null, year.id)}
                   onDelete={deleteGradingTemplate}
@@ -94,7 +97,7 @@ export default async function GradingPeriodsPage({ searchParams }: PageProps<"/g
                   <tr key={p.id}>
                     <Td className="tabular-nums text-muted">{p.sequence}</Td>
                     <Td className="font-medium">{p.name} <span className="ml-1 font-mono text-xs text-muted">{p.code}</span></Td>
-                    <Td className="text-muted">{formatDate(p.start_date, "UTC")} – {formatDate(p.end_date, "UTC")}</Td>
+                    <Td className="text-muted"><DateText value={p.start_date} /> – <DateText value={p.end_date} /></Td>
                     <Td><StatusBadge status={p.status} /></Td>
                     <Td>
                       {editable && (

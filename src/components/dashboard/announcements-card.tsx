@@ -1,11 +1,11 @@
 import Link from "next/link"
 import { Card, CardHeader } from "@/components/ui/card"
 import { Badge, EmptyState } from "@/components/ui/misc"
-import { formatDateTime } from "@/lib/dates"
 import { announcementFeed } from "@/services/communication"
+import { DateText } from "@/components/ui/date-text"
 
 /** Latest active announcements for the viewer (RLS decides which). */
-export async function AnnouncementsCard({ schoolId, timezone }: { schoolId: string; timezone?: string }) {
+export async function AnnouncementsCard({ schoolId }: { schoolId: string }) {
   const { data } = await announcementFeed(schoolId, 3)
   return (
     <Card>
@@ -19,7 +19,7 @@ export async function AnnouncementsCard({ schoolId, timezone }: { schoolId: stri
               <Link href={`/announcements/${a.id}`} className="text-sm font-medium text-brand hover:underline">{a.title}</Link>
               {(a.priority === "high" || a.priority === "urgent") && <span className="ml-2"><Badge tone="red">{a.priority}</Badge></span>}
               <p className="line-clamp-2 text-sm text-muted">{a.content}</p>
-              <p className="text-xs text-muted">{formatDateTime(a.published_at, timezone)}</p>
+              <p className="text-xs text-muted"><DateText value={a.published_at} time /></p>
             </li>
           ))}
         </ul>

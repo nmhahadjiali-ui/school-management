@@ -11,9 +11,10 @@ import { requireAcademicActor } from "@/lib/auth/session"
 import { isIsoDate, todayIn } from "@/lib/dates"
 import { isUuid, listHref, type SearchParams } from "@/lib/list-params"
 import { gradeOptions, sectionOptions, yearOptions } from "@/lib/options"
-import { cn, formatDate } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { listAcademicYears, listGradeLevels, listSectionOptions, myTeachingSections, pickYear } from "@/services/academic"
 import { attendanceByDate, sectionAttendanceSummary } from "@/services/operations"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Attendance reports" }
 
@@ -135,7 +136,7 @@ async function DateReport({ schoolId, yearId, date, grade }: { schoolId: string;
   return (
     <>
       <p className="px-4 py-3 text-sm text-muted">
-        {formatDate(date, "UTC")}: attendance taken in <span className="font-semibold text-foreground">{taken}</span> of {data.length} sections.
+        <DateText value={date} />: attendance taken in <span className="font-semibold text-foreground">{taken}</span> of {data.length} sections.
       </p>
       <Table label="Attendance by section">
         <thead>

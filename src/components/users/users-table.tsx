@@ -9,8 +9,9 @@ import { updateMember } from "@/lib/actions/users"
 import { deleteUserAccount } from "@/lib/actions/user-delete"
 import { DeleteWithPassword } from "@/components/ui/delete-with-password"
 import { ROLE_LABELS, SCHOOL_MEMBER_ROLES, isSchoolMemberRole } from "@/lib/auth/permissions"
-import { formatDate, fullName } from "@/lib/utils"
+import { fullName } from "@/lib/utils"
 import type { AppRole, ProfileStatus } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 export type UserRow = {
   id: string
@@ -145,7 +146,7 @@ export function UsersTable({ users, currentProfileId, mode }: Props) {
               <Td>
                 <StatusBadge status={u.status} />
               </Td>
-              <Td className="text-muted">{formatDate(u.created_at)}</Td>
+              <Td className="text-muted"><DateText value={u.created_at} /></Td>
               <Td>{canManage(u) ? <RowActions user={u} mode={mode} onError={setError} /> : null}</Td>
             </tr>
           ))}

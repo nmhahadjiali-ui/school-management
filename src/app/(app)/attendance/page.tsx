@@ -14,10 +14,10 @@ import { requireAcademicActor } from "@/lib/auth/session"
 import { isIsoDate, todayIn } from "@/lib/dates"
 import { isUuid } from "@/lib/list-params"
 import { sectionOptions } from "@/lib/options"
-import { formatDate } from "@/lib/utils"
 import { listSectionOptions, myTeachingSections } from "@/services/academic"
 import { attendanceSession, editableForTeacher, rosterOn } from "@/services/operations"
 import { getSchoolSettings } from "@/services/settings"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Attendance" }
 
@@ -97,10 +97,10 @@ async function SheetFor({
     <>
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 px-4 py-2.5 text-sm">
         <p>
-          <span className="font-semibold">{sectionLabel}</span> · {formatDate(date, "UTC")}
+          <span className="font-semibold">{sectionLabel}</span> · <DateText value={date} />
           {s ? (
             <span className="ml-2 text-muted">
-              {s.status === "locked" ? <><Lock className="inline size-3.5" aria-hidden /> Locked</> : "Recorded"} · last saved {formatDate(s.updated_at)}
+              {s.status === "locked" ? <><Lock className="inline size-3.5" aria-hidden /> Locked</> : "Recorded"} · last saved <DateText value={s.updated_at} />
             </span>
           ) : (
             <span className="ml-2 text-muted">Not recorded yet</span>

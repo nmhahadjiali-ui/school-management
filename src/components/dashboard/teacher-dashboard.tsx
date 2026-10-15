@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { Card, CardHeader } from "@/components/ui/card"
 import { Badge, EmptyState, StatCard } from "@/components/ui/misc"
-import { formatDateTime, formatTime, isoWeekday, todayIn } from "@/lib/dates"
+import { formatTime, isoWeekday, todayIn } from "@/lib/dates"
 import { createClient } from "@/lib/supabase/server"
 import { getUserId } from "@/lib/auth/session"
 import { myTeachingSections } from "@/services/academic"
 import { listSchedules, recentActivity, teachingLoads, upcomingCoursework } from "@/services/operations"
 import type { UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 const ACTIVITY: Record<string, string> = {
   "attendance.created": "Took attendance",
@@ -91,7 +92,7 @@ export async function TeacherDashboard({ ctx, teacherId, yearId }: { ctx: UserCo
                 {upcoming.data.map((w) => (
                   <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm">
                     <Link href={`/coursework/${w.id}`} className="font-medium text-brand hover:underline">{w.title}</Link>
-                    <span className="text-muted">{w.section.grade_level.name} – {w.section.name} · {formatDateTime(w.due_at, ctx.school?.timezone)}</span>
+                    <span className="text-muted">{w.section.grade_level.name} – {w.section.name} · <DateText value={w.due_at} time /></span>
                   </li>
                 ))}
               </ul>
@@ -107,7 +108,7 @@ export async function TeacherDashboard({ ctx, teacherId, yearId }: { ctx: UserCo
               {activity.data.map((a) => (
                 <li key={a.id} className="flex justify-between gap-3 px-5 py-2.5 text-sm">
                   <span>{ACTIVITY[a.action] ?? a.action}{typeof (a.metadata as Record<string, unknown>)?.title === "string" ? `: ${(a.metadata as Record<string, string>).title}` : ""}</span>
-                  <span className="shrink-0 text-muted">{formatDateTime(a.created_at, ctx.school?.timezone)}</span>
+                  <span className="shrink-0 text-muted"><DateText value={a.created_at} time /></span>
                 </li>
               ))}
             </ul>

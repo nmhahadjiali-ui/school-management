@@ -12,6 +12,7 @@ import { isUuid } from "@/lib/list-params"
 import { gradeOptions } from "@/lib/options"
 import { listGradeLevels, listSchoolSections } from "@/services/academic"
 import { getFeeStructure, listFeeTypes, listStructureItems, structureChargeCount } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Fee structure" }
 
@@ -61,7 +62,7 @@ export default async function FeeStructurePage({ params }: PageProps<"/finance/f
                     <Td>{i.name}</Td>
                     <Td>{i.fee_type?.name}</Td>
                     <Td>{FREQ[i.frequency]}{i.installments > 1 && ` × ${i.installments}`}</Td>
-                    <Td>{i.due_date ?? "—"}</Td>
+                    <Td><DateText value={i.due_date} /></Td>
                     <Td className="text-right"><Amount value={i.amount} currency={cur} /></Td>
                     <Td>{isAdmin && <div className="flex justify-end gap-2"><StructureItemDialog structureId={id} feeTypes={typeOptions} item={i} currency={cur} /><DeleteItemButton itemId={i.id} /></div>}</Td>
                   </tr>

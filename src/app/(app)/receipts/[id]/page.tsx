@@ -5,13 +5,13 @@ import { Amount } from "@/components/finance/finance-ui"
 import { PrintButton } from "@/components/finance/finance-actions"
 import { requireActiveUser } from "@/lib/auth/session"
 import { myFinanceLevel } from "@/lib/finance/access"
-import { formatDateTime } from "@/lib/dates"
 import { isUuid } from "@/lib/list-params"
 import { METHOD_LABELS } from "@/lib/money"
 import { personName } from "@/lib/options"
 import { createClient } from "@/lib/supabase/server"
 import { actorNames, getReceipt, getStudentRef } from "@/services/finance"
 import { getSchool } from "@/services/schools"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Receipt" }
 
@@ -37,7 +37,6 @@ export default async function ReceiptPage({ params }: PageProps<"/receipts/[id]"
     family ? Promise.resolve(new Map<string, string>()) : actorNames([r.issued_by]),
   ])
   const cur = p.currency.trim()
-  const tz = ctx.school?.timezone
   const applied = (allocations ?? []).filter((a) => !a.released_at)
   const appliedCents = applied.reduce((s, a) => s + Math.round(Number(a.amount) * 100), 0)
   const voided = r.status === "voided"
@@ -47,7 +46,7 @@ export default async function ReceiptPage({ params }: PageProps<"/receipts/[id]"
       <div className="mb-4 flex justify-end gap-2 print:hidden">
         <PrintButton />
       </div>
-      {voided && <Alert tone="error" className="mb-4">This receipt was VOIDED on {formatDateTime(r.voided_at, tz)}: {r.void_reason}</Alert>}
+      {voided && <Alert tone="error" className="mb-4">This receipt was VOIDED on <DateText value={r.voided_at} time />: {r.void_reason}</Alert>}
       <article className="relative rounded-lg border border-border bg-surface p-8 shadow-sm print:border-0 print:shadow-none">
         {voided && <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-7xl font-bold text-red-600/15 -rotate-12" aria-hidden>VOID</p>}
         <header className="flex items-start justify-between gap-4 border-b border-border pb-4">
@@ -59,7 +58,7 @@ export default async function ReceiptPage({ params }: PageProps<"/receipts/[id]"
           <div className="text-right">
             <p className="text-xs uppercase tracking-wide text-muted">Payment receipt</p>
             <p className="font-mono text-lg font-semibold">{r.receipt_number}</p>
-            <p className="text-sm text-muted">{formatDateTime(r.issued_at, tz)}</p>
+            <p className="text-sm text-muted"><DateText value={r.issued_at} time /></p>
           </div>
         </header>
 
@@ -67,7 +66,7 @@ export default async function ReceiptPage({ params }: PageProps<"/receipts/[id]"
           <dt className="text-muted">Received from</dt>
           <dd className="font-medium">{student ? `${personName(student)} (${student.student_number})` : "Student"}</dd>
           <dt className="text-muted">Payment date</dt>
-          <dd>{p.payment_date}</dd>
+          <dd><DateText value={p.payment_date} /></dd>
           <dt className="text-muted">Method</dt>
           <dd>{METHOD_LABELS[p.payment_method] ?? p.payment_method}{p.reference_number && ` · Ref. ${p.reference_number}`}</dd>
           {!family && r.issued_by && (<><dt className="text-muted">Received by</dt><dd>{names.get(r.issued_by) ?? "Staff member"}</dd></>)}

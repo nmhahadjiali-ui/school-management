@@ -151,3 +151,23 @@ describe("slotConflicts (no overlapping time slots)", () => {
     assert.deepEqual(r, ["08:30–09:30 overlaps 09:00–10:00.", "08:30–09:30 overlaps the existing Monday 08:00–09:00 slot."])
   })
 })
+
+const { displayDate } = await import("../src/lib/dates.ts")
+
+describe("displayDate (school date format setting)", () => {
+  test("plain dates in each format, never shifted by the time zone", () => {
+    assert.equal(displayDate("2026-03-30", "medium", "Pacific/Honolulu"), "Mar 30, 2026")
+    assert.equal(displayDate("2026-03-30", "long", "Asia/Manila"), "March 30, 2026")
+    assert.equal(displayDate("2026-03-30", "iso"), "2026-03-30")
+  })
+  test("timestamps use the school's time zone; time is optional", () => {
+    // 2026-03-30 18:30 UTC is already March 31 in Manila (UTC+8)
+    assert.equal(displayDate("2026-03-30T18:30:00Z", "medium", "Asia/Manila"), "Mar 31, 2026")
+    assert.equal(displayDate("2026-03-30T18:30:00Z", "iso", "Asia/Manila"), "2026-03-31")
+    assert.equal(displayDate("2026-03-30T18:30:00Z", "long", "Asia/Manila", true), "March 31, 2026, 2:30 AM")
+  })
+  test("empty values show a dash", () => {
+    assert.equal(displayDate(null), "—")
+    assert.equal(displayDate(""), "—")
+  })
+})

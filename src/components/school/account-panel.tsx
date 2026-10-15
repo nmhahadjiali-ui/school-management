@@ -5,9 +5,9 @@ import { Field } from "@/components/ui/form"
 import { StatusBadge } from "@/components/ui/misc"
 import { DescriptionList } from "@/components/data/list"
 import { inviteAccount, linkAccount, revokeInvitation, unlinkAccount } from "@/lib/actions/people"
-import { formatDate } from "@/lib/utils"
 import { invitationState, listRecordInvitations } from "@/services/invitations"
 import { linkableAccounts, linkedAccount, type RecordType } from "@/services/people"
+import { DateText } from "@/components/ui/date-text"
 
 const ROLE_WORD: Record<RecordType, string> = { teacher: "teacher", student: "student", guardian: "parent" }
 
@@ -42,10 +42,10 @@ export async function AccountPanel({
               items={[
                 ["Login email", account.data.email],
                 ["Account status", <StatusBadge key="s" status={account.data.status} />],
-                ...(latest?.accepted_at ? ([["Invitation accepted", formatDate(latest.accepted_at)]] as [string, React.ReactNode][]) : []),
+                ...(latest?.accepted_at ? ([["Invitation accepted", <DateText key="acc" value={latest.accepted_at} />]] as [string, React.ReactNode][]) : []),
               ]}
             />
-            {openInvite && <p className="text-sm text-muted">Invitation sent {formatDate(openInvite.created_at)} — waiting for the person to set a password.</p>}
+            {openInvite && <p className="text-sm text-muted">Invitation sent <DateText value={openInvite.created_at} /> — waiting for the person to set a password.</p>}
             <div className="flex flex-wrap gap-2">
               {openInvite && (
                 <ConfirmAction destructive trigger="Revoke invitation" title="Revoke this invitation?" description="The link in the email stops working and the unused account is removed. You can invite again later." confirmLabel="Revoke" onConfirm={revokeInvitation.bind(null, openInvite.id)} />

@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { simulateCheckout, startOnlinePayment } from "@/lib/actions/finance"
 import { cents, formatMoney } from "@/lib/money"
+import { DateText } from "@/components/ui/date-text"
 
 type Charge = { id: string; description: string; due_date: string | null; remaining: number }
 
@@ -27,7 +28,7 @@ export function OnlinePay({ studentId, charges, currency }: { studentId: string;
           <li key={c.id}>
             <label className="flex items-center gap-3 px-3 py-2 text-sm">
               <input type="checkbox" className="size-4 accent-[var(--brand)]" checked={selected.includes(c.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, c.id] : selected.filter((x) => x !== c.id))} />
-              <span className="flex-1">{c.description}{c.due_date && <span className="ml-2 text-xs text-muted">due {c.due_date}</span>}</span>
+              <span className="flex-1">{c.description}{c.due_date && <span className="ml-2 text-xs text-muted">due <DateText value={c.due_date} /></span>}</span>
               <span className="tabular-nums">{formatMoney(c.remaining, currency)}</span>
             </label>
           </li>

@@ -12,9 +12,10 @@ import { CourseworkFields } from "@/components/academics/fields"
 import { CourseworkAttachment, SubmissionForm } from "@/components/academics/coursework-client"
 import { reviewSubmission, setCourseworkStatus, updateCoursework } from "@/lib/actions/operations"
 import { requireActiveUser } from "@/lib/auth/session"
-import { formatDateTime, isPast, isoToZonedInput } from "@/lib/dates"
+import { isPast, isoToZonedInput } from "@/lib/dates"
 import { uuidSchema } from "@/lib/validations"
 import { getCoursework, mySubmission, submissionsFor } from "@/services/operations"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Assignment" }
 
@@ -80,7 +81,7 @@ export default async function CourseworkDetailPage({ params, searchParams }: Pag
 
           {studentId && (
             <Card>
-              <CardHeader title="Your submission" description={mine.data ? <>Submitted {formatDateTime(mine.data.submitted_at, tz)} · <StatusBadge status={mine.data.status} /></> : overdue ? "Past due — late submissions are marked as late." : undefined} />
+              <CardHeader title="Your submission" description={mine.data ? <>Submitted <DateText value={mine.data.submitted_at} time /> · <StatusBadge status={mine.data.status} /></> : overdue ? "Past due — late submissions are marked as late." : undefined} />
               <CardBody className="space-y-3">
                 {mine.data?.file_path && <p className="text-sm">{fileLink(mine.data.file_path, mine.data.file_name)}</p>}
                 <SubmissionForm assignmentId={a.id} folder={`${a.school_id}/submissions/${a.id}/${studentId}`} existing={mine.data} locked={mine.data?.status === "reviewed"} />
@@ -108,7 +109,7 @@ export default async function CourseworkDetailPage({ params, searchParams }: Pag
                     {subs.data.map((s) => (
                       <tr key={s.id}>
                         <Td><Link href={`/students/${s.student.id}`} className="font-medium text-brand hover:underline">{s.student.last_name}, {s.student.first_name}</Link></Td>
-                        <Td className="whitespace-nowrap text-muted">{formatDateTime(s.submitted_at, tz)}</Td>
+                        <Td className="whitespace-nowrap text-muted"><DateText value={s.submitted_at} time /></Td>
                         <Td className="max-w-md">
                           {s.content && <p className="line-clamp-3 whitespace-pre-wrap">{s.content}</p>}
                           {s.file_path && fileLink(s.file_path, s.file_name)}
@@ -135,8 +136,8 @@ export default async function CourseworkDetailPage({ params, searchParams }: Pag
                 ["Class", `${a.section.grade_level.name} – ${a.section.name}`],
                 ["Subject", a.subject.name],
                 ["Teacher", `${a.teacher.first_name} ${a.teacher.last_name}`],
-                ["Due", a.due_at ? <span key="d" className={overdue ? "text-red-700" : ""}>{formatDateTime(a.due_at, tz)}</span> : "No due date"],
-                ["Posted", formatDateTime(a.created_at, tz)],
+                ["Due", a.due_at ? <span key="d" className={overdue ? "text-red-700" : ""}><DateText value={a.due_at} time /></span> : "No due date"],
+                ["Posted", <DateText key="posted" value={a.created_at} time />],
               ]}
             />
           </CardBody>

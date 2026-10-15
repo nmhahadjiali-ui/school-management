@@ -16,8 +16,8 @@ import {
   updateAcademicYear,
 } from "@/lib/actions/academic"
 import { requireSchoolAdmin } from "@/lib/auth/session"
-import { formatDate } from "@/lib/utils"
 import { listAcademicYears } from "@/services/academic"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Academic years" }
 
@@ -60,7 +60,7 @@ export default async function AcademicYearsPage() {
                   <Td className="font-medium">
                     {y.name} {y.is_current && <Badge tone="blue">Current</Badge>}
                   </Td>
-                  <Td className="text-muted">{formatDate(y.start_date, "UTC")} – {formatDate(y.end_date, "UTC")}</Td>
+                  <Td className="text-muted"><DateText value={y.start_date} /> – <DateText value={y.end_date} /></Td>
                   <Td><StatusBadge status={y.status} /></Td>
                   <Td>
                     {y.status !== "archived" && (

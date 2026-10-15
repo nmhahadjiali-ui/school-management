@@ -7,10 +7,11 @@ import { PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { Amount, studentLabel } from "@/components/finance/finance-ui"
 import { ChargeAdminActions, RevokeDiscountButton } from "@/components/finance/finance-actions"
 import { atLeast, requireFinance } from "@/lib/finance/access"
-import { formatDateTime } from "@/lib/dates"
+import { displayDate, type DateFormat } from "@/lib/dates"
 import { isUuid } from "@/lib/list-params"
 import { METHOD_LABELS } from "@/lib/money"
 import { actorNames, chargeHistory, getCharge, getChargeRecord, listDiscountTypes, studentsById } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Charge" }
 
@@ -31,6 +32,8 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
   ])
   const cur = ctx.currency
   const tz = ctx.school?.timezone
+  /** Dates inside text, in the school's date format. */
+  const dt = (v: string | null | undefined, time = false) => displayDate(v, ctx.settings?.date_format as DateFormat | undefined, tz, time)
   const isAdmin = atLeast(ctx.level, "admin")
   const cancelled = c.effective_status === "cancelled"
   // A discount type can be active on a charge only once; offer only the others.
@@ -49,9 +52,9 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
     ["Paid", <Amount key="p" value={c.paid} currency={cur} />],
     ["Balance", <Amount key="b" value={c.remaining} currency={cur} className="font-semibold" />],
     ["Source", record.fee_structure_item_id ? `Fee structure (installment ${record.installment_no})` : "Individual charge"],
-    ["Created", `${formatDateTime(record.created_at, tz)} by ${by(record.created_by)}`],
+    ["Created", `${dt(record.created_at, true)} by ${by(record.created_by)}`],
   ]
-  if (record.cancelled_at) summary.push(["Cancelled", `${formatDateTime(record.cancelled_at, tz)} by ${by(record.cancelled_by)}: ${record.cancel_reason}`])
+  if (record.cancelled_at) summary.push(["Cancelled", `${dt(record.cancelled_at, true)} by ${by(record.cancelled_by)}: ${record.cancel_reason}`])
 
   return (
     <>
@@ -87,7 +90,7 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
                   const receipt = a.payment?.receipts?.[0]
                   return (
                     <tr key={a.id}>
-                      <Td><Link href={`/finance/payments/${a.payment_id}`} className="text-brand hover:underline">{a.payment?.payment_date}</Link></Td>
+                      <Td><Link href={`/finance/payments/${a.payment_id}`} className="text-brand hover:underline"><DateText value={a.payment?.payment_date} /></Link></Td>
                       <Td className="font-mono text-xs">{receipt?.receipt_number ?? "—"}</Td>
                       <Td>{METHOD_LABELS[a.payment?.payment_method ?? ""] ?? "—"}</Td>
                       <Td className="text-right"><Amount value={a.amount} currency={cur} /></Td>
@@ -109,7 +112,7 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
                     <Td>
                       {d.discount_type?.name}
                       {d.percentage ? ` (${d.percentage}%)` : ""}
-                      <span className="block text-xs text-muted">by {by(d.created_by)}, {formatDateTime(d.created_at, tz)}</span>
+                      <span className="block text-xs text-muted">by {by(d.created_by)}, <DateText value={d.created_at} time /></span>
                     </Td>
                     <Td className="text-muted">
                       {d.reason}
@@ -133,7 +136,7 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
                   <tr key={a.id}>
                     <Td>{ADJ_LABELS[a.adjustment_type]}</Td>
                     <Td className="text-muted">{a.reason}</Td>
-                    <Td className="text-xs">{by(a.created_by)}<span className="block text-muted">{formatDateTime(a.created_at, tz)}</span></Td>
+                    <Td className="text-xs">{by(a.created_by)}<span className="block text-muted"><DateText value={a.created_at} time /></span></Td>
                     <Td className="text-right"><Amount value={a.signed_amount} currency={cur} /></Td>
                   </tr>
                 ))}

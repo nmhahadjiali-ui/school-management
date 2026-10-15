@@ -13,10 +13,10 @@ import { Pagination, TableSkeleton } from "@/components/data/list"
 import { NotificationActions } from "@/components/communication/notification-actions"
 import { markNotificationsRead } from "@/lib/actions/operations"
 import { requirePermission } from "@/lib/auth/session"
-import { formatDateTime } from "@/lib/dates"
 import { listHref, parseListParams, type SearchParams } from "@/lib/list-params"
 import { cn } from "@/lib/utils"
 import { listNotifications, notificationTypes, NOTIFICATION_SORTS } from "@/services/communication"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Notifications" }
 
@@ -60,14 +60,14 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
         </nav>
         <ListToolbar searchPlaceholder="Search titles…" filters={[{ name: "type", label: "Types", options: (types ?? []).map((t) => ({ value: t.key, label: t.name })) }]} />
         <Suspense key={JSON.stringify(sp)} fallback={<TableSkeleton />}>
-          <NotificationList sp={sp} timezone={ctx.school?.timezone} />
+          <NotificationList sp={sp} />
         </Suspense>
       </Card>
     </>
   )
 }
 
-async function NotificationList({ sp, timezone }: { sp: SearchParams; timezone?: string }) {
+async function NotificationList({ sp }: { sp: SearchParams }) {
   const p = parseListParams(sp, { sorts: NOTIFICATION_SORTS, defaultSort: "created_at", filters: ["view", "type"] })
   if (p.filters.type && !/^[a-z_]{2,50}$/.test(p.filters.type)) delete p.filters.type
   const page = await listNotifications(p)
@@ -87,7 +87,7 @@ async function NotificationList({ sp, timezone }: { sp: SearchParams; timezone?:
                   {(n.priority === "high" || n.priority === "urgent") && <span className="ml-2"><Badge tone="red">{n.priority}</Badge></span>}
                 </p>
                 <p className="text-sm text-muted">{n.message}</p>
-                <p className="mt-0.5 text-xs text-muted">{formatDateTime(n.created_at, timezone)}</p>
+                <p className="mt-0.5 text-xs text-muted"><DateText value={n.created_at} time /></p>
               </a>
               <NotificationActions id={n.id} read={Boolean(n.read_at)} />
             </li>

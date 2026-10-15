@@ -17,17 +17,17 @@ import { assignEnrollmentSection, closeEnrollment, enrollStudent, transferStuden
 import { unlinkGuardian, updateGuardianLink, linkGuardian } from "@/lib/actions/people"
 import { requireActiveUser } from "@/lib/auth/session"
 import { gradeOptions, personName, sectionOptions } from "@/lib/options"
-import { formatDate } from "@/lib/utils"
 import { uuidSchema } from "@/lib/validations"
 import { listGradeLevels, listSectionOptions, studentEnrollments } from "@/services/academic"
 import { getStudent, studentGuardians } from "@/services/people"
 import { photoSrc } from "@/lib/images"
 import type { Student, UserContext } from "@/types/domain"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Student" }
 
 const label = (s: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : null)
-const d = (v: string | null) => (v ? formatDate(v, "UTC") : null)
+const d = (v: string | null) => (v ? <DateText value={v} /> : null)
 
 /**
  * The student's central record. Visible to school admins, the student's

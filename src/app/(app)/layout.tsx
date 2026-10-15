@@ -1,4 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell"
+import { DateFormatProvider } from "@/components/ui/date-text"
+import type { DateFormat } from "@/lib/dates"
 import { requireActiveUser } from "@/lib/auth/session"
 import { ROLE_LABELS } from "@/lib/auth/permissions"
 import { navForRole } from "@/lib/navigation"
@@ -17,6 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={settings?.primary_color ? ({ "--brand": settings.primary_color } as React.CSSProperties) : undefined}>
+      <DateFormatProvider format={settings?.date_format as DateFormat | undefined} timeZone={school?.timezone}>
       <AppShell
         nav={navForRole(profile.role, ctx.features, financeLevel)}
         unread={bell?.unread ?? 0}
@@ -29,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       >
         {children}
       </AppShell>
+      </DateFormatProvider>
     </div>
   )
 }

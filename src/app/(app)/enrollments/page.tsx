@@ -14,8 +14,8 @@ import { assignEnrollmentSection, enrollStudent } from "@/lib/actions/academic"
 import { requireSchoolAdmin } from "@/lib/auth/session"
 import { isUuid, parseListParams, type SearchParams } from "@/lib/list-params"
 import { gradeOptions, sectionOptions, yearOptions } from "@/lib/options"
-import { formatDate } from "@/lib/utils"
 import { ENROLLMENT_SORTS, listAcademicYears, listEnrollments, listGradeLevels, listSectionOptions, pickYear } from "@/services/academic"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Enrollments" }
 
@@ -111,7 +111,7 @@ async function EnrollmentsTable({ schoolId, yearId, editable, sections, sp }: { 
                 )}
               </Td>
               <Td><StatusBadge status={e.enrollment_status} /></Td>
-              <Td className="text-muted">{formatDate(e.enrollment_date, "UTC")}</Td>
+              <Td className="text-muted"><DateText value={e.enrollment_date} /></Td>
             </tr>
           ))}
         </tbody>

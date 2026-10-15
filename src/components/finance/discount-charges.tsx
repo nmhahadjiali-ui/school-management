@@ -11,6 +11,7 @@ import { Amount } from "@/components/finance/finance-ui"
 import { applyDiscountToCharges } from "@/lib/actions/finance"
 import { formatMoney } from "@/lib/money"
 import type { ChargeBalance } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 export type DiscountTypeOption = { id: string; name: string; calculation_type: "fixed" | "percentage"; value: number }
 
@@ -155,7 +156,7 @@ export function DiscountableCharges({
                   />
                 </Td>
                 <Td>{chargeHrefs?.[c.id!] ? <Link href={chargeHrefs[c.id!]} className="text-brand hover:underline">{c.description}</Link> : c.description}</Td>
-                <Td className="whitespace-nowrap">{c.due_date ?? "—"}</Td>
+                <Td className="whitespace-nowrap"><DateText value={c.due_date} /></Td>
                 <Td className="text-right"><Amount value={c.amount} currency={currency} /></Td>
                 <Td className="text-right text-muted">{adj === 0 ? "—" : <Amount value={adj} currency={currency} />}</Td>
                 <Td className="text-right"><Amount value={c.paid} currency={currency} /></Td>

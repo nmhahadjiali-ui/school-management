@@ -10,6 +10,7 @@ import { Table, Td, Th } from "@/components/ui/misc"
 import { recordPayment } from "@/lib/actions/finance"
 import type { ActionResult } from "@/lib/action-result"
 import { cents, formatMoney, METHOD_LABELS, parseMoney, PAYMENT_METHODS } from "@/lib/money"
+import { DateText } from "@/components/ui/date-text"
 
 type OpenCharge = { id: string; description: string; due_date: string | null; remaining: number; effective_status: string }
 
@@ -183,7 +184,7 @@ export function PaymentEntry({
                     return (
                       <tr key={c.id} className={applied > 0 && !invalid ? "bg-brand/5" : undefined}>
                         <Td>{c.description}{c.effective_status === "overdue" && <span className="ml-2 text-xs text-red-700">overdue</span>}</Td>
-                        <Td className="whitespace-nowrap">{c.due_date ?? "—"}</Td>
+                        <Td className="whitespace-nowrap"><DateText value={c.due_date} /></Td>
                         <Td className="text-right tabular-nums">{formatMoney(c.remaining, currency)}</Td>
                         <Td>
                           <div className="flex items-center justify-end gap-1.5">
@@ -223,7 +224,7 @@ export function PaymentEntry({
                 <dt className="text-muted">Student</dt><dd className="font-medium">{student.label} {student.detail && <span className="text-muted">({student.detail})</span>}</dd>
                 <dt className="text-muted">Amount</dt><dd className="text-lg font-semibold">{formatMoney(amountCents / 100, currency)}</dd>
                 <dt className="text-muted">Method</dt><dd>{METHOD_LABELS[method]}{reference && ` · ${reference}`}</dd>
-                <dt className="text-muted">Date</dt><dd>{date}</dd>
+                <dt className="text-muted">Date</dt><dd><DateText value={date} /></dd>
                 <dt className="text-muted">Applied to charges</dt><dd>{formatMoney(allocated / 100, currency)}</dd>
                 <dt className="text-muted">Kept as credit</dt><dd>{formatMoney(leftover / 100, currency)}</dd>
               </dl>

@@ -5,8 +5,8 @@ import { PageHeader, StatusBadge } from "@/components/ui/misc"
 import { SchoolForm } from "@/components/schools/school-form"
 import { updateSchool } from "@/lib/actions/schools"
 import { requirePermission } from "@/lib/auth/session"
-import { formatDate } from "@/lib/utils"
 import { getSchool } from "@/services/schools"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "School" }
 
@@ -38,7 +38,7 @@ export default async function SchoolPage() {
                 <StatusBadge status={school.status} />
               </dd>
               <dt className="text-muted">Member since</dt>
-              <dd>{formatDate(school.created_at, school.timezone)}</dd>
+              <dd><DateText value={school.created_at} /></dd>
             </dl>
             <p className="mt-4 text-xs text-muted">Share the school code with staff, students and parents so they can register.</p>
           </CardBody>

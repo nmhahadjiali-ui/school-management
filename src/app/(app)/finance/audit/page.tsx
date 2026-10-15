@@ -7,9 +7,9 @@ import { ListToolbar } from "@/components/data/list-toolbar"
 import { Pagination } from "@/components/data/list"
 import { studentLabel } from "@/components/finance/finance-ui"
 import { requireFinance } from "@/lib/finance/access"
-import { formatDateTime } from "@/lib/dates"
 import { parseListParams } from "@/lib/list-params"
 import { actorNames, auditLog, studentsById } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Financial audit log" }
 
@@ -27,7 +27,6 @@ export default async function AuditPage({ searchParams }: PageProps<"/finance/au
   if (!p.filters.action) delete p.filters.action
   const page = await auditLog(ctx.schoolId, p)
   const [names, students] = await Promise.all([actorNames(page.rows.map((r) => r.actor_user_id)), studentsById(page.rows.map((r) => r.student_id ?? ""))])
-  const tz = ctx.school?.timezone
 
   return (
     <>
@@ -41,7 +40,7 @@ export default async function AuditPage({ searchParams }: PageProps<"/finance/au
               <tbody>
                 {page.rows.map((r) => (
                   <tr key={r.id} className="align-top">
-                    <Td className="whitespace-nowrap text-xs">{formatDateTime(r.created_at, tz)}</Td>
+                    <Td className="whitespace-nowrap text-xs"><DateText value={r.created_at} time /></Td>
                     <Td className="text-xs">{r.actor_user_id ? (names.get(r.actor_user_id) ?? "Staff member") : "System / provider"}</Td>
                     <Td className="font-mono text-xs">{r.action}</Td>
                     <Td className="text-xs">{r.student_id ? <Link href={`/finance/students/${r.student_id}`} className="text-brand hover:underline">{studentLabel(students.get(r.student_id))}</Link> : "—"}</Td>

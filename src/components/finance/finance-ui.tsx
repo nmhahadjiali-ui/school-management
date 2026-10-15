@@ -3,6 +3,7 @@ import { EmptyState, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { formatMoney, METHOD_LABELS } from "@/lib/money"
 import { cn } from "@/lib/utils"
 import type { ChargeBalance, LedgerEntry, StudentRef } from "@/services/finance"
+import { DateText } from "@/components/ui/date-text"
 
 // Read-only finance building blocks shared by the finance area and the
 // student / parent pages. Values are displayed exactly as PostgreSQL computed them.
@@ -61,7 +62,7 @@ export function ChargesTable({
                 </Td>
               )}
               <Td>{chargeHref ? <Link href={chargeHref(c.id!)} className="text-brand hover:underline">{c.description}</Link> : c.description}</Td>
-              <Td className="whitespace-nowrap">{c.due_date ?? "—"}</Td>
+              <Td className="whitespace-nowrap"><DateText value={c.due_date} /></Td>
               <Td className="text-right"><Amount value={c.amount} currency={currency} /></Td>
               <Td className="text-right text-muted">{adj === 0 ? "—" : <Amount value={adj} currency={currency} />}</Td>
               <Td className="text-right"><Amount value={c.paid} currency={currency} /></Td>
@@ -117,7 +118,7 @@ export function PaymentsTable({
           const receipt = firstReceipt(p.receipts)
           return (
             <tr key={p.id} className="hover:bg-slate-50">
-              <Td className="whitespace-nowrap">{paymentHref ? <Link href={paymentHref(p.id)} className="text-brand hover:underline">{p.payment_date}</Link> : p.payment_date}</Td>
+              <Td className="whitespace-nowrap">{paymentHref ? <Link href={paymentHref(p.id)} className="text-brand hover:underline"><DateText value={p.payment_date} /></Link> : <DateText value={p.payment_date} />}</Td>
               {students && <Td>{studentLabel(students.get(p.student_id))}</Td>}
               <Td className="font-mono text-xs">
                 {receipt ? <Link href={`/receipts/${receipt.id}`} className="text-brand hover:underline">{receipt.receipt_number}</Link> : "—"}
@@ -172,7 +173,7 @@ export function LedgerTable({ rows, currency }: { rows: LedgerEntry[]; currency:
           const c = amounts[i]
           return (
             <tr key={`${e.entity_id}-${e.entry_type}-${i}`}>
-              <Td className="whitespace-nowrap">{e.entry_date}</Td>
+              <Td className="whitespace-nowrap"><DateText value={e.entry_date} /></Td>
               <Td>{LEDGER_LABELS[e.entry_type ?? ""] ?? e.entry_type}</Td>
               <Td className="text-muted">{e.description}</Td>
               <Td className="text-right">{c > 0 ? <Amount value={c / 100} currency={currency} /> : ""}</Td>

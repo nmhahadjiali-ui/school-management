@@ -102,6 +102,7 @@ export const updateProfileSchema = z.object({
 export const schoolSettingsSchema = z.object({
   timezone,
   primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color such as #1d4ed8"),
+  date_format: z.enum(["medium", "long", "iso"], "Choose a date format").default("medium"),
 })
 
 export const uuidSchema = z.uuid()

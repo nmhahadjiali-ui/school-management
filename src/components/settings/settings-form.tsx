@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { Field, Form, SubmitButton } from "@/components/ui/form"
 import { updateSchoolSettings } from "@/lib/actions/settings"
+import { DATE_FORMATS } from "@/lib/dates"
 import type { School, SchoolSettings } from "@/types/domain"
 
 export function SettingsForm({ school, settings }: { school: School; settings: SchoolSettings }) {
@@ -13,6 +14,14 @@ export function SettingsForm({ school, settings }: { school: School; settings: S
         <CardHeader title="General" />
         <CardBody className="grid gap-4 md:grid-cols-2">
           <Field name="timezone" label="Time zone" defaultValue={school.timezone} hint="IANA name, e.g. Asia/Manila" required />
+          <Field
+            as="select"
+            name="date_format"
+            label="Date format"
+            defaultValue={settings.date_format}
+            options={DATE_FORMATS.map((f) => ({ value: f.value, label: f.label }))}
+            hint="How dates are shown everywhere in the app, for everyone in your school."
+          />
           <p className="self-end pb-2 text-sm text-muted">
             Academic years are managed on the{" "}
             <Link href="/academic-years" className="font-medium text-brand hover:underline">

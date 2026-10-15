@@ -4,10 +4,10 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { EmptyState, PageHeader, StatusBadge, Table, Td, Th } from "@/components/ui/misc"
 import { DescriptionList } from "@/components/data/list"
 import { requireAcademicActor } from "@/lib/auth/session"
-import { formatDateTime } from "@/lib/dates"
 import { createClient } from "@/lib/supabase/server"
 import { uuidSchema } from "@/lib/validations"
 import { gradeHistory } from "@/services/operations"
+import { DateText } from "@/components/ui/date-text"
 
 export const metadata: Metadata = { title: "Grade history" }
 
@@ -55,9 +55,9 @@ export default async function GradeHistoryPage({ params }: PageProps<"/grades/[i
                 ["Remarks", grade.remarks],
                 ["Class", `${grade.section.grade_level.name} – ${grade.section.name}`],
                 ["Teacher", `${grade.teacher.first_name} ${grade.teacher.last_name}`],
-                ["Submitted", grade.submitted_at ? formatDateTime(grade.submitted_at) : null],
-                ["Approved", grade.approved_at ? formatDateTime(grade.approved_at) : null],
-                ["Locked", grade.locked_at ? formatDateTime(grade.locked_at) : null],
+                ["Submitted", grade.submitted_at ? <DateText key="s" value={grade.submitted_at} time /> : null],
+                ["Approved", grade.approved_at ? <DateText key="a" value={grade.approved_at} time /> : null],
+                ["Locked", grade.locked_at ? <DateText key="l" value={grade.locked_at} time /> : null],
               ]}
             />
           </CardBody>
@@ -80,7 +80,7 @@ export default async function GradeHistoryPage({ params }: PageProps<"/grades/[i
               <tbody>
                 {history.map((h) => (
                   <tr key={h.id}>
-                    <Td className="whitespace-nowrap text-muted">{formatDateTime(h.changed_at, actor.school?.timezone)}</Td>
+                    <Td className="whitespace-nowrap text-muted"><DateText value={h.changed_at} time /></Td>
                     <Td>{who(h.changed_by)}</Td>
                     <Td className="tabular-nums">{h.old_score !== null && Number(h.old_score) !== Number(h.new_score) ? <><s className="text-muted">{Number(h.old_score)}</s> → {Number(h.new_score)}</> : Number(h.new_score)}</Td>
                     <Td>{h.old_status && h.old_status !== h.new_status ? <>{h.old_status} → <StatusBadge status={h.new_status ?? ""} /></> : <StatusBadge status={h.new_status ?? ""} />}</Td>
