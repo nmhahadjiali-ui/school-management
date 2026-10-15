@@ -97,6 +97,19 @@ describe("discounts and adjustments", () => {
     assert.deepEqual([money(lb.amount), money(lb.discounts), money(lb.remaining)], ["1500.00", "750.00", "750.00"])
   })
 
+  test("the same discount type applies to a charge only once (until revoked)", async () => {
+    const tuition = await chargeFor(A.student.id, A.tuitionItem.id)
+    const lab = await chargeFor(A.student.id, A.labItem.id)
+    // tuition already has sibling10 (previous test): applying it alone again is refused
+    await fails(as.financeA.rpc("apply_discount", { p_charge_ids: [tuition.id], p_discount_type_id: A.sibling10.id, p_reason: "Again" }), "duplicate")
+    // with another charge in the batch, only the new one is discounted
+    assert.equal(ok(await as.financeA.rpc("apply_discount", { p_charge_ids: [tuition.id, lab.id], p_discount_type_id: A.sibling10.id, p_reason: "Batch" }), "batch"), 1)
+    const { count } = await service.from("student_discounts").select("id", { count: "exact", head: true }).eq("student_charge_id", tuition.id).eq("discount_type_id", A.sibling10.id).eq("status", "active")
+    assert.equal(count, 1)
+    const { data: added } = await service.from("student_discounts").select("id").eq("student_charge_id", lab.id).eq("discount_type_id", A.sibling10.id).single()
+    ok(await as.financeA.rpc("revoke_discount", { p_discount_id: added.id, p_reason: "Test cleanup" }), "cleanup")
+  })
+
   test("revoking a discount restores the balance and keeps the record", async () => {
     const act = await chargeFor(A.student.id, A.actItem.id, 1)
     ok(await as.financeA.rpc("apply_discount", { p_charge_ids: [act.id], p_discount_type_id: A.half.id, p_reason: "Trial" }), "apply")

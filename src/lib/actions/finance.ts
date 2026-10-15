@@ -230,25 +230,35 @@ export async function applyDiscount(chargeId: string, _prev: ActionResult | null
   if (!valid(chargeId)) return badId
   return finance("admin", fd, z.object({ discount_type_id: id, reason }), async (d) => {
     const supabase = await createClient()
-    return supabase.rpc("apply_discount", { p_charge_ids: [chargeId], p_discount_type_id: d.discount_type_id, p_reason: d.reason })
+    // The database refuses a discount type that is already active on the charge.
+    const { data, error } = await supabase.rpc("apply_discount", { p_charge_ids: [chargeId], p_discount_type_id: d.discount_type_id, p_reason: d.reason })
+    if (error) return { error }
+    return data ? { ok: true } : { ok: false, error: "Nothing to discount: this charge is already fully paid." }
   }, { context: "applyDiscount", success: "Discount applied. The original charge is unchanged." })
 }
 
 /** One discount type on several charges at once (one database call: all or nothing). */
 export async function applyDiscountToCharges(input: { charge_ids: string[]; discount_type_id: string; reason: string }): Promise<ActionResult> {
   let applied = 0
+  let already = 0
   const schema = z.object({ charge_ids: z.array(id).min(1, "Select at least one charge").max(500), discount_type_id: id, reason })
   const result = await finance("admin", input, schema, async (d) => {
     const supabase = await createClient()
+    // Charges that already carry this discount are skipped by the database (counted here for the message).
+    const { count } = await supabase.from("student_discounts").select("id", { count: "exact", head: true })
+      .in("student_charge_id", d.charge_ids).eq("discount_type_id", d.discount_type_id).eq("status", "active")
+    already = count ?? 0
     const { data, error } = await supabase.rpc("apply_discount", { p_charge_ids: [...new Set(d.charge_ids)], p_discount_type_id: d.discount_type_id, p_reason: d.reason })
     applied = data ?? 0
     return { error }
   }, { context: "applyDiscountToCharges", success: "" })
   if (!result.ok) return result
-  const skipped = new Set(input.charge_ids).size - applied
+  const settled = new Set(input.charge_ids).size - applied - already
+  const skipped = [already > 0 && `${already} already had this discount`, settled > 0 && `${settled} already paid or cancelled`].filter(Boolean).join(", ")
+  if (applied === 0) return { ok: false, error: `No charge was discounted${skipped ? `: ${skipped}` : ""}.` }
   return {
     ok: true,
-    message: `Discount applied to ${applied} charge${applied === 1 ? "" : "s"}${skipped > 0 ? `; ${skipped} skipped (already paid or cancelled)` : ""}. Original charges are unchanged.`,
+    message: `Discount applied to ${applied} charge${applied === 1 ? "" : "s"}${skipped ? ` (skipped: ${skipped})` : ""}. Original charges are unchanged.`,
   }
 }
 

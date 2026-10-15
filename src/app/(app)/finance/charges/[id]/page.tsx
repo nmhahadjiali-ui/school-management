@@ -33,6 +33,9 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
   const tz = ctx.school?.timezone
   const isAdmin = atLeast(ctx.level, "admin")
   const cancelled = c.effective_status === "cancelled"
+  // A discount type can be active on a charge only once; offer only the others.
+  const activeTypeIds = new Set(history.discounts.filter((d) => d.status === "active").map((d) => d.discount_type_id))
+  const offerable = (discountTypes ?? []).filter((d) => !activeTypeIds.has(d.id))
   const by = (uid: string | null) => (uid ? (names.get(uid) ?? "Staff member") : "System")
 
   const summary: [string, React.ReactNode][] = [
@@ -60,7 +63,7 @@ export default async function ChargePage({ params }: PageProps<"/finance/charges
           !cancelled && (
             <ChargeAdminActions
               chargeId={id}
-              discountTypes={(discountTypes ?? []).map((d) => ({ value: d.id, label: `${d.name} (${d.calculation_type === "percentage" ? `${d.value}%` : d.value})` }))}
+              discountTypes={offerable.map((d) => ({ value: d.id, label: `${d.name} (${d.calculation_type === "percentage" ? `${d.value}%` : d.value})` }))}
               cancellable={Number(c.paid) === 0}
             />
           )

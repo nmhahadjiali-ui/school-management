@@ -2,7 +2,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
 import { ChargesTable, LedgerTable, MoneyStat, PaymentsTable } from "@/components/finance/finance-ui"
 import { DiscountableCharges, type DiscountTypeOption } from "@/components/finance/discount-charges"
-import { studentBalances, studentCredits, studentLedger, studentPayments } from "@/services/finance"
+import { studentActiveDiscounts, studentBalances, studentCredits, studentLedger, studentPayments } from "@/services/finance"
 
 /**
  * One student's account: totals, charges, payments and the full statement.
@@ -26,7 +26,13 @@ export async function StudentFinance({
   /** Finance admins: select charges and apply a discount to them. */
   discounts?: { types: DiscountTypeOption[]; tuitionTypeIds: string[] }
 }) {
-  const [balances, credits, payments, ledger] = await Promise.all([studentBalances(studentId), studentCredits(studentId), studentPayments(studentId), studentLedger(studentId)])
+  const [balances, credits, payments, ledger, activeDiscounts] = await Promise.all([
+    studentBalances(studentId),
+    studentCredits(studentId),
+    studentPayments(studentId),
+    studentLedger(studentId),
+    discounts ? studentActiveDiscounts(studentId) : Promise.resolve({}),
+  ])
   if (balances.error || payments.error || ledger.error) return <Alert tone="error">The account could not be loaded. Please refresh the page.</Alert>
 
   // Totals are summed in integer cents from database-computed values (display only).
@@ -48,7 +54,7 @@ export async function StudentFinance({
       <Card>
         <CardHeader title="Charges" description={discounts ? "Tick charges to give a discount on several at once." : undefined} />
         {discounts ? (
-          <DiscountableCharges rows={balances.data ?? []} currency={currency} discountTypes={discounts.types} tuitionTypeIds={discounts.tuitionTypeIds} chargeHrefs={chargeHref ? Object.fromEntries((balances.data ?? []).map((c) => [c.id!, chargeHref(c.id!)])) : undefined} />
+          <DiscountableCharges rows={balances.data ?? []} currency={currency} discountTypes={discounts.types} tuitionTypeIds={discounts.tuitionTypeIds} activeDiscounts={activeDiscounts} chargeHrefs={chargeHref ? Object.fromEntries((balances.data ?? []).map((c) => [c.id!, chargeHref(c.id!)])) : undefined} />
         ) : (
           <ChargesTable rows={balances.data ?? []} currency={currency} chargeHref={chargeHref} />
         )}

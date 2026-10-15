@@ -34,6 +34,7 @@ export function DiscountableCharges({
   currency,
   discountTypes,
   tuitionTypeIds,
+  activeDiscounts = {},
   chargeHrefs,
 }: {
   rows: ChargeBalance[]
@@ -41,6 +42,8 @@ export function DiscountableCharges({
   discountTypes: DiscountTypeOption[]
   /** Fee types in the "tuition" category, for the quick selection. */
   tuitionTypeIds: string[]
+  /** Discount types already active per charge id (a type applies to a charge once). */
+  activeDiscounts?: Record<string, string[]>
   /** Link per charge id (functions cannot be passed to a client component). */
   chargeHrefs?: Record<string, string>
 }) {
@@ -63,15 +66,18 @@ export function DiscountableCharges({
   const select = (list: ChargeBalance[]) => setSelected(new Set(list.map((c) => c.id!)))
 
   const dt = discountTypes.find((d) => d.id === typeId)
-  const perCharge = dt ? chosen.map((c) => discountCents(c, dt)) : []
+  const hasIt = (c: ChargeBalance) => Boolean(dt && activeDiscounts[c.id!]?.includes(dt.id))
+  const eligible = chosen.filter((c) => !hasIt(c))
+  const duplicates = chosen.length - eligible.length
+  const perCharge = dt ? chosen.map((c) => (hasIt(c) ? 0 : discountCents(c, dt))) : []
   const totalCents = perCharge.reduce((a, b) => a + b, 0)
-  const capped = dt ? chosen.filter((c, i) => perCharge[i] < (dt.calculation_type === "fixed" ? cents(dt.value) : Math.round((cents(c.amount) * Number(dt.value)) / 100))).length : 0
+  const capped = dt ? eligible.filter((c) => discountCents(c, dt) < (dt.calculation_type === "fixed" ? cents(dt.value) : Math.round((cents(c.amount) * Number(dt.value)) / 100))).length : 0
   const money = (c: number) => formatMoney(c / 100, currency)
 
   const apply = () => {
     setError(null)
     startTransition(async () => {
-      const r = await applyDiscountToCharges({ charge_ids: chosen.map((c) => c.id!), discount_type_id: typeId, reason })
+      const r = await applyDiscountToCharges({ charge_ids: eligible.map((c) => c.id!), discount_type_id: typeId, reason })
       if (r.ok) {
         dialog.current?.close()
         setSelected(new Set())
@@ -177,19 +183,26 @@ export function DiscountableCharges({
             </select>
           </label>
 
-          {dt && chosen.length > 0 && (
-            <div className={dt.calculation_type === "fixed" && chosen.length > 1 ? "flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" : "rounded-md bg-slate-50 p-3 text-sm"}>
-              {dt.calculation_type === "fixed" && chosen.length > 1 && <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />}
+          {dt && duplicates > 0 && (
+            <Alert tone={eligible.length ? "info" : "error"}>
+              {eligible.length
+                ? `${duplicates} selected charge${duplicates === 1 ? " already has" : "s already have"} ${dt.name}; ${duplicates === 1 ? "it is" : "they are"} skipped.`
+                : `All selected charges already have ${dt.name}. Revoke it on a charge first to apply it again.`}
+            </Alert>
+          )}
+          {dt && eligible.length > 0 && (
+            <div className={dt.calculation_type === "fixed" && eligible.length > 1 ? "flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" : "rounded-md bg-slate-50 p-3 text-sm"}>
+              {dt.calculation_type === "fixed" && eligible.length > 1 && <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />}
               <div className="space-y-1">
                 <p>
                   {dt.calculation_type === "fixed"
-                    ? chosen.length > 1
-                      ? <>This gives <strong>{formatMoney(dt.value, currency)} off each</strong> of the {chosen.length} charges (<strong>{money(totalCents)} total</strong>).</>
+                    ? eligible.length > 1
+                      ? <>This gives <strong>{formatMoney(dt.value, currency)} off each</strong> of the {eligible.length} charges (<strong>{money(totalCents)} total</strong>).</>
                       : <>This gives <strong>{money(totalCents)}</strong> off the charge.</>
                     : <>This gives <strong>{Number(dt.value)}% off each</strong> selected charge (<strong>{money(totalCents)} total</strong>).</>}
                 </p>
                 {capped > 0 && <p className="text-xs">{capped} charge{capped === 1 ? " has" : "s have"} less left to pay than the discount, so {capped === 1 ? "it is" : "they are"} reduced to zero instead; the total above already accounts for that.</p>}
-                {dt.calculation_type === "fixed" && chosen.length > 1 && <p className="text-xs">If you meant {formatMoney(dt.value, currency)} in total, apply it to one charge only.</p>}
+                {dt.calculation_type === "fixed" && eligible.length > 1 && <p className="text-xs">If you meant {formatMoney(dt.value, currency)} in total, apply it to one charge only.</p>}
               </div>
             </div>
           )}
@@ -198,7 +211,11 @@ export function DiscountableCharges({
             {chosen.map((c, i) => (
               <li key={c.id} className="flex justify-between gap-3 px-3 py-1.5">
                 <span className="truncate">{c.description}</span>
-                <span className="shrink-0 tabular-nums text-green-700">{dt ? `− ${money(perCharge[i])}` : ""}</span>
+                {hasIt(c) ? (
+                  <span className="shrink-0 text-xs text-muted">already applied · skipped</span>
+                ) : (
+                  <span className="shrink-0 tabular-nums text-green-700">{dt ? `− ${money(perCharge[i])}` : ""}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -210,9 +227,9 @@ export function DiscountableCharges({
         </div>
         <div className="flex justify-end gap-2 border-t border-border bg-slate-50 px-5 py-3">
           <Button variant="secondary" onClick={() => dialog.current?.close()} disabled={pending}>Cancel</Button>
-          <Button onClick={apply} disabled={pending || !dt || chosen.length === 0 || reason.trim().length < 3}>
+          <Button onClick={apply} disabled={pending || !dt || eligible.length === 0 || reason.trim().length < 3}>
             {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            Apply to {chosen.length} charge{chosen.length === 1 ? "" : "s"}
+            Apply to {eligible.length} charge{eligible.length === 1 ? "" : "s"}
           </Button>
         </div>
       </dialog>

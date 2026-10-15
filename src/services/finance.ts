@@ -166,6 +166,15 @@ export async function studentBalances(studentId: string) {
   return supabase.from("student_charge_balances").select("*").eq("student_id", studentId).order("due_date", { ascending: true, nullsFirst: false }).order("created_at")
 }
 
+/** Active discounts on a student's charges: charge id -> discount type ids. */
+export async function studentActiveDiscounts(studentId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase.from("student_discounts").select("student_charge_id, discount_type_id").eq("student_id", studentId).eq("status", "active").limit(5000)
+  const map: Record<string, string[]> = {}
+  for (const d of data ?? []) (map[d.student_charge_id] ??= []).push(d.discount_type_id)
+  return map
+}
+
 export async function studentCredits(studentId: string) {
   const supabase = await createClient()
   return supabase.from("student_payment_credits").select("*").eq("student_id", studentId).gt("unallocated", 0).order("payment_date")
