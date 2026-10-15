@@ -147,33 +147,91 @@ export function StructureItemDialog({
   structureId,
   feeTypes,
   item,
+  currency,
+  nextSequence,
 }: {
   structureId: string
   feeTypes: Opt[]
-  item?: { id: string; fee_type_id: string; name: string; amount: number; frequency: string; installments: number; due_date: string | null; sequence: number }
+  item?: StructureItem
+  currency?: string
+  nextSequence?: number
 }) {
   return (
     <FormDialog
       trigger={item ? "Edit" : <><Plus className="size-4" aria-hidden /> Fee item</>}
-      variant={item ? "ghost" : "primary"}
+      variant={item ? "secondary" : "primary"}
       size="sm"
       title={item ? "Edit fee item" : "Add fee item"}
-      description="Monthly, quarterly and semester fees can be split into installments (due dates step by 1, 3 or 6 months)."
       action={fin.saveStructureItem.bind(null, structureId, item?.id ?? null)}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field as="select" name="fee_type_id" label="Fee type" required defaultValue={item?.fee_type_id} options={feeTypes} />
-        <Field name="name" label="Name on the charge" required defaultValue={item?.name} maxLength={150} />
-        <Field name="amount" label="Total amount" required inputMode="decimal" defaultValue={item ? String(item.amount) : ""} hint="Split evenly across installments (to the cent)." />
-        <Field as="select" name="frequency" label="Frequency" defaultValue={item?.frequency ?? "one_time"} options={[
-          { value: "one_time", label: "One-time" }, { value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" },
-          { value: "semester", label: "Per semester" }, { value: "annual", label: "Annual" }, { value: "custom", label: "Custom" },
-        ]} />
-        <Field name="installments" label="Installments" type="number" min={1} max={24} defaultValue={item?.installments ?? 1} />
-        <Field name="due_date" label="(First) due date" type="date" defaultValue={item?.due_date ?? ""} />
-        <Field name="sequence" label="Order" type="number" min={1} max={100} defaultValue={item?.sequence ?? 1} />
-      </div>
+      <StructureItemFields feeTypes={feeTypes} item={item} currency={currency} nextSequence={nextSequence} />
     </FormDialog>
+  )
+}
+
+type StructureItem = { id: string; fee_type_id: string; name: string; amount: number; frequency: string; installments: number; due_date: string | null; sequence: number }
+
+const FREQUENCIES: Opt[] = [
+  { value: "one_time", label: "One-time" }, { value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" },
+  { value: "semester", label: "Per semester" }, { value: "annual", label: "Annual" }, { value: "custom", label: "Custom" },
+]
+/** Frequencies that can be split into installments, and the months between their due dates. */
+const SPLIT_MONTHS: Record<string, number> = { monthly: 1, quarterly: 3, semester: 6 }
+
+/** Even split to the cent; the last installment absorbs the remainder (same rule as the database). */
+function splitAmount(total: number, n: number) {
+  const cents = Math.round(total * 100)
+  const each = Math.trunc(cents / n)
+  return { each: each / 100, last: (cents - each * (n - 1)) / 100 }
+}
+
+/**
+ * Fee item form, grouped: what (fee type, item name), how much and when
+ * (amount, frequency, installments when the frequency allows them, first due
+ * date), and the order in the list. A preview line shows the resulting charges.
+ */
+function StructureItemFields({ feeTypes, item, currency = "PHP", nextSequence = 1 }: { feeTypes: Opt[]; item?: StructureItem; currency?: string; nextSequence?: number }) {
+  const [frequency, setFrequency] = useState(item?.frequency ?? "one_time")
+  const [installments, setInstallments] = useState(String(item?.installments ?? 1))
+  const [amount, setAmount] = useState(item ? String(item.amount) : "")
+  const [due, setDue] = useState(item?.due_date ?? "")
+  const splittable = frequency in SPLIT_MONTHS
+  const n = splittable ? Math.min(24, Math.max(1, Math.trunc(Number(installments)) || 1)) : 1
+  const total = Number(amount.replace(/[,s]/g, ""))
+
+  let preview = ""
+  if (total > 0) {
+    const { each, last } = splitAmount(total, n)
+    preview = n === 1 ? `1 charge of ${formatMoney(total, currency)}` : each === last ? `${n} charges of ${formatMoney(each, currency)}` : `${n - 1} charges of ${formatMoney(each, currency)} + 1 of ${formatMoney(last, currency)}`
+    if (due) {
+      const first = new Date(`${due}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+      preview += n > 1 ? `, due every ${SPLIT_MONTHS[frequency] === 1 ? "month" : `${SPLIT_MONTHS[frequency]} months`} from ${first}` : `, due ${first}`
+    }
+    preview += " per student."
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-[2fr_3fr]">
+        <Field as="select" name="fee_type_id" label="Fee type" required defaultValue={item?.fee_type_id} options={feeTypes} hint="Category used in reports." />
+        <Field name="name" label="Item name" required defaultValue={item?.name} maxLength={150} placeholder="e.g. Tuition fee – Grade 7" hint="Shown to students and parents on charges and receipts." />
+      </div>
+      <fieldset className="space-y-4 rounded-md border border-border p-3">
+        <legend className="px-1 text-sm font-medium">Amount and schedule</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field name="amount" label="Total amount" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+          <Field as="select" name="frequency" label="Frequency" value={frequency} onChange={(e) => setFrequency(e.target.value)} options={FREQUENCIES} />
+          {splittable ? (
+            <Field name="installments" label="Installments" type="number" min={1} max={24} value={installments} onChange={(e) => setInstallments(e.target.value)} hint="The total is split evenly." />
+          ) : (
+            <input type="hidden" name="installments" value="1" />
+          )}
+          <Field name="due_date" label={n > 1 ? "First due date" : "Due date"} type="date" value={due} onChange={(e) => setDue(e.target.value)} hint="Optional." />
+        </div>
+        {preview && <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-muted">{preview}</p>}
+      </fieldset>
+      <Field name="sequence" label="Order in the list" type="number" min={1} max={100} defaultValue={item?.sequence ?? nextSequence} className="sm:w-40" />
+    </div>
   )
 }
 

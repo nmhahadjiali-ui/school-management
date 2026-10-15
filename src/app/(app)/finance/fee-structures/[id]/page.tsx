@@ -50,7 +50,7 @@ export default async function FeeStructurePage({ params }: PageProps<"/finance/f
       />
       <div className="space-y-6">
         <Card>
-          <CardHeader title="Fee items" description={`Total per student: ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${cur}`} action={isAdmin && typeOptions.length > 0 && <StructureItemDialog structureId={id} feeTypes={typeOptions} />} />
+          <CardHeader title="Fee items" description={`Total per student: ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${cur}`} action={isAdmin && typeOptions.length > 0 && <StructureItemDialog structureId={id} feeTypes={typeOptions} currency={cur} nextSequence={Math.max(0, ...(items ?? []).map((i) => i.sequence)) + 1} />} />
           {(items ?? []).length === 0 ? <EmptyState title="No fee items" description="Add the fees students in this structure pay." /> : (
             <Table label="Fee items">
               <thead><tr><Th>#</Th><Th>Item</Th><Th>Fee type</Th><Th>Frequency</Th><Th>First due</Th><Th className="text-right">Amount</Th><Th /></tr></thead>
@@ -63,7 +63,7 @@ export default async function FeeStructurePage({ params }: PageProps<"/finance/f
                     <Td>{FREQ[i.frequency]}{i.installments > 1 && ` × ${i.installments}`}</Td>
                     <Td>{i.due_date ?? "—"}</Td>
                     <Td className="text-right"><Amount value={i.amount} currency={cur} /></Td>
-                    <Td className="whitespace-nowrap text-right">{isAdmin && <><StructureItemDialog structureId={id} feeTypes={typeOptions} item={i} /><DeleteItemButton itemId={i.id} /></>}</Td>
+                    <Td>{isAdmin && <div className="flex justify-end gap-2"><StructureItemDialog structureId={id} feeTypes={typeOptions} item={i} currency={cur} /><DeleteItemButton itemId={i.id} /></div>}</Td>
                   </tr>
                 ))}
               </tbody>
